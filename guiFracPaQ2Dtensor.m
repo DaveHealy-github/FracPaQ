@@ -26,9 +26,9 @@ function guiFracPaQ2Dtensor(traces, xMin, yMin, xMax, yMax, nAperture, nLamda, f
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 %   trace segment angles are measured from Y-axis, clockwise is positive 
-nTraces = length(traces) ; 
 traceAngles = [ traces.segmentAngle ]' ; 
 traceLengths = [ traces.segmentLength ] ;
+nTraces = length(traces) ; 
 
 traceAngles = traceAngles ; 
 if flag_reverse 
@@ -56,13 +56,13 @@ for i = 1:nSegments
     
 end 
 
-N11 = N11 / nTraces ; 
-N22 = N22 / nTraces ; 
-N12 = N12 / nTraces ; 
+N11 = N11 / nSegments ; 
+N22 = N22 / nSegments ; 
+N12 = N12 / nSegments ; 
 
-% disp(N11) ; 
-% disp(N22) ; 
-% disp(N12) ; 
+% N11 = N11 / nTraces ; 
+% N22 = N22 / nTraces ; 
+% N12 = N12 / nTraces ; 
 
 %   calculate P11, P22 and P12 
 k = 0 ; 
@@ -127,25 +127,6 @@ disp(k2) ;
 disp(kazimuth) ; 
 
 %   plot azimuthal variation of k 
-
-% %   mapped lines 
-% subplot(1, 2, 1) ; 
-% hold on ; 
-% for k = 1:length(traces)
-%     
-%     plot( [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 1, 'Color', 'green') ;
-% 
-% end ; 
-% hold off ; 
-% %set(gca,'YDir', 'reverse') ; 
-% axis on equal ; 
-% box on ; 
-% xlim([0 xMax]) ; 
-% ylim([0 yMax]) ; 
-% xlabel('X, pixels') ; 
-% ylabel('Y, pixels') ; 
-% title(['Mapped trace segments, n=', num2str(nSegments)]) ; 
-
 theta = thetatrace - 90 ; 
 x = -k1:k1/10:k1 ; 
 y = sqrt( k2^2 * ( 1 - x.^2 / k1^2 ) ) ; 
@@ -161,27 +142,32 @@ yprime2 = x * sin(theta*pi/180) + y * cos(theta*pi/180) ;
 % yprime2 = x * sin(thetatrace*pi/180) + y * cos(thetatrace*pi/180) ; 
 lim = max([max(xprime), max(yprime)]) * 1.2 ; 
 
-% subplot(1,2,2) ; 
-% scrsz = get(0,'ScreenSize') ;
-% figure('OuterPosition',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]) ; 
-
 f = figure ; 
 set(gcf, 'PaperPositionMode', 'manual') ; 
 set(gcf, 'PaperUnits', 'inches') ; 
 set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
+%   permeability in the direction of flow (after Long et al., 1982. WRR)
+ek1 = sqrt(k1) ; 
+ek2 = sqrt(k2) ; 
+
+%   permeability in the direction of gradient (after Long et al., 1982.
+%   WRR)
+% ek1 = 1 / sqrt(k1) ; 
+% ek2 = 1 / sqrt(k2) ; 
+
 hold on ; 
-rectangle('Position', [-k2/2 -k1/2 k2 k1], 'Curvature', [1 1], 'EdgeColor', 'b', 'FaceColor', 'b') ; 
-plot([-k2/2*1.2, +k2/2*1.2], [0, 0], '-k') ; 
-plot([0, 0], [-k1/2*1.2, +k1/2*1.2], '-k') ; 
+rectangle('Position', [-ek2/2 -ek1/2 ek2 ek1], 'Curvature', [1 1], 'EdgeColor', 'b', 'FaceColor', 'b') ; 
+plot([-ek2/2*1.2, +ek2/2*1.2], [0, 0], '-k') ; 
+plot([0, 0], [-ek1/2*1.2, +ek1/2*1.2], '-k') ; 
 hold off ; 
 view(kazimuth, 90) ; 
 axis equal off ; 
 % xlim([-lim lim]) ; 
 % ylim([-lim lim]) ; 
-title(['Permeability, k_1:k_2=', ...
+title({['Permeability, k_1:k_2=', ...
             num2str(round(kratio), '%i'), ':1, ', ...
-            'k_1 azimuth=', num2str(round(kazimuth), '%03i')]) ; 
+            'k_1 azimuth=', num2str(round(kazimuth), '%03i')];''}) ; 
 
 %   save to file 
 guiPrint(f, 'FracPaQ2D_permtensor') ; 

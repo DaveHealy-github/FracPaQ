@@ -102,6 +102,11 @@ set(handles.popupmenu_histolengthbins,'Value',2) ;
 set(handles.popupmenu_histoanglebins,'Value',2) ;
 set(handles.popupmenu_rosebins,'Value',2) ;
 
+handles.FracPaQversion = '1.6a' ; 
+disp(['FracPaQ version: ', handles.FracPaQversion]) ; 
+% Update handles structure
+guidata(hObject, handles);
+
 % --- Outputs from this function are returned to the command line.
 function varargout = guiFracPaQ2D_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
@@ -129,7 +134,17 @@ function checkbox_permellipse_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_permellipse
-
+if get(hObject, 'Value')
+    set(handles.edit_aperture, 'Enable', 'on') ; 
+    set(handles.label_aperture, 'Enable', 'on') ; 
+    set(handles.edit_lambda, 'Enable', 'on') ; 
+    set(handles.label_lambda, 'Enable', 'on') ; 
+else
+    set(handles.edit_aperture, 'Enable', 'off') ; 
+    set(handles.label_aperture, 'Enable', 'off') ; 
+    set(handles.edit_lambda, 'Enable', 'off') ; 
+    set(handles.label_lambda, 'Enable', 'off') ; 
+end ; 
 
 % --- Executes on button press in checkbox_intensitymap.
 function checkbox_intensitymap_Callback(hObject, eventdata, handles)
@@ -217,7 +232,15 @@ function checkbox_logloglength_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_logloglength
-
+if get(hObject, 'Value')
+    set(handles.checkbox_censor, 'Enable', 'on') ; 
+    set(handles.checkbox_mle, 'Enable', 'on') ; 
+else    
+    set(handles.checkbox_censor, 'Enable', 'off') ; 
+    set(handles.checkbox_mle, 'Enable', 'off') ; 
+    set(handles.checkbox_censor, 'Value', 0) ; 
+    set(handles.checkbox_mle, 'Value', 0) ; 
+end ; 
 
 % --- Executes on button press in checkbox_mle.
 function checkbox_mle_Callback(hObject, eventdata, handles)
@@ -254,9 +277,13 @@ function checkbox_rose_Callback(hObject, eventdata, handles)
 if get(hObject, 'Value')
     set(handles.text_rosebins, 'Enable', 'on') ; 
     set(handles.popupmenu_rosebins, 'Enable', 'on') ; 
+    set(handles.edit_degfromnorth, 'Enable', 'on') ; 
+    set(handles.label_degfromnorth, 'Enable', 'on') ; 
 else 
     set(handles.text_rosebins, 'Enable', 'off') ; 
     set(handles.popupmenu_rosebins, 'Enable', 'off') ; 
+    set(handles.edit_degfromnorth, 'Enable', 'off') ; 
+    set(handles.label_degfromnorth, 'Enable', 'off') ; 
 end ; 
 
 
@@ -542,7 +569,7 @@ handles.axes_tracemap.YDir = 'normal' ;
 
 %   for Linux and Mac users, offer access to *.svg input files 
 if isunix
-    sFileTypes = {'*.svg'; '*.txt'; '*.jpeg'; '*.jpg'; '*.tiff'; '*.tif'} ; 
+    sFileTypes = {'*.txt'; '*.svg'; '*.jpeg'; '*.jpg'; '*.tiff'; '*.tif'} ; 
 else
     sFileTypes = {'*.txt'; '*.jpeg'; '*.jpg'; '*.tiff'; '*.tif'} ; 
 end ; 
@@ -659,17 +686,21 @@ if ~flagError
     end ; 
     
     if get(handles.radiobutton_image, 'Value') 
+        
         nHoughPeaks = str2double(get(handles.edit_houghpeaks, 'String')) ;
         dHoughThreshold = str2double(get(handles.edit_houghthreshold, 'String')) ;
         dfillgap = str2double(get(handles.edit_fillgap, 'String')) ;
         dminlength = str2double(get(handles.edit_minlength, 'String')) ;
 
-        set(handles.text_message, 'String', 'Running Hough transform on image...') ;                                 
+        set(handles.text_message, 'String', 'Running Hough transform on image...') ;  
+
         [ handles.traces, handles.xmin, handles.ymin, handles.xmax, handles.ymax ] = guiFracPaQ2Dimage(sFilename, nPixels, ...
-                                                            nHoughPeaks, dHoughThreshold, dfillgap, dminlength) ; 
+                                                            nHoughPeaks, dHoughThreshold, dfillgap, dminlength, handles.axes_tracemap) ; 
     else
         set(handles.text_message, 'String', 'Reading node file...') ;                                 
-        [ handles.traces, handles.xmin, handles.ymin, handles.xmax, handles.ymax ] = guiFracPaQ2Dlist(sFilename, nPixels) ; 
+        
+        [ handles.traces, handles.xmin, handles.ymin, handles.xmax, handles.ymax ] = guiFracPaQ2Dlist(sFilename, nPixels, handles.axes_tracemap) ; 
+        
     end ; 
     
     set(handles.text_message, 'String', 'Collecting fracture trace data...') ;     
@@ -734,8 +765,8 @@ if isnan(str2double(sValue)) || str2double(sValue) <= 0.0
 end ; 
 
 sValue = get(handles.edit_lambda, 'String') ; 
-if isnan(str2double(sValue)) || str2double(sValue) <= 0.08333 || str2double(sValue) > 1.0
-    hError = errordlg('Lamda factor must be a number, >= 1/12, <= 1.0', 'Input error', 'modal') ; 
+if isnan(str2double(sValue)) || str2double(sValue) < 0.0 || str2double(sValue) > 1.0
+    hError = errordlg('Lamda factor must be a number, >= 0, <= 1.0', 'Input error', 'modal') ; 
     uicontrol(handles.edit_lambda) ; 
     flagError = true ; 
     return ; 
@@ -757,11 +788,13 @@ if ~flagError
         else
             nPixels = str2double(get(handles.edit_scaling, 'String')) ; 
         end ; 
+        
         if strcmp(handles.axes_tracemap.YDir, 'reverse')
             flag_reverse = true ; 
         else
             flag_reverse = false ; 
         end ;
+        
         nNorth = str2double(get(handles.edit_degfromnorth, 'String')) ;
         nAperture = str2double(get(handles.edit_aperture, 'String')) ;
         nLambda = str2double(get(handles.edit_lambda, 'String')) ;
@@ -823,7 +856,7 @@ if ~flagError
             guiFracPaQ2Dtensor(traces, xmin, ymin, xmax, ymax, nAperture, nLambda, flag_reverse) ; 
         end ; 
 
-        set(handles.text_message, 'String', 'All done. Check current folder for plot figure .jpeg files.') ;   
+        set(handles.text_message, 'String', 'All done. Check current folder for plot figure .tif files.') ;   
         
         uicontrol(handles.pushbutton_run) ; 
 
@@ -944,5 +977,9 @@ function pushbutton_flipy_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_flipy (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.axes_tracemap.YDir = 'reverse' ; 
+if strcmp(handles.axes_tracemap.YDir, 'reverse')
+    handles.axes_tracemap.YDir = 'normal' ;
+else
+    handles.axes_tracemap.YDir = 'reverse' ;
+end ;     
 set(handles.text_message, 'String', 'Y-axis flipped.') ;   

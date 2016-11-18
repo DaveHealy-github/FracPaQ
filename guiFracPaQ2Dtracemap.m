@@ -39,7 +39,7 @@ hold on ;
 
 for k = 1:nTraces
     
-    plot( [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 1, 'Color', 'blue') ;
+    plot( [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 0.75, 'Color', 'blue') ;
 
    
 end ; 
@@ -53,6 +53,9 @@ if flag_shownodes
             %   plot segment end points
             plot(traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point1(2), 'ok', 'MarkerSize', 4) ; 
             plot(traces(k).Segment(l).Point2(1), traces(k).Segment(l).Point2(2), 'ok', 'MarkerSize', 4) ; 
+            
+            %   plot segment mid points 
+            plot(traces(k).Segment(l).midpointX, traces(k).Segment(l).midpointY, 'sr') ;  
 
         end ; 
 
@@ -78,10 +81,9 @@ else
     xlabel('X, pixels') ; 
     ylabel('Y, pixels') ; 
 end ; 
-title(['Mapped traces (n=', num2str(nTraces), ...
+title({['Mapped traces (n=', num2str(nTraces), ...
        '), segments (n=', num2str(nSegments), ...
-       ') & nodes (n=', num2str(nNodes), ')']) ; 
-colormap(hot) ; 
+       ') & nodes (n=', num2str(nNodes), ')'];''}) ; 
 
 %   save to file 
 guiPrint(f, 'FracPaQ2D_tracemap') ; 

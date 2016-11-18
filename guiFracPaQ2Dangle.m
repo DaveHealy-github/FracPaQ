@@ -46,6 +46,11 @@ for i = 1:max(size(traceAngles2))
 end ; 
 if flag_reverse 
     traceAngles2 = 180 - traceAngles2 ; 
+    for i = 1:max(size(traceAngles2))
+        if traceAngles2(i) < 0 
+            traceAngles2(i) = traceAngles2(i) + 360 ; 
+        end ;
+    end ; 
 end ; 
 
 %   write the trace angles to a text file for EZ-ROSE plotting
@@ -67,7 +72,7 @@ if flag_roseangle
     set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
     roseEqualArea(traceAngles2, nRoseBins, 0) ; 
-    title(['Trace segment angles (area weighted), n=', num2str(length(traceLengths))]) ; 
+    title({['Trace segment angles (area weighted), n=', num2str(length(traceLengths))];''}) ; 
 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_roseangle') ; 
@@ -92,7 +97,7 @@ if flag_histoangle
     axis on square ; 
     box on ; 
     grid on ; 
-    title(['Trace segment angles, n=', num2str(length(traceLengths))]) ; 
+    title({['Trace segment angles, n=', num2str(length(traceLengths))];''}) ; 
 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_histoangle') ; 
