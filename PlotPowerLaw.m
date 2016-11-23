@@ -63,7 +63,3 @@ title('Power Law Distribution MLE');
 legend('Observed Data','Estimated Data');
 ylabel ('Pr(l \geq l)');
 xlabel ('Length, units');
-
-
-%   save to file 
-%print(f, '-djpeg', '-r300', 'FracPaQ2Dlengths_FittingPowerLaw.jpeg') ;

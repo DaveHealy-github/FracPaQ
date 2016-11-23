@@ -1,4 +1,4 @@
-function [ traces, xMin, yMin, xMax, yMax ] = guiFracPaQ2Dlist(fnList, numPixelsPerMetre)
+function [ traces, xMin, yMin, xMax, yMax ] = guiFracPaQ2Dlist(fnList, numPixelsPerMetre, ax)
 %   guiFracPaQ2Dlist.m 
 %       returns traces from supplied file of end points  
 %       
@@ -30,6 +30,8 @@ function [ traces, xMin, yMin, xMax, yMax ] = guiFracPaQ2Dlist(fnList, numPixels
 % DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+hWait = waitbar(0.5, 'Reading node file...', 'Name', 'Preview') ; 
 
 [ listPoints, result ] = readtext(fnList, '\t', '', '', 'numeric') ; 
 
@@ -102,21 +104,12 @@ end ;
 
 nSegments = sum([traces(:).nSegments]) ; 
 nNodes = sum([traces(:).nNodes]) ; 
-
-% scrsz = get(0,'ScreenSize') ;
-% figure('OuterPosition',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]) ; 
-% figure ; 
-% set(gcf, 'PaperPositionMode', 'manual') ; 
-% set(gcf, 'PaperUnits', 'inches') ; 
-% set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
+close(hWait) ;
 
 hold on ; 
 for k = 1:nTraces
     
-%     disp([ traces(k).Node.x ]') ; 
-%     disp([ traces(k).Node.y ]') ; 
-    
-    plot( [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 1, 'Color', 'blue') ;
+    plot(ax, [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 0.75, 'Color', 'blue') ;
 
     node1index = 1 ; 
     
@@ -140,6 +133,8 @@ for k = 1:nTraces
 
         traces(k).Segment(l).startLength = sum(traces(k).segmentLength(1:l-1)) ;
         traces(k).Segment(l).endLength = sum(traces(k).segmentLength(1:l)) ;
+        traces(k).Segment(l).midpointX = point1X + ( point2X - point1X ) / 2 ; 
+        traces(k).Segment(l).midpointY = point1Y + ( point2Y - point1Y ) / 2 ; 
         
         %   plot segment end points
 %         plot(traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point1(2), 'ok', 'MarkerSize', 4) ; 
@@ -202,23 +197,12 @@ for k = 1:nTraces
                 end ; 
             end ; 
 
-%             disp(['Trace: ', num2str(k)]) ; 
-%             disp(traces(k).totalLength) ; 
-%             disp(traces(k).Segment(m).startLength) ; 
-%             disp(midl) ; 
-%             disp(theta) ;
-%             disp(deltaX) ; 
-%             disp(deltaY) ; 
-            
             break ;
             
         end ; 
             
     end ; 
     
-    %   plot trace mid points 
-%     plot(traces(k).midpointX, traces(k).midpointY, 'or') ;  
-   
 end ; 
 hold off ; 
 axis on equal ; 
@@ -231,8 +215,4 @@ if numPixelsPerMetre > 0
 else
     xlabel('X, pixels') ; 
     ylabel('Y, pixels') ; 
-end ; 
-% title(['Mapped traces (n=', num2str(nTraces), ...
-%        '), segments (n=', num2str(nSegments), ...
-%        ') & nodes (n=', num2str(nNodes), ')']) ; 
-colormap(hot) ; 
+end ;

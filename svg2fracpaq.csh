@@ -3,29 +3,43 @@
 # Shell script to convert a scalable vector graphics file into a text file
 # suitable for input into Dave Healy's FracPaQ software
 #
+##### SVG file example ####
+# <?xml version="1.0" encoding="utf-8"?>
+# <!-- Generator: Adobe Illustrator 14.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 43363)  -->
+# <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+# <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+#          width="595.28px" height="841.89px" viewBox="0 0 595.28 841.89" enable-background="new 0 0 595.28 841.89" xml:space="preserve">
+# <path fill="#DD4B26" stroke="#ED1C24" stroke-miterlimit="10" d="M98.571,410.374"/>
+# <line fill="none" stroke="#ED1C24" stroke-miterlimit="10" x1="98.571" y1="410.374" x2="297.64" y2="273.64"/>
+# <line fill="none" stroke="#ED1C24" stroke-miterlimit="10" x1="321.701" y1="350.51" x2="444.15" y2="223.979"/>
+# <line fill="none" stroke="#ED1C24" stroke-miterlimit="10" x1="187.687" y1="236.905" x2="338.028" y2="168.877"/>
+# <line fill="none" stroke="#ED1C24" stroke-miterlimit="10" x1="321.701" y1="260.034" x2="420.34" y2="116.497"/>
+#
 # On any Linux PC or Mac, copy this file then make executable by typing:
 # chmod a+x svg2fracpaq.csh at the command prompt
 #
-# then place the SVG file in the same folder as svg2fracpaq.csh, change the filenames
-# (infile and outfile) below and then type ./svg2fracpaq.csh at the command prompt
-# and hit enter.
+# then place the SVG file in the same folder as svg2fracpaq.csh and then type the following at the command prompt
+# 
+# svg2fracpaq.csh <infile.svg> 
+#
+# and hit Enter.
 # 
 # Written and updated by: D. Cornwell
 # Date: 12/9/14, 20-30/11/15, 15-20/2/16
+# 18/11/16 - final update before release, commas & tabs
 #####################################################################################
-############### CHANGE THE FILENAMES BELOW ##########################################
 
-set infile = 'ThinSection_H12Z.svg'
-set outfile = 'ThinSection_H12Z.txt'
-
-#set infile = $1
-#set outfile = $2
+set infile = $1
 
 ############### NO CHANGES BELOW THIS LINE ##########################################
 # remove any old files
 #\rm lines* polylines.* remainder.* lineinfo* all.out all_sorted.out all_sorted_no_num.out nearly_there.out
 
-#echo "SVG file: "$infile" has been chosen"
+echo "SVG file: "$infile" has been chosen"
+
+set outfile = $1.csv
+set outfile2 = $1.txt
+
 # Create a new file with just the lines from the .svg with the string "line" in them
 #grep 'line' $infile >! lineinfo
 awk '/^.*line/,/>/' $infile >! lineinfo
@@ -123,8 +137,11 @@ sed 's/ /,/g' nearly_there.out | sed 's/,$//' >! nearly_there2.out
 #--- DELETE ANY REMAINING BLANK LINES ---#
 awk 'NF' nearly_there2.out >! $outfile
 
+#--- CHANGE COMMAS TO TABS, SAVE AS .CSV & .TXT ---#
+tr ',' '\t' < $outfile > $outfile2
+
 #--- REPORT FILE CREATION ---#
-echo "FracPaQ file: "$outfile" has been created"
+echo "FracPaQ files "$outfile" and "$outfile2" have been created"
 
 #--- CLEAN UP TEMPORARY FILES ---#
 \rm lines* polylines.* polylines2.* spolylines.* remainder.* lineinfo* all.out all_sorted.out all_sorted_no_num.out nearly_*.out

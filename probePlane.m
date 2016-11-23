@@ -34,17 +34,17 @@ function [ m, m_ij, mq ] = probePlane(x, xMin, yMin, xMax, yMax, traces, nq)
 
 %   run scan traces over the image, centred on the image mid point
 %   at nq different angles 
-xMid = floor((xMax-xMin)/2) ; 
-yMid = floor((yMax-yMin)/2) ; 
+xMid = (xMax-xMin)/2 ; 
+yMid = (yMax-yMin)/2 ; 
 nLines = 1 ; 
 if nLines == 1 
 %     disp(' ') ; 
 %     disp('*** Using radial scanlines...') ; 
-    lenScanline = 0.9 * min(xMax-xMin, yMax-yMin) ; 
+    lenScanline = 0.95 * min(xMax-xMin, yMax-yMin) ; 
 else       
 %     disp(' ') ; 
 %     disp('*** Using parallel scanlines...') ; 
-    lenScanline = 0.9 * sqrt((xMax-xMin)^2 + (yMax-yMin)^2) ; 
+    lenScanline = 0.95 * sqrt((xMax-xMin)^2 + (yMax-yMin)^2) ; 
 end ; 
 d = lenScanline / nLines ; 
 id = -10:1:10 ; 
@@ -52,8 +52,6 @@ id = id' ;
 mq = zeros(nq, 1) ; 
 mq_new = zeros(nq, 1) ; 
 
-% subplot(1,3,x) ; 
-% hold on ; 
 traces = traces(~any(isnan(traces),2),:) ; 
 
 %   X2 (Y) plane - ref line is x3 (Z)
@@ -85,7 +83,7 @@ if x == 2
         end ; 
 
         %   find which traces intersected by scan line - their angles and lengths  
-        scanXY = [ round(x1Scan), round(y1Scan), round(x2Scan), round(y2Scan) ] ; 
+        scanXY = [ x1Scan, y1Scan, x2Scan, y2Scan ] ; 
 
         intersectionScan = lineSegmentIntersect(scanXY, traces) ; 
 
@@ -97,14 +95,6 @@ if x == 2
 %         disp(['Count of intersections = ', num2str(numIntersections)]) ;
 %         disp(['Normalised count of intersections = ', num2str(mq(a))]) ;
 
-%         if a == 1 
-%             plot([x1Scan'; x2Scan'], [y1Scan'; y2Scan'], '-r', 'LineWidth', 1) ; 
-%         elseif a == nq 
-%             plot([x1Scan'; x2Scan'], [y1Scan'; y2Scan'], '-b', 'LineWidth', 1) ; 
-%         else 
-%             plot([x1Scan'; x2Scan'], [y1Scan'; y2Scan'], '-k') ; 
-%         end ; 
-        
     end ; 
     
     %   ?re-order mq?
@@ -158,22 +148,9 @@ else
 %         disp(['Count of intersections = ', num2str(numIntersections)]) ;
 %         disp(['Normalised count of intersections = ', num2str(mq(a))]) ;
 
-%         if a == 1 
-%             plot([x1Scan'; x2Scan'], [y1Scan'; y2Scan'], '-r', 'LineWidth', 1) ; 
-%         elseif a == nq 
-%             plot([x1Scan'; x2Scan'], [y1Scan'; y2Scan'], '-b', 'LineWidth', 1) ; 
-%         else 
-%             plot([x1Scan'; x2Scan'], [y1Scan'; y2Scan'], '-k') ; 
-%         end ; 
-        
     end ; 
     
 end ; 
-% hold off ; 
-% axis equal on ; 
-% box on ; 
-% xlim([0 xMax]) ; 
-% ylim([0 yMax]) ; 
 
 m = 2 * pi * sum(mq) / nq ;
 

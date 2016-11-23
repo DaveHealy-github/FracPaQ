@@ -147,7 +147,7 @@ if flag_histolength
     %   histogram of trace lengths 
     % subplot(2, 2, 2) ; 
     [ nTraceLengths, binTraceLengths ] = hist(traceLengths, ...
-                                minTraceLength:floor((maxTraceLength-minTraceLength))/nBins:maxTraceLength) ; 
+                                minTraceLength:(maxTraceLength-minTraceLength)/nBins:maxTraceLength) ; 
 
     hold on ; 
     bar(binTraceLengths, (nTraceLengths/sum(nTraceLengths))*100, 1, 'FaceColor', 'b') ;
@@ -166,7 +166,7 @@ if flag_histolength
     axis on square ; 
     box on ; 
     grid on ; 
-    title(['Trace lengths, n=', num2str(length(traceLengths))]) ; 
+    title({['Trace lengths, n=', num2str(length(traceLengths))];''}) ; 
 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_histotracelength') ; 
@@ -179,7 +179,7 @@ if flag_histolength
     %   histogram of segment lengths 
     % subplot(2, 2, 2) ; 
     [ nSegmentLengths, binSegmentLengths ] = hist(traceSegmentLengths, ...
-                                minSegmentLength:floor((maxSegmentLength-minSegmentLength))/nBins:maxSegmentLength) ; 
+                                minSegmentLength:(maxSegmentLength-minSegmentLength)/nBins:maxSegmentLength) ; 
 
     hold on ; 
     bar(binSegmentLengths, (nSegmentLengths/sum(nSegmentLengths))*100, 1, 'FaceColor', 'b') ;
@@ -198,7 +198,7 @@ if flag_histolength
     axis on square ; 
     box on ; 
     grid on ; 
-    title(['Segment lengths, n=', num2str(length(traceSegmentLengths))]) ; 
+    title({['Segment lengths, n=', num2str(length(traceSegmentLengths))];''}) ; 
 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_histosegmentlength') ; 
@@ -242,7 +242,7 @@ if flag_logloglength
     axis on square ; 
     box on ; 
     grid on ; 
-    title(['Trace lengths, n=', num2str(length(traceLengths))]) ; 
+    title({['Trace lengths, n=', num2str(length(traceLengths))];''}) ; 
 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_loglogplottracelength') ; 
@@ -281,7 +281,7 @@ if flag_logloglength
     axis on square ; 
     box on ; 
     grid on ; 
-    title(['Segment lengths, n=', num2str(length(traceSegmentLengths))]) ; 
+    title({['Segment lengths, n=', num2str(length(traceSegmentLengths))];''}) ; 
 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_loglogplotsegmentlength') ; 
@@ -313,7 +313,7 @@ if flag_crossplot
     axis on square ; 
     box on ; 
     grid on ; 
-    title(['Trace segment lengths versus angles, n=', num2str(length(traceSegmentLengths))]) ; 
+    title({['Trace segment lengths versus angles, n=', num2str(length(traceSegmentLengths))];''}) ; 
 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_crossplotsegmentlengthangle') ; 
@@ -336,22 +336,37 @@ if flag_mle
     disp('MLE for trace lengths...') ; 
     % Power Law Statistics
     [alpha,xmin,z,HpercentPL,PpercentPL]=fittingPL(x,uc,lc);
+    if nPixelsPerMetre > 0 
+        xlabel('Length, metres') ; 
+    else 
+        xlabel('Length, pixels') ;
+    end ; 
     t = get(gca, 'Title') ; 
-    title([t.String, ', trace lengths']) ; 
+    title({[t.String, ', trace lengths'];''}) ; 
     %   save to file 
     guiPrint(gcf, 'FracPaQ2D_tracelengthsFittingPowerLaw') ;
     
     % Exponential Statistics
     [lambda,xmin2,z2,Hpercentexp,Ppercentexp]=fittingExponential(x,uc,lc);
+    if nPixelsPerMetre > 0 
+        xlabel('Length, metres') ; 
+    else 
+        xlabel('Length, pixels') ;
+    end ; 
     t = get(gca, 'Title') ; 
-    title([t.String, ', trace lengths']) ; 
+    title({[t.String, ', trace lengths'];''}) ; 
     %   save to file 
     guiPrint(gcf, 'FracPaQ2D_tracelengthsFittingExponential') ; 
     
     % Log-Normal Statistics
     [mu,sigma,xmin3,z4,HpercentLN,PpercentLN]=fittingLognormal(x,uc,lc);
+    if nPixelsPerMetre > 0 
+        xlabel('Length, metres') ; 
+    else 
+        xlabel('Length, pixels') ;
+    end ; 
     t = get(gca, 'Title') ; 
-    title([t.String, ', trace lengths']) ; 
+    title({[t.String, ', trace lengths'];''}) ; 
     %   save to file 
     guiPrint(gcf, 'FracPaQ2D_tracelengthsFittingLogNormal') ;
     
@@ -368,22 +383,37 @@ if flag_mle
     disp('MLE for segment lengths...') ; 
     % Power Law Statistics
     [alpha,xmin,z,HpercentPL,PpercentPL]=fittingPL(x,uc,lc);
+    if nPixelsPerMetre > 0 
+        xlabel('Length, metres') ; 
+    else 
+        xlabel('Length, pixels') ;
+    end ; 
     t = get(gca, 'Title') ; 
-    title([t.String, ', segment lengths']) ; 
+    title({[t.String, ', segment lengths'];''}) ; 
     %   save to file 
     guiPrint(gcf, 'FracPaQ2D_segmentlengthsFittingPowerLaw') ;
 
     % Exponential Statistics
     [lambda,xmin2,z2,Hpercentexp,Ppercentexp]=fittingExponential(x,uc,lc);
+    if nPixelsPerMetre > 0 
+        xlabel('Length, metres') ; 
+    else 
+        xlabel('Length, pixels') ;
+    end ; 
     t = get(gca, 'Title') ; 
-    title([t.String, ', segment lengths']) ; 
+    title({[t.String, ', segment lengths'];''}) ; 
     %   save to file 
     guiPrint(gcf, 'FracPaQ2D_segmentlengthsFittingExponential') ; 
 
     % Log-Normal Statistics
     [mu,sigma,xmin3,z4,HpercentLN,PpercentLN]=fittingLognormal(x,uc,lc);
+    if nPixelsPerMetre > 0 
+        xlabel('Length, metres') ; 
+    else 
+        xlabel('Length, pixels') ;
+    end ; 
     t = get(gca, 'Title') ; 
-    title([t.String, ', segment lengths']) ; 
+    title({[t.String, ', segment lengths'];''}) ; 
     %   save to file 
     guiPrint(gcf, 'FracPaQ2D_segmentlengthsFittingLogNormal') ;
 

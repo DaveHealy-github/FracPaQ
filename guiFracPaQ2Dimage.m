@@ -1,4 +1,4 @@
-function [ traces, xMin, yMin, xMax, yMax ] = guiFracPaQ2Dimage(sFile, numPixelsPerMetre, nPeaks, dThreshold, dGap, dMin)
+function [ traces, xMin, yMin, xMax, yMax ] = guiFracPaQ2Dimage(sFile, numPixelsPerMetre, nPeaks, dThreshold, dGap, dMin, ax)
 %   guiFracPaQ2Dimage.m 
 %       extracts lines (traces) from supplied binary image file 
 %       
@@ -25,6 +25,8 @@ function [ traces, xMin, yMin, xMax, yMax ] = guiFracPaQ2Dimage(sFile, numPixels
 % DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+hWait = waitbar(0.5, 'Reading image file...', 'Name', 'Preview') ; 
 
 Iin = imread(sFile) ; 
 
@@ -84,7 +86,7 @@ for k = 1:length(lines)
        angles(k) = angles(k) + 180 ; 
    end ; 
    
-   plot( xy(:, 1), xy(:, 2), 'LineWidth', 1, 'Color', 'blue') ;
+   plot(ax, xy(:, 1), xy(:, 2), 'LineWidth', 0.75, 'Color', 'blue') ;
 
    %    plot beginnings and ends of lines
    %plot( xy(1, 1), xy(1, 2), '-', 'LineWidth', 1, 'Color', 'yellow') ;
@@ -162,64 +164,21 @@ for k = 1:length(lines)
                 end ; 
             end ; 
 
-%             disp(['Trace: ', num2str(k)]) ; 
-%             disp(traces(k).totalLength) ; 
-%             disp(traces(k).Segment(m).startLength) ; 
-%             disp(midl) ; 
-%             disp(theta) ;
-%             disp(deltaX) ; 
-%             disp(deltaY) ; 
-            
             break ;
             
         end ; 
             
     end ; 
     
-    %   plot trace mid points 
-    %   plot(traces(k).midpointX, traces(k).midpointY, 'or') ;  
-   
 end ; 
 hold off ; 
-set(gca,'YDir','normal') ; 
+set(ax,'YDir','normal') ; 
 xlim([xMin xMax]) ; 
 ylim([yMin yMax]) ; 
 xlabel('X, pixels') ; 
 ylabel('Y, pixels') ; 
-% title(['Mapped traces, n=', num2str(length(lengths))]) ; 
-%colormap(hot) ; 
 
-% scrsz = get(0,'ScreenSize') ;
-% figure('OuterPosition',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]) ; 
-% set(gcf, 'PaperPositionMode', 'manual') ; 
-% set(gcf, 'PaperUnits', 'inches') ; 
-% set(gcf, 'PaperPosition', [ 0.25 0.25 12 6 ]) ; 
-% 
-% subplot(2, 1, 1) ; 
-% imshow(Iin) ; 
-% title('Binary image') ; 
-% axis on equal ; 
-% box on ; 
-% set(gca,'YDir','normal') ; 
-% xlim([0 xMax]) ; 
-% ylim([0 yMax]) ; 
-% xlabel('X, pixels') ; 
-% ylabel('Y, pixels') ; 
-% 
-% subplot(2, 1, 2) ; 
-% imshow(imadjust(mat2gray(H)), [], ...
-%         'XData', theta, 'YData', rho, ...
-%         'InitialMagnification', 'fit') ; 
-% hold on ; 
-% plot(x, y, 's', 'color', 'black') ;
-% hold off ; 
-% xlabel('\theta, degrees') ; 
-% ylabel('\rho, pixels') ;
-% title('Hough transform') ; 
-% axis on square ; 
-% 
-% %   save to file 
-% print('-djpeg', '-r300', 'FracPaQ2Dimage.jpeg') ; 
+close(hWait) ; 
 
 %   show 3D surface of H to visualise peaks - helps selection of threshold 
 scrsz = get(0,'ScreenSize') ;
