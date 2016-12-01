@@ -171,6 +171,8 @@ for k = 1:length(lines)
     
 end ; 
 hold off ; 
+axis on equal ; 
+box on ; 
 set(ax,'YDir','normal') ; 
 xlim([xMin xMax]) ; 
 ylim([yMin yMax]) ; 
