@@ -66,10 +66,8 @@ disp(['houghLines() with FillGap = ', num2str(dGap), ...
         ', MinLength = ', num2str(dMin)]) ; 
 lines = houghlines(BW, theta, rho, P, 'FillGap', dGap, 'MinLength', dMin) ;
 
-% subplot(2, 2, 4) ; 
-%imshow(Iin) ; 
-axis on equal ; 
-box on ; 
+close(hWait) ; 
+
 hold on ; 
 maxLength = 0 ;
 lengths = zeros(length(lines), 1) ; 
@@ -86,8 +84,6 @@ for k = 1:length(lines)
        angles(k) = angles(k) + 180 ; 
    end ; 
    
-   plot(ax, xy(:, 1), xy(:, 2), 'LineWidth', 0.75, 'Color', 'blue') ;
-
    %    plot beginnings and ends of lines
    %plot( xy(1, 1), xy(1, 2), '-', 'LineWidth', 1, 'Color', 'yellow') ;
    %plot( xy(2, 1), xy(2, 2), '-', 'LineWidth', 1, 'Color', 'red') ;
@@ -107,6 +103,9 @@ for k = 1:length(lines)
    traces(k).Node(2).x = lines(k).point2(1) ; 
    traces(k).Node(2).y = lines(k).point2(2) ; 
    
+%    plot(ax, xy(:, 1), xy(:, 2), 'LineWidth', 0.75, 'Color', 'blue') ;
+   plot(ax, [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 0.75, 'Color', 'blue') ;
+
    traces(k).segmentLength(1) = lengths(k) ; 
    traces(k).segmentAngle(1) = angles(k) ; 
    traces(k).nSegments = 1 ;  
@@ -172,13 +171,13 @@ for k = 1:length(lines)
     
 end ; 
 hold off ; 
+axis on equal ; 
+box on ; 
 set(ax,'YDir','normal') ; 
 xlim([xMin xMax]) ; 
 ylim([yMin yMax]) ; 
 xlabel('X, pixels') ; 
 ylabel('Y, pixels') ; 
-
-close(hWait) ; 
 
 %   show 3D surface of H to visualise peaks - helps selection of threshold 
 scrsz = get(0,'ScreenSize') ;
@@ -285,3 +284,4 @@ colormap(hot) ;
 
 %   save to file 
 %print(f, '-djpeg', '-r300', 'FracPaQ2Dhough.jpeg') ; 
+guiPrint(f, 'FracPaQ2D_Hough') ;

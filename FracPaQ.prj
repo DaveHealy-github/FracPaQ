@@ -1,0 +1,141 @@
+<deployment-project plugin="plugin.ezdeploy" plugin-version="1.0">
+  <configuration file="/Users/gmi522/Dropbox/FracPaQ/version 1.6a/github - 18Nov2016/FracPaQ.prj" location="/Users/gmi522/Dropbox/FracPaQ/version 1.6a/github - 18Nov2016" name="FracPaQ" target="target.ezdeploy.standalone" target-name="Application Compiler">
+    <param.appname>FracPaQ</param.appname>
+    <param.icon />
+    <param.icons />
+    <param.version>1.6</param.version>
+    <param.authnamewatermark>Dave Healy</param.authnamewatermark>
+    <param.email>d.healy@abdn.ac.uk</param.email>
+    <param.company />
+    <param.summary>FracPaQ is an open source toolbox for the quantification of fracture patterns in rocks and other materials</param.summary>
+    <param.description />
+    <param.screenshot>${PROJECT_ROOT}/FracPaQicon.jpeg</param.screenshot>
+    <param.guid />
+    <param.installpath.string>/FracPaQ/</param.installpath.string>
+    <param.installpath.combo>option.installpath.systemwideapp</param.installpath.combo>
+    <param.logo />
+    <param.install.notes>In the following directions, replace MCR_ROOT by the directory where the MATLAB Runtime is installed on the target machine.
+
+If the environment variable DYLD_LIBRARY_PATH is undefined, set it to the concatenation of the following strings:
+
+    MCR_ROOT/v901/runtime/maci64:
+    MCR_ROOT/v901/sys/os/maci64:
+    MCR_ROOT/v901/bin/maci64
+
+If it is defined, set it to the concatenation of these strings:
+
+    ${LD_LIBRARY_PATH}: 
+    MCR_ROOT/v901/runtime/maci64:
+    MCR_ROOT/v901/sys/os/maci64:
+    MCR_ROOT/v901/bin/maci64</param.install.notes>
+    <param.target.install.notes />
+    <param.intermediate>${PROJECT_ROOT}/FracPaQ/for_testing</param.intermediate>
+    <param.files.only>${PROJECT_ROOT}/FracPaQ/for_redistribution_files_only</param.files.only>
+    <param.output>${PROJECT_ROOT}/FracPaQ/for_redistribution</param.output>
+    <param.logdir>${PROJECT_ROOT}/FracPaQ</param.logdir>
+    <param.enable.clean.build>false</param.enable.clean.build>
+    <param.user.defined.mcr.options />
+    <param.embed.ctf>true</param.embed.ctf>
+    <param.target.type>subtarget.standalone</param.target.type>
+    <param.support.packages />
+    <param.web.mcr>true</param.web.mcr>
+    <param.package.mcr>false</param.package.mcr>
+    <param.no.mcr>false</param.no.mcr>
+    <param.web.mcr.name>MyAppInstaller_web</param.web.mcr.name>
+    <param.package.mcr.name>MyAppInstaller_mcr</param.package.mcr.name>
+    <param.no.mcr.name>MyAppInstaller_app</param.no.mcr.name>
+    <param.windows.command.prompt>false</param.windows.command.prompt>
+    <param.create.log>false</param.create.log>
+    <param.log.file />
+    <unset>
+      <param.icon />
+      <param.icons />
+      <param.company />
+      <param.description />
+      <param.guid />
+      <param.installpath.string />
+      <param.installpath.combo />
+      <param.logo />
+      <param.target.install.notes />
+      <param.intermediate />
+      <param.files.only />
+      <param.output />
+      <param.logdir />
+      <param.enable.clean.build />
+      <param.user.defined.mcr.options />
+      <param.embed.ctf />
+      <param.target.type />
+      <param.support.packages />
+      <param.web.mcr />
+      <param.package.mcr />
+      <param.no.mcr />
+      <param.web.mcr.name />
+      <param.package.mcr.name />
+      <param.no.mcr.name />
+      <param.windows.command.prompt />
+      <param.create.log />
+      <param.log.file />
+    </unset>
+    <fileset.main>
+      <file>${PROJECT_ROOT}/guiFracPaQ2D.m</file>
+    </fileset.main>
+    <fileset.resources>
+      <file>${PROJECT_ROOT}/FracPaQ User Guide.pdf</file>
+      <file>${PROJECT_ROOT}/FracPaQicon.jpeg</file>
+      <file>${PROJECT_ROOT}/FracPaQlogo.jpeg</file>
+    </fileset.resources>
+    <fileset.package />
+    <fileset.depfun>
+      <file>${PROJECT_ROOT}/KStestLogNorm.m</file>
+      <file>${PROJECT_ROOT}/KStestPower.m</file>
+      <file>${PROJECT_ROOT}/KStestexp.m</file>
+      <file>${PROJECT_ROOT}/PlotExp.m</file>
+      <file>${PROJECT_ROOT}/PlotLogNorm.m</file>
+      <file>${PROJECT_ROOT}/PlotPowerLaw.m</file>
+      <file>${PROJECT_ROOT}/fittingExponential.m</file>
+      <file>${PROJECT_ROOT}/fittingLognormal.m</file>
+      <file>${PROJECT_ROOT}/fittingPL.m</file>
+      <file>${PROJECT_ROOT}/getConnectivity.m</file>
+      <file>${PROJECT_ROOT}/guiFracPaQ2D.fig</file>
+      <file>${PROJECT_ROOT}/guiFracPaQ2Dangle.m</file>
+      <file>${PROJECT_ROOT}/guiFracPaQ2Dimage.m</file>
+      <file>${PROJECT_ROOT}/guiFracPaQ2Dlength_new.m</file>
+      <file>${PROJECT_ROOT}/guiFracPaQ2Dlist.m</file>
+      <file>${PROJECT_ROOT}/guiFracPaQ2Dpattern.m</file>
+      <file>${PROJECT_ROOT}/guiFracPaQ2Dtensor.m</file>
+      <file>${PROJECT_ROOT}/guiFracPaQ2Dtracemap.m</file>
+      <file>${PROJECT_ROOT}/guiPrint.m</file>
+      <file>${PROJECT_ROOT}/lineSegmentIntersect.m</file>
+      <file>${PROJECT_ROOT}/plotEllipse.m</file>
+      <file>${PROJECT_ROOT}/probePlane.m</file>
+      <file>${PROJECT_ROOT}/readtext.m</file>
+      <file>${PROJECT_ROOT}/roseEqualArea.m</file>
+    </fileset.depfun>
+    <build-deliverables>
+      <file location="${PROJECT_ROOT}/FracPaQ/for_testing" name="run_FracPaQ.sh" optional="false">/Users/gmi522/Dropbox/FracPaQ/version 1.6a/github - 18Nov2016/FracPaQ/for_testing/run_FracPaQ.sh</file>
+      <file location="${PROJECT_ROOT}/FracPaQ/for_testing" name="FracPaQ.app" optional="false">/Users/gmi522/Dropbox/FracPaQ/version 1.6a/github - 18Nov2016/FracPaQ/for_testing/FracPaQ.app</file>
+      <file location="${PROJECT_ROOT}/FracPaQ/for_testing" name="splash.png" optional="false">/Users/gmi522/Dropbox/FracPaQ/version 1.6a/github - 18Nov2016/FracPaQ/for_testing/splash.png</file>
+      <file location="${PROJECT_ROOT}/FracPaQ/for_testing" name="readme.txt" optional="true">/Users/gmi522/Dropbox/FracPaQ/version 1.6a/github - 18Nov2016/FracPaQ/for_testing/readme.txt</file>
+    </build-deliverables>
+    <workflow />
+    <matlab>
+      <root>/Applications/MATLAB_R2016a.app</root>
+      <toolboxes />
+    </matlab>
+    <platform>
+      <unix>true</unix>
+      <mac>true</mac>
+      <windows>false</windows>
+      <win2k>false</win2k>
+      <winxp>false</winxp>
+      <vista>false</vista>
+      <linux>false</linux>
+      <solaris>false</solaris>
+      <osver>10.10.5</osver>
+      <os32>false</os32>
+      <os64>true</os64>
+      <arch>maci64</arch>
+      <matlab>true</matlab>
+    </platform>
+  </configuration>
+</deployment-project>

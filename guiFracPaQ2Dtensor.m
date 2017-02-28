@@ -160,21 +160,21 @@ title({['Permeability in direction of flow, k_1:k_2=', ...
 %   save to file 
 guiPrint(f, 'FracPaQ2D_permtensor_flow') ; 
 
-% %   permeability in the direction of gradient (after Long et al., 1982.
-% %   WRR)
-% ek1 = 1 / sqrt(k1) ; 
-% ek2 = 1 / sqrt(k2) ; 
-% 
-% f = figure ; 
-% set(gcf, 'PaperPositionMode', 'manual') ; 
-% set(gcf, 'PaperUnits', 'inches') ; 
-% set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-% 
-% plotEllipse(ek1, ek2, kazimuth) ; 
-% 
-% title({['Permeability in direction of gradient, k_1:k_2=', ...
-%             num2str(round(kratio), '%i'), ':1, ', ...
-%             'k_1 azimuth=', num2str(round(kazimuth), '%03i')];''}) ; 
-% 
-% %   save to file 
-% guiPrint(f, 'FracPaQ2D_permtensor_gradient') ; 
+%   permeability in the direction of gradient (after Long et al., 1982.
+%   WRR)
+ek1 = 1 / sqrt(k1) ; 
+ek2 = 1 / sqrt(k2) ; 
+
+f = figure ; 
+set(gcf, 'PaperPositionMode', 'manual') ; 
+set(gcf, 'PaperUnits', 'inches') ; 
+set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
+
+plotEllipse(ek1, ek2, kazimuth) ; 
+
+title({['Permeability in direction of gradient, k_1:k_2=', ...
+            num2str(round(kratio), '%i'), ':1, ', ...
+            'k_1 azimuth=', num2str(round(kazimuth), '%03i')];''}) ; 
+
+%   save to file 
+guiPrint(f, 'FracPaQ2D_permtensor_gradient') ; 
