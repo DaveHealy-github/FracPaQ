@@ -63,3 +63,6 @@ title('Power Law Distribution MLE');
 legend('Observed Data','Estimated Data');
 ylabel ('Pr(l \geq l)');
 xlabel ('Length, units');
+dim = [ .2 .025 .3 .3 ] ; 
+str = [ '\alpha = ', num2str(alpha), ', \itx_{min}\rm = ', num2str(xmin) ] ; 
+annotation('textbox', dim, 'String', str, 'FitBoxToText', 'on', 'BackgroundColor', 'w') ; 

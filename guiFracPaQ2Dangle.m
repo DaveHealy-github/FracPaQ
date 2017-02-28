@@ -1,5 +1,5 @@
 function guiFracPaQ2Dangle(traces, northCorrection, xMax, yMax, nHistoBins, nRoseBins, ...
-                flag_histoangle, flag_roseangle, flag_reverse)
+                flag_histoangle, flag_roseangle, flag_revY, flag_revX, flag_cracktensor, flag_roselengthweighted)
 %   guiFracPaQ2Dangle.m 
 %       calculates and plots statistics of trace segment angles  
 %       
@@ -30,11 +30,7 @@ function guiFracPaQ2Dangle(traces, northCorrection, xMax, yMax, nHistoBins, nRos
 numTraces = length(traces) ; 
 
 traceAngles = [ traces.segmentAngle ]' ; 
-
-traceLengths = [ traces.segmentLength ] ; 
-minLength = min(traceLengths) ; 
-maxLength = max(traceLengths) ; 
-maxPossTraceLength = ceil(sqrt(xMax^2 + yMax^2)) ; 
+traceLengths = [ traces.segmentLength ]' ; 
 
 %   double the trace angle data over 360 degrees 
 traceAngles2 = [ round(traceAngles - northCorrection); ...
@@ -44,7 +40,19 @@ for i = 1:max(size(traceAngles2))
         traceAngles2(i) = traceAngles2(i) + 360 ; 
     end ; 
 end ; 
-if flag_reverse 
+%   double the length data too, for length weighting of rose plot 
+traceLengths2 = [ traceLengths ; traceLengths ] ; 
+
+if flag_revX 
+    traceAngles2 = 180 - traceAngles2 ; 
+    for i = 1:max(size(traceAngles2))
+        if traceAngles2(i) < 0 
+            traceAngles2(i) = traceAngles2(i) + 360 ; 
+        end ;
+    end ; 
+end ; 
+
+if flag_revY 
     traceAngles2 = 180 - traceAngles2 ; 
     for i = 1:max(size(traceAngles2))
         if traceAngles2(i) < 0 
@@ -54,13 +62,10 @@ if flag_reverse
 end ; 
 
 %   write the trace angles to a text file for EZ-ROSE plotting
-sorted_traceAngles = sort(traceAngles - northCorrection) ; 
+sorted_traceAngles2 = sort(traceAngles2) ; 
 fidRose = fopen('FracPaQ2DEZROSE.txt', 'wt') ; 
-for i = 1:max(size(traceAngles)) 
-    fprintf(fidRose, '%6.2f\n', sorted_traceAngles(i)) ; 
-end ; 
-for i = 1:max(size(traceAngles)) 
-    fprintf(fidRose, '%6.2f\n', sorted_traceAngles(i)+180 ) ; 
+for i = 1:max(size(traceAngles2)) 
+    fprintf(fidRose, '%6.2f\n', sorted_traceAngles2(i)) ; 
 end ; 
 fclose(fidRose) ; 
 
@@ -71,12 +76,35 @@ if flag_roseangle
     set(gcf, 'PaperUnits', 'inches') ; 
     set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
-    roseEqualArea(traceAngles2, nRoseBins, 0) ; 
-    title({['Trace segment angles (area weighted), n=', num2str(length(traceLengths))];''}) ; 
-
-    %   save to file 
-    guiPrint(f, 'FracPaQ2D_roseangle') ; 
-
+    %   might implement linear scaling later, if demand exists; equal area is better though 
+    flag_equalarea = 1 ;
+    
+    if ~flag_roselengthweighted
+        traceLengths2 = 0 ; 
+    end ; 
+    
+    if flag_equalarea 
+%         rosePlot(traceAngles2, 360/nRoseBins, 1, 1) ; 
+        roseEqualArea(traceAngles2, nRoseBins, 0, traceLengths2) ; 
+        if flag_roselengthweighted 
+            title({['Segment angles (equal area, length weighted), n=', num2str(length(traceLengths))];''}) ; 
+        else
+            title({['Segment angles (equal area), n=', num2str(length(traceLengths))];''}) ; 
+        end ; 
+        %   save to file 
+        guiPrint(f, 'FracPaQ2D_roseangleEqArea') ; 
+    else
+%         rosePlot(traceAngles2, 360/nRoseBins, 1, 0) ; 
+        roseLinear(traceAngles2, nRoseBins, 0, traceLengths2) ; 
+        if flag_roselengthweighted 
+            title({['Segment angles (linear, length weighted), n=', num2str(length(traceLengths))];''}) ; 
+        else
+            title({['Segment angles (linear), n=', num2str(length(traceLengths))];''}) ; 
+        end ; 
+        %   save to file 
+        guiPrint(f, 'FracPaQ2D_roseangleLinear') ; 
+    end ; 
+    
 end ; 
 
 if flag_histoangle 
@@ -102,4 +130,10 @@ if flag_histoangle
     %   save to file 
     guiPrint(f, 'FracPaQ2D_histoangle') ; 
     
+end ; 
+
+if flag_cracktensor 
+    
+    guiFracPaQ2Dcracktensor(traces, northCorrection, xMax, yMax, flag_revY, flag_revX) ; 
+
 end ; 

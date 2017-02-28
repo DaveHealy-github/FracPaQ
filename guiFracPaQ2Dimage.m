@@ -66,6 +66,8 @@ disp(['houghLines() with FillGap = ', num2str(dGap), ...
         ', MinLength = ', num2str(dMin)]) ; 
 lines = houghlines(BW, theta, rho, P, 'FillGap', dGap, 'MinLength', dMin) ;
 
+close(hWait) ; 
+
 % subplot(2, 2, 4) ; 
 %imshow(Iin) ; 
 axis on equal ; 
@@ -177,8 +179,6 @@ xlim([xMin xMax]) ;
 ylim([yMin yMax]) ; 
 xlabel('X, pixels') ; 
 ylabel('Y, pixels') ; 
-
-close(hWait) ; 
 
 %   show 3D surface of H to visualise peaks - helps selection of threshold 
 scrsz = get(0,'ScreenSize') ;
