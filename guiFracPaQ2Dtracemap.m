@@ -1,4 +1,4 @@
-function guiFracPaQ2Dtracemap(traces, nPixelsPerMetre, xMin, yMin, xMax, yMax, flag_shownodes, flag_reverse) 
+function guiFracPaQ2Dtracemap(traces, nPixelsPerMetre, xMin, yMin, xMax, yMax, flag_shownodes, flag_revY, flag_revX) 
 %   guiFracPaQ2Dtracemap.m 
 %       calculates and plots statistics of line trace segment lengths  
 %       
@@ -71,7 +71,10 @@ axis on equal ;
 box on ; 
 xlim([xMin xMax]) ; 
 ylim([yMin yMax]) ; 
-if flag_reverse 
+if flag_revX 
+    set(gca, 'XDir', 'reverse') ; 
+end ; 
+if flag_revY 
     set(gca, 'YDir', 'reverse') ; 
 end ; 
 if nPixelsPerMetre > 0 

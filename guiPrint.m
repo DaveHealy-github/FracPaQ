@@ -30,6 +30,6 @@ print(fig, '-dtiff', '-r300', [fn, '.tif']) ;
 
 %   add some FracPaQ metadata to the file 
 t = Tiff([fn, '.tif'], 'r+') ; 
-t.setTag('Artist', 'FracPaQ2D version 1.6') ; 
+t.setTag('Artist', 'FracPaQ2D version 1.8') ; 
 t.rewriteDirectory() ; 
 t.close() ; 

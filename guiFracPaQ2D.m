@@ -43,7 +43,7 @@ function varargout = guiFracPaQ2D(varargin)
 
 % Edit the above text to modify the response to help guiFracPaQ2D
 
-% Last Modified by GUIDE v2.5 12-Aug-2016 12:39:36
+% Last Modified by GUIDE v2.5 22-Feb-2017 13:24:23
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -67,7 +67,6 @@ end
 
 %   my initialisation can go here... 
 
-
 % --- Executes just before guiFracPaQ2D is made visible.
 function guiFracPaQ2D_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
@@ -75,10 +74,6 @@ function guiFracPaQ2D_OpeningFcn(hObject, eventdata, handles, varargin)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to guiFracPaQ2D (see VARARGIN)
-
-% %   get a list of possible files for the filename popup menu
-% list_temp = [ dir('*.txt') ; dir('*.jpeg') ; dir('*.tiff') ; dir('*.tif') ] ; 
-% handles.lsFracPaQ_files = {list_temp.name} ;
 
 % Choose default command line output for guiFracPaQ2D
 handles.output = hObject;
@@ -102,10 +97,19 @@ set(handles.popupmenu_histolengthbins,'Value',2) ;
 set(handles.popupmenu_histoanglebins,'Value',2) ;
 set(handles.popupmenu_rosebins,'Value',2) ;
 
-handles.FracPaQversion = '1.6a' ; 
+handles.FracPaQversion = '1.8' ; 
 disp(['FracPaQ version: ', handles.FracPaQversion]) ; 
 % Update handles structure
 guidata(hObject, handles);
+
+v = ver('MATLAB') ; 
+iRelease = regexp(v.Release, 'R.....') ; 
+nReleaseYear = str2num(v.Release(iRelease+1:iRelease+4)) ; 
+if nReleaseYear < 2015 
+    h = msgbox('Warning: FracPaQ needs MATLAB release of R2015a, or later.', 'Important Warning!') ;  
+    uiwait(h) ; 
+end ; 
+
 
 % --- Outputs from this function are returned to the command line.
 function varargout = guiFracPaQ2D_OutputFcn(hObject, eventdata, handles) 
@@ -135,15 +139,29 @@ function checkbox_permellipse_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_permellipse
 if get(hObject, 'Value')
-    set(handles.edit_aperture, 'Enable', 'on') ; 
-    set(handles.label_aperture, 'Enable', 'on') ; 
+    set(handles.label_aperturefactor, 'Enable', 'on') ; 
+    set(handles.edit_aperturefactor, 'Enable', 'on') ; 
+    set(handles.label_apertureexponent, 'Enable', 'on') ; 
+    set(handles.edit_apertureexponent, 'Enable', 'on') ; 
+    set(handles.label_apertureequation, 'Enable', 'on') ; 
     set(handles.edit_lambda, 'Enable', 'on') ; 
     set(handles.label_lambda, 'Enable', 'on') ; 
+    set(handles.edit_fixedaperture, 'Enable', 'on') ; 
+    set(handles.label_fixedaperture, 'Enable', 'on') ; 
+    set(handles.radiobutton_fixedaperture, 'Enable', 'on') ; 
+    set(handles.radiobutton_scaledaperture, 'Enable', 'on') ; 
 else
-    set(handles.edit_aperture, 'Enable', 'off') ; 
-    set(handles.label_aperture, 'Enable', 'off') ; 
+    set(handles.label_aperturefactor, 'Enable', 'off') ; 
+    set(handles.edit_aperturefactor, 'Enable', 'off') ; 
+    set(handles.label_apertureexponent, 'Enable', 'off') ; 
+    set(handles.edit_apertureexponent, 'Enable', 'off') ; 
+    set(handles.label_apertureequation, 'Enable', 'off') ; 
     set(handles.edit_lambda, 'Enable', 'off') ; 
     set(handles.label_lambda, 'Enable', 'off') ; 
+    set(handles.edit_fixedaperture, 'Enable', 'off') ; 
+    set(handles.label_fixedaperture, 'Enable', 'off') ; 
+    set(handles.radiobutton_fixedaperture, 'Enable', 'off') ; 
+    set(handles.radiobutton_scaledaperture, 'Enable', 'off') ; 
 end ; 
 
 % --- Executes on button press in checkbox_intensitymap.
@@ -279,11 +297,13 @@ if get(hObject, 'Value')
     set(handles.popupmenu_rosebins, 'Enable', 'on') ; 
     set(handles.edit_degfromnorth, 'Enable', 'on') ; 
     set(handles.label_degfromnorth, 'Enable', 'on') ; 
+    set(handles.checkbox_roselengthweighted, 'Enable', 'on') ; 
 else 
     set(handles.text_rosebins, 'Enable', 'off') ; 
     set(handles.popupmenu_rosebins, 'Enable', 'off') ; 
     set(handles.edit_degfromnorth, 'Enable', 'off') ; 
     set(handles.label_degfromnorth, 'Enable', 'off') ; 
+    set(handles.checkbox_roselengthweighted, 'Enable', 'off') ; 
 end ; 
 
 
@@ -475,30 +495,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-
-function edit_aperture_Callback(hObject, eventdata, handles)
-% hObject    handle to edit_aperture (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of edit_aperture as text
-%        str2double(get(hObject,'String')) returns contents of edit_aperture as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function edit_aperture_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit_aperture (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
 function edit_lambda_Callback(hObject, eventdata, handles)
 % hObject    handle to edit_lambda (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -567,12 +563,15 @@ function pushbutton_browse_Callback(hObject, eventdata, handles)
 cla(handles.axes_tracemap) ; 
 handles.axes_tracemap.YDir = 'normal' ; 
 
-%   for Linux and Mac users, offer access to *.svg input files 
-if isunix
-    sFileTypes = {'*.txt'; '*.svg'; '*.jpeg'; '*.jpg'; '*.tiff'; '*.tif'} ; 
-else
-    sFileTypes = {'*.txt'; '*.jpeg'; '*.jpg'; '*.tiff'; '*.tif'} ; 
-end ; 
+% %   for Linux and Mac users, offer access to *.svg input files 
+% if isunix
+%     sFileTypes = {'*.txt'; '*.svg'; '*.jpeg'; '*.jpg'; '*.tiff'; '*.tif'} ; 
+% else
+%     sFileTypes = {'*.txt'; '*.jpeg'; '*.jpg'; '*.tiff'; '*.tif'} ; 
+% end ; 
+
+%   v1.8 - all platforms get access to .svg input files 
+sFileTypes = {'*.txt'; '*.svg'; '*.jpeg'; '*.jpg'; '*.tiff'; '*.tif'} ; 
 
 [ handles.selfile, handles.selpath ] = uigetfile(sFileTypes, 'Select an input file for FracPaQ2D') ; 
 
@@ -603,6 +602,7 @@ else
     set(handles.pushbutton_preview, 'Enable', 'off') ; 
 end ; 
 
+set(handles.pushbutton_flipx, 'Enable', 'off') ; 
 set(handles.pushbutton_flipy, 'Enable', 'off') ; 
 set(handles.pushbutton_run, 'Enable', 'off') ; 
 set(handles.text_message, 'String', 'Click Preview to view the file contents.') ;                                 
@@ -656,12 +656,16 @@ if get(handles.radiobutton_image, 'Value')
 
 end ; 
 
-%   convert .svg file to .txt file with C shell script 
-if ~isempty(strfind(handles.selfile, '.svg')) && isunix 
+%   convert .svg file to .txt file 
+if ~isempty(strfind(handles.selfile, '.svg'))  
     sFilename = [ handles.selpath, handles.selfile ] ; 
-    [ status, ~ ] = system(['./svg2fracpaq.csh ', sFilename], '-echo') ; 
-    if ~status 
-        handles.selfile = strrep(handles.selfile, '.svg', '.txt') ; 
+    fConvert = convertSVG2txt(sFilename) ; 
+    if fConvert 
+        handles.selfile = strrep(handles.selfile, '.svg', 'converted.txt') ; 
+    else
+        hError = errordlg('Error converting .svg file to .txt; check .svg file is version 1.1', 'Input error', 'modal') ; 
+        uicontrol(handles.edit_filename) ; 
+        flagError = true ; 
     end ; 
 end ; 
 
@@ -727,6 +731,7 @@ if ~flagError
     set(handles.text_message, 'String', 'Ready. Click Run to generate maps and graphs.') ;     
   
     set(handles.pushbutton_run, 'Enable', 'on') ; 
+    set(handles.pushbutton_flipx, 'Enable', 'on') ; 
     set(handles.pushbutton_flipy, 'Enable', 'on') ; 
     uicontrol(handles.pushbutton_run) ; 
     
@@ -756,18 +761,34 @@ if isnan(str2double(sValue)) || str2double(sValue) > 360.0 || str2double(sValue)
     return ; 
 end ; 
 
-sValue = get(handles.edit_aperture, 'String') ; 
-if isnan(str2double(sValue)) || str2double(sValue) <= 0.0
-    hError = errordlg('Aperture must be a number (in pixels) > 0', 'Input error', 'modal') ; 
-    uicontrol(handles.edit_aperture) ; 
-    flagError = true ; 
-    return ; 
-end ; 
-
 sValue = get(handles.edit_lambda, 'String') ; 
 if isnan(str2double(sValue)) || str2double(sValue) < 0.0 || str2double(sValue) > 1.0
     hError = errordlg('Lamda factor must be a number, >= 0, <= 1.0', 'Input error', 'modal') ; 
     uicontrol(handles.edit_lambda) ; 
+    flagError = true ; 
+    return ; 
+end ; 
+
+sValue = get(handles.edit_fixedaperture, 'String') ; 
+if isnan(str2double(sValue)) || str2double(sValue) < 0.0
+    hError = errordlg('Fixed aperture must be a number, >= 0', 'Input error', 'modal') ; 
+    uicontrol(handles.edit_fixedaperture) ; 
+    flagError = true ; 
+    return ; 
+end ; 
+
+sValue = get(handles.edit_aperturefactor, 'String') ; 
+if isnan(str2double(sValue)) || str2double(sValue) < 0.0 || str2double(sValue) > 0.1
+    hError = errordlg('Aperture scaling factor must be a number, >= 0, <= 0.1', 'Input error', 'modal') ; 
+    uicontrol(handles.edit_aperturefactor) ; 
+    flagError = true ; 
+    return ; 
+end ; 
+
+sValue = get(handles.edit_apertureexponent, 'String') ; 
+if isnan(str2double(sValue)) || str2double(sValue) < 0.0 || str2double(sValue) > 1.0 || str2double(sValue) < 0.5 
+    hError = errordlg('Aperture scaling exponent must be a number, >= 0.5, <= 1.0', 'Input error', 'modal') ; 
+    uicontrol(handles.edit_apertureexponent) ; 
     flagError = true ; 
     return ; 
 end ; 
@@ -790,15 +811,18 @@ if ~flagError
         end ; 
         
         if strcmp(handles.axes_tracemap.YDir, 'reverse')
-            flag_reverse = true ; 
+            flag_reverseY = true ; 
         else
-            flag_reverse = false ; 
+            flag_reverseY = false ; 
+        end ;
+        
+        if strcmp(handles.axes_tracemap.XDir, 'reverse')
+            flag_reverseX = true ; 
+        else
+            flag_reverseX = false ; 
         end ;
         
         nNorth = str2double(get(handles.edit_degfromnorth, 'String')) ;
-        nAperture = str2double(get(handles.edit_aperture, 'String')) ;
-        nLambda = str2double(get(handles.edit_lambda, 'String')) ;
-        
         %   get values from drop down lists 
         list = get(handles.popupmenu_histolengthbins, 'String') ; 
         nHistoLengthBins = str2double(list{get(handles.popupmenu_histolengthbins, 'Value')}) ;
@@ -826,12 +850,14 @@ if ~flagError
 
         flag_histoangle = get(handles.checkbox_histoangle, 'Value') ;
         flag_roseangle = get(handles.checkbox_rose, 'Value') ;
+        flag_cracktensor = get(handles.checkbox_cracktensor, 'Value') ;
+        flag_roselengthweighted = get(handles.checkbox_roselengthweighted, 'Value') ; 
 
         flag_triangle = get(handles.checkbox_triangle, 'Value') ;
         flag_permellipse = get(handles.checkbox_permellipse, 'Value') ;
-
+        
         if flag_tracemap 
-            guiFracPaQ2Dtracemap(traces, nPixels, xmin, ymin, xmax, ymax, flag_shownodes, flag_reverse) ; 
+            guiFracPaQ2Dtracemap(traces, nPixels, xmin, ymin, xmax, ymax, flag_shownodes, flag_reverseY, flag_reverseX) ; 
         end ; 
 
         flag_length = sum([flag_histolength, flag_logloglength]) ; 
@@ -840,20 +866,33 @@ if ~flagError
                                     flag_histolength, flag_logloglength, flag_crossplot, flag_mle, flag_censor) ; 
         end ; 
 
-        flag_angle = sum([flag_histoangle, flag_roseangle]) ; 
+        flag_angle = sum([flag_histoangle, flag_roseangle, flag_cracktensor]) ; 
         if flag_angle
             guiFracPaQ2Dangle(traces, nNorth, xmax, ymax, nHistoAngleBins, nRoseBins, ...
-                                    flag_histoangle, flag_roseangle, flag_reverse) ; 
+                                    flag_histoangle, flag_roseangle, flag_reverseY, flag_reverseX, flag_cracktensor, flag_roselengthweighted) ; 
         end ; 
 
         flag_pattern = sum([flag_intensitymap, flag_densitymap, flag_triangle]) ; 
         if flag_pattern
             guiFracPaQ2Dpattern(traces, nPixels, xmin, ymin, xmax, ymax, ...
-                                    flag_intensitymap, flag_densitymap, flag_triangle, flag_showcircles, nCircles, flag_reverse) ; 
+                                    flag_intensitymap, flag_densitymap, flag_triangle, flag_showcircles, nCircles, flag_reverseY, flag_reverseX) ; 
         end ; 
 
         if flag_permellipse
-            guiFracPaQ2Dtensor(traces, xmin, ymin, xmax, ymax, nAperture, nLambda, flag_reverse) ; 
+            nLambda = str2double(get(handles.edit_lambda, 'String')) ;
+            if get(handles.radiobutton_fixedaperture, 'Value') 
+                nFixedAperture = str2double(get(handles.edit_fixedaperture, 'String')) ;
+                nApertureFactor = 0 ;
+                nApertureExponent = 0 ;
+            else 
+                nFixedAperture = 0 ; 
+                nApertureFactor = str2double(get(handles.edit_aperturefactor, 'String')) ;
+                nApertureExponent = str2double(get(handles.edit_apertureexponent, 'String')) ;
+            end ; 
+            guiFracPaQ2Dtensor(traces, xmin, ymin, xmax, ymax, nNorth, nLambda, ...
+                                    flag_reverseY, flag_reverseX, ...
+                                        nFixedAperture, nApertureFactor, nApertureExponent, ...
+                                            nPixels) ; 
         end ; 
 
         set(handles.text_message, 'String', 'All done. Check current folder for plot figure .tif files.') ;   
@@ -983,3 +1022,198 @@ else
     handles.axes_tracemap.YDir = 'reverse' ;
 end ;     
 set(handles.text_message, 'String', 'Y-axis flipped.') ;   
+
+% --- Executes on button press in pushbutton_flipx.
+function pushbutton_flipx_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_flipx (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+if strcmp(handles.axes_tracemap.XDir, 'reverse')
+    handles.axes_tracemap.XDir = 'normal' ;
+else
+    handles.axes_tracemap.XDir = 'reverse' ;
+end ;     
+set(handles.text_message, 'String', 'X-axis flipped.') ;   
+
+
+% --- Executes on selection change in popupmenu_rosebins.
+function popupmenu8_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu_rosebins (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_rosebins contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu_rosebins
+
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu8_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu_rosebins (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in popupmenu_histoanglebins.
+function popupmenu7_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu_histoanglebins (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_histoanglebins contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu_histoanglebins
+
+
+% --- Executes during object creation, after setting all properties.
+function popupmenu7_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popupmenu_histoanglebins (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in checkbox_crossplot.
+function checkbox21_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_crossplot (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_crossplot
+
+
+
+function edit12_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_degfromnorth (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_degfromnorth as text
+%        str2double(get(hObject,'String')) returns contents of edit_degfromnorth as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit12_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_degfromnorth (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in checkbox_rose.
+function checkbox20_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_rose (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_rose
+
+
+% --- Executes on button press in checkbox_histoangle.
+function checkbox19_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_histoangle (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_histoangle
+
+
+% --- Executes on button press in checkbox_cracktensor.
+function checkbox_cracktensor_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_cracktensor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_cracktensor
+
+
+% --- Executes on button press in checkbox_roselengthweighted.
+function checkbox_roselengthweighted_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_roselengthweighted (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_roselengthweighted
+
+
+
+function edit_apertureexponent_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_apertureexponent (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_apertureexponent as text
+%        str2double(get(hObject,'String')) returns contents of edit_apertureexponent as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_apertureexponent_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_apertureexponent (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit_aperturefactor_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_aperturefactor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_aperturefactor as text
+%        str2double(get(hObject,'String')) returns contents of edit_aperturefactor as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_aperturefactor_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_aperturefactor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit_fixedaperture_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_fixedaperture (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_fixedaperture as text
+%        str2double(get(hObject,'String')) returns contents of edit_fixedaperture as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_fixedaperture_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_fixedaperture (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

@@ -53,6 +53,6 @@ title('Exponential Distribution MLE');
 legend('Observed Data','Estimated Data');
 ylabel('Pr(l \geq l)');
 xlabel('Length, units')
-
-%   save to file 
-%print(f, '-djpeg', '-r300', 'FracPaQ2Dlengths_FittingExponential.jpeg') ; 
+dim = [ .2 .025 .3 .3 ] ; 
+str = [ '\lambda = ', num2str(lambda) ] ; 
+annotation('textbox', dim, 'String', str, 'FitBoxToText', 'on', 'BackgroundColor', 'w') ;  

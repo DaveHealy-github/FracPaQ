@@ -1,4 +1,4 @@
-function guiFracPaQ2Dtensor(traces, xMin, yMin, xMax, yMax, nAperture, nLamda, flag_reverse) 
+function guiFracPaQ2Dtensor(traces, xMin, yMin, xMax, yMax, northCorrection, nLambda, flag_revY, flag_revX, nAperture, nApertureFactor, nApertureExponent, nPixels) 
 %   guiFracPaQ2Dtensor.m
 %
 %   Dave Healy
@@ -27,11 +27,17 @@ function guiFracPaQ2Dtensor(traces, xMin, yMin, xMax, yMax, nAperture, nLamda, f
 
 %   trace segment angles are measured from Y-axis, clockwise is positive 
 traceAngles = [ traces.segmentAngle ]' ; 
+traceAngles = round(traceAngles - northCorrection) ; 
+
 traceLengths = [ traces.segmentLength ] ;
 nTraces = length(traces) ; 
 
 traceAngles = traceAngles ; 
-if flag_reverse 
+
+if flag_revX 
+    traceAngles = 180 - traceAngles ; 
+end ; 
+if flag_revY 
     traceAngles = 180 - traceAngles ; 
 end ; 
 
@@ -60,10 +66,6 @@ N11 = N11 / nSegments ;
 N22 = N22 / nSegments ; 
 N12 = N12 / nSegments ; 
 
-% N11 = N11 / nTraces ; 
-% N22 = N22 / nTraces ; 
-% N12 = N12 / nTraces ; 
-
 %   calculate P11, P22 and P12 
 k = 0 ; 
 for i = 1:nTraces
@@ -78,34 +80,29 @@ for i = 1:nTraces
     
 end ; 
 
-t = nAperture ; 
+if nAperture > 0 
+    %   fixed aperture
+    t = nAperture ;
+else 
+    %   aperture scaled to length 
+    t = nApertureFactor .* traceLengths.^nApertureExponent ; 
+end ; 
+
 [ ~, ~, mq ] = probePlane(3, xMin, yMin, xMax, yMax, segmentsxy, 2) ; 
 nq1 = mq(1) ; 
 nq2 = mq(2) ;
 nq12 = mean([nq1, nq2]) ; 
 
-% disp(nq1) ; 
-% disp(nq2) ; 
-% disp(nq12) ; 
-
-P11 = t^3 * nq2 * N11 ; 
-P22 = t^3 * nq1 * N22 ; 
-P12 = t^3 * nq12 * N12 ; 
-
-% disp(P11) ; 
-% disp(P22) ; 
-% disp(P12) ; 
+%   Suzuki et al., 1998; equation 5
+P11 = mean(t.^3) * nq2 * N11 ; 
+P22 = mean(t.^3) * nq1 * N22 ; 
+P12 = mean(t.^3) * nq12 * N12 ; 
 
 %   calculate k11, k22, k12 
-lamda = nLamda ; 
-k11 = lamda * P22 ; 
-k22 = lamda * P11 ; 
-k12 = -lamda * P12 ;
-
-% disp('Cartesian k_ij:') ; 
-% disp(k11) ; 
-% disp(k22) ; 
-% disp(k12) ; 
+lambda = nLambda ; 
+k11 = lambda * P22 ; 
+k22 = lambda * P11 ; 
+k12 = -lambda * P12 ;
 
 [ eigVec, eigVal ] = eig([ k11, k12 ; k12, k22 ]) ; 
 k1 = eigVal(2,2) ; 
@@ -114,17 +111,28 @@ k2 = eigVal(1,1) ;
 % disp(eigVal) ; 
 thetatrace = acos(eigVec(2,2)) * 180 / pi ; 
 kratio = k1 / k2 ; 
-if flag_reverse 
+if flag_revX 
+    kazimuth = thetatrace ; 
+else
+    kazimuth = 180 - thetatrace ; 
+end ; 
+if flag_revY 
     kazimuth = thetatrace ; 
 else
     kazimuth = 180 - thetatrace ; 
 end ; 
 
 disp(' ') ; 
-disp('Permeability tensor: k1, k2 and theta...') ; 
-disp(k1) ; 
-disp(k2) ; 
-disp(kazimuth) ; 
+disp('Permeability tensor:') ; 
+if nPixels > 0 
+    disp(['k1 = ', num2str(k1), ' m^2']) ; 
+    disp(['k2 = ', num2str(k2), ' m^2']) ; 
+    disp(['Azimuth of k1 = ', num2str(kazimuth, '%03f'), ' degrees']) ; 
+else 
+    disp(['k1 = ', num2str(k1), ' pixels^2']) ; 
+    disp(['k2 = ', num2str(k2), ' pixels^2']) ; 
+    disp(['Azimuth of k1 = ', num2str(kazimuth, '%03f'), ' degrees']) ; 
+end ;     
 
 %   plot azimuthal variation of k 
 theta = thetatrace - 90 ; 
@@ -160,21 +168,21 @@ title({['Permeability in direction of flow, k_1:k_2=', ...
 %   save to file 
 guiPrint(f, 'FracPaQ2D_permtensor_flow') ; 
 
-% %   permeability in the direction of gradient (after Long et al., 1982.
-% %   WRR)
-% ek1 = 1 / sqrt(k1) ; 
-% ek2 = 1 / sqrt(k2) ; 
-% 
-% f = figure ; 
-% set(gcf, 'PaperPositionMode', 'manual') ; 
-% set(gcf, 'PaperUnits', 'inches') ; 
-% set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-% 
-% plotEllipse(ek1, ek2, kazimuth) ; 
-% 
-% title({['Permeability in direction of gradient, k_1:k_2=', ...
-%             num2str(round(kratio), '%i'), ':1, ', ...
-%             'k_1 azimuth=', num2str(round(kazimuth), '%03i')];''}) ; 
-% 
-% %   save to file 
-% guiPrint(f, 'FracPaQ2D_permtensor_gradient') ; 
+%   permeability in the direction of gradient (after Long et al., 1982.
+%   WRR)
+ek1 = 1 / sqrt(k1) ; 
+ek2 = 1 / sqrt(k2) ; 
+
+f = figure ; 
+set(gcf, 'PaperPositionMode', 'manual') ; 
+set(gcf, 'PaperUnits', 'inches') ; 
+set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
+
+plotEllipse(ek1, ek2, kazimuth) ; 
+
+title({['Permeability in direction of gradient, k_1:k_2=', ...
+            num2str(round(kratio), '%i'), ':1, ', ...
+            'k_1 azimuth=', num2str(round(kazimuth), '%03i')];''}) ; 
+
+%   save to file 
+guiPrint(f, 'FracPaQ2D_permtensor_gradient') ; 

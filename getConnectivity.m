@@ -30,11 +30,6 @@ nInt = 0 ;
 
 for i = 1:size(segments,1) 
     
-%     disp(['Segment: ', num2str(i)]) ; 
-    
-    %   round the coordinates to the nearest whole pixel - good enough! 
-%     scanXY = [ round(segments(i, 1)), round(segments(i, 2)), ...
-%                 round(segments(i, 3)), round(segments(i, 4)) ] ; 
     scanXY = [ segments(i, 1), segments(i, 2), ...
               segments(i, 3), segments(i, 4) ] ; 
     
@@ -56,8 +51,6 @@ for i = 1:size(segments,1)
                     nInt = nInt + 1 ; 
 
                     %   get coords of intersection 
-%                     xint(nInt) = round(intScan.intMatrixX(1, j)) ; 
-%                     yint(nInt) = round(intScan.intMatrixY(1, j)) ; 
                     xint(nInt) = intScan.intMatrixX(1, j) ; 
                     yint(nInt) = intScan.intMatrixY(1, j) ; 
 
@@ -68,11 +61,9 @@ for i = 1:size(segments,1)
                     elseif ( xint(nInt) == scanXY(3) && yint(nInt) == scanXY(4) )
                         Y = Y + 1 ; 
                         fint(nInt) = 'Y' ; 
-%                    elseif ( xint(nInt) == round(segments(j, 1)) && yint(nInt) == round(segments(j, 2)) )
                     elseif ( xint(nInt) == segments(j, 1) && yint(nInt) == segments(j, 2) )
                         Y = Y + 1 ; 
                         fint(nInt) = 'Y' ; 
-%                    elseif ( xint(nInt) == round(segments(j, 3)) && yint(nInt) == round(segments(j, 4)) )
                     elseif ( xint(nInt) == segments(j, 3) && yint(nInt) == segments(j, 4) )
                         Y = Y + 1 ; 
                         fint(nInt) = 'Y' ; 

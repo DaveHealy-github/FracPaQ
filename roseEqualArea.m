@@ -1,5 +1,15 @@
-function roseEqualArea(roseAngles, delta, azimuth) 
-%   area weighted rose diagram of trace angles
+function roseEqualArea(roseAngles, delta, azimuth, roseLengths) 
+%   equal area rose diagram of trace segment angles
+%
+%   arguments:
+%       roseAngles - vector of orientations in degrees 
+%       delta - (scalar) bin size for rose plot in degrees
+%       azimuth - (scalar) rotation angle for final rose plot e.g. northCorrection,
+%       in degrees
+%   
+%   Dave Healy 
+%   February 2017 
+%   d.healy@abdn.ac.uk 
 
 %% Copyright
 % Permission is hereby granted, free of charge, to any person obtaining a
@@ -21,13 +31,14 @@ function roseEqualArea(roseAngles, delta, azimuth)
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-roseAngles = round(roseAngles) ; 
+%   calculate circular statistics: mean and std dev 
+[ roseMean, roseStddev, roseResultant ] = circStat(roseAngles) ; 
 
-for i = 1:max(size(roseAngles))
-    if roseAngles(i) < 0 
-        roseAngles(i) = roseAngles(i) + 360 ; 
-    end ; 
-end ; 
+disp(' ') ; 
+disp('Circular statistics:') ; 
+disp(['Circular mean (degrees from North): ', num2str(roseMean)]) ; 
+disp(['Circular standard deviation (degrees): ', num2str(roseStddev)]) ; 
+disp(['Resultant: ', num2str(roseResultant)]) ; 
 
 %   initialise 
 rinc = 0.0005 ; 
@@ -51,9 +62,13 @@ y50Percent = sqrt(r50Percent^2 - x50Percent.^2) ;
 binAngles = 0:delta:360 ; 
 binAngles2 = zeros(1, max(size(binAngles))*2) ; 
 numAngles2 = zeros(1, max(size(binAngles))*2) ; 
+sumLengths2 = zeros(1, max(size(binAngles))*2) ; 
 j = 1 ; 
-numAngles = histc(roseAngles, binAngles) ; 
-for i = 1:max(size(binAngles))
+[ numAngles, ~, indBins ] = histcounts(roseAngles, binAngles) ; 
+%numAngles = histc(roseAngles, binAngles) ; 
+
+%   go through the bins... 
+for i = 1:max(size(binAngles))-1
     
     binAngles2(j) = binAngles(i) ;
     if (i+1) > max(size(binAngles)) 
@@ -62,14 +77,28 @@ for i = 1:max(size(binAngles))
         binAngles2(j+1) = binAngles(i+1) ; 
     end ; 
     numAngles2(j:j+1) = numAngles(i) ; 
+    if sum(roseLengths) 
+        sumLengths2(j:j+1) = sum(roseLengths(indBins==i)) ; 
+    end ; 
     j = j + 2 ;  
     
 end ; 
-numAnglesPercent = ( numAngles2 ./ length(roseAngles) ) * 100 ;
+
+if sum(roseLengths) == 0 
+    numAnglesPercent = ( numAngles2 ./ length(roseAngles) ) * 100 ;
+else 
+%   length weighted - sum lengths in each bin, and divide by total length
+%   of all segments 
+    numAnglesPercent = ( sumLengths2 ./ sum(roseLengths) ) * 100 ;
+end ; 
+
+%   this is the equal area bit... 
 rAnglesPercent = r1Percent .* sqrt(numAnglesPercent) ; 
+
 % disp(' ') ; 
 % disp(max(rAnglesPercent)) ; 
 % disp(max(numAnglesPercent)) ; 
+
 [ xRoseArea, yRoseArea ] = pol2cart((pi/2 - binAngles2*pi/180), rAnglesPercent) ; 
 limX = max(xRoseArea) ; 
 limY = max(yRoseArea) ;
@@ -94,9 +123,12 @@ plot(x50Percent, y50Percent, '-k', x50Percent, -y50Percent, '-k', 'LineWidth', 0
 plot([-r50Percent*1.1, r50Percent*1.1], [0, 0], '-k', 'LineWidth', 0.5) ; 
 plot([0, 0], [-r50Percent*1.1, r50Percent*1.1], '-k', 'LineWidth', 0.5) ; 
 fill(xRoseArea, yRoseArea, 'b', 'EdgeColor', 'b') ; 
+% plot([r50Percent*sind(roseMean), -r50Percent*sind(roseMean)], ...
+%      [r50Percent*cosd(roseMean), -r50Percent*cosd(roseMean)], '-r', 'LineWidth', 1) ; 
+plot([lim*sind(roseMean), -lim*sind(roseMean)], ...
+     [lim*cosd(roseMean), -lim*cosd(roseMean)], '-r', 'LineWidth', 1) ; 
 hold off ; 
 
-title(['Angles (area weighted), n=', num2str(length(roseAngles)/2)]) ; 
 axis equal off ;
 view(azimuth, 90) ; 
 text(-(r1Percent), 0, '1%', 'Clipping', 'on', ...
