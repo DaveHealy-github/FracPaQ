@@ -168,7 +168,6 @@ if flag_intensitymap || flag_densitymap
             
             n = 0 ;
             m = 0 ;
-disp([num2str(i), ', ', num2str(j)]) ; 
 
             for k = 1:numTraces
                 
@@ -199,11 +198,9 @@ disp([num2str(i), ', ', num2str(j)]) ;
                         
                     elseif bPoint1Inside
                         n = n + 1 ;
-                        disp('bPoint1Inside') ; 
                         
                     elseif bPoint2Inside
                         n = n + 1 ;
-                        disp('bPoint2Inside') ; 
                         
                     else
                         
