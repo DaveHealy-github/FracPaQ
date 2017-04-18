@@ -29,6 +29,7 @@ function guiFracPaQ2Dpattern(traces, numPixelsPerMetre, xMin, yMin, xMax, yMax, 
 
 numTraces = length(traces) ;
 traceLengths = [ traces.segmentLength ] ;
+mapArea = (xMax - xMin) * (yMax - yMin) ; 
 
 if flag_intensitymap || flag_densitymap || flag_showcircles
     
@@ -44,7 +45,7 @@ if flag_intensitymap || flag_densitymap || flag_showcircles
 %         rCircle = 0.99 * min(xDeltaCircle, yDeltaCircle) / 2 ;
     
     %% X dimension is longer than y
-    if xMax - xMin > yMax - yMin
+    if ( xMax - xMin ) > ( yMax - yMin )
         yNumCircle = nCircles ;
         yDeltaCircle = ( yMax - yMin ) / ( yNumCircle + 1 ) ;
         %   set circle radius, as function of y increments
@@ -55,7 +56,7 @@ if flag_intensitymap || flag_densitymap || flag_showcircles
         xNumCircle=floor((( xMax - xMin ) / xDeltaCircle) - 1);
         
     %% Y dimension is longer than x
-    elseif xMax - xMin < yMax - yMin
+    elseif ( xMax - xMin ) < ( yMax - yMin )
         xNumCircle = nCircles ;
         xDeltaCircle = ( xMax - xMin ) / ( xNumCircle + 1 ) ;
         %   set circle radius, as function of x increments
@@ -66,7 +67,7 @@ if flag_intensitymap || flag_densitymap || flag_showcircles
         yNumCircle=floor((( yMax - yMin ) / yDeltaCircle) - 1);
         
     %% X and y dimensions are equal
-    elseif xMax - xMin == yMax - yMin
+    elseif ( xMax - xMin ) == ( yMax - yMin )
         %   define circle centres
         xNumCircle = nCircles ;
         yNumCircle = nCircles ;
@@ -167,7 +168,8 @@ if flag_intensitymap || flag_densitymap
             
             n = 0 ;
             m = 0 ;
-            
+disp([num2str(i), ', ', num2str(j)]) ; 
+
             for k = 1:numTraces
                 
                 for s = 1:traces(k).nSegments
@@ -197,24 +199,48 @@ if flag_intensitymap || flag_densitymap
                         
                     elseif bPoint1Inside
                         n = n + 1 ;
+                        disp('bPoint1Inside') ; 
                         
                     elseif bPoint2Inside
                         n = n + 1 ;
+                        disp('bPoint2Inside') ; 
                         
                     else
                         
                         dx = traces(k).Segment(s).Point2(1) - traces(k).Segment(s).Point1(1) ;
                         dy = traces(k).Segment(s).Point2(2) - traces(k).Segment(s).Point1(2) ;
                         dr = sqrt( dx^2 + dy^2 ) ;
-                        Det = traces(k).Segment(s).Point1(1) * traces(k).Segment(s).Point2(2) - ...
-                            traces(k).Segment(s).Point2(1) * traces(k).Segment(s).Point1(2) - ...
-                            xCentreCircle * ( traces(k).Segment(s).Point2(2) - traces(k).Segment(s).Point1(2) ) + ...
-                            yCentreCircle * ( traces(k).Segment(s).Point2(1) - traces(k).Segment(s).Point1(1) ) ;
+%                         Det = traces(k).Segment(s).Point1(1) * traces(k).Segment(s).Point2(2) - ...
+%                             traces(k).Segment(s).Point2(1) * traces(k).Segment(s).Point1(2) - ...
+%                             xCentreCircle * ( traces(k).Segment(s).Point2(2) - traces(k).Segment(s).Point1(2) ) + ...
+%                             yCentreCircle * ( traces(k).Segment(s).Point2(1) - traces(k).Segment(s).Point1(1) ) ;
+                         
+                        x1new = traces(k).Segment(s).Point1(1) - xCentreCircle ; 
+                        x2new = traces(k).Segment(s).Point2(1) - xCentreCircle ;
+                        y1new = traces(k).Segment(s).Point1(2) - yCentreCircle ; 
+                        y2new = traces(k).Segment(s).Point2(2) - yCentreCircle ; 
+                        
+                        Det = x1new * y2new - x2new * y1new ;
                         
                         deltaSecant = rCircleMetres^2 * dr^2 - Det^2 ;
                         
                         if deltaSecant > 0
-                            n = n + 2 ;
+                            
+                            %   this test checks to see if the adjusted line end
+                            %   points are either side of the circle centre
+                            %   (to correct a bug where finite line
+                            %   segments far away from circle, but
+                            %   aligned to intersect were being reported as
+                            %   intersections)
+                            if ( ( x1new < 0 && x2new >= 0 ) || ...
+                                 ( x1new > 0 && x2new <= 0 ) ) && ...    
+                               ( ( y1new < 0 && y2new >= 0 ) || ...
+                                 ( y1new > 0 && y2new <= 0 ) )    
+
+                                n = n + 2 ;
+
+                            end ; 
+                                
                         end ;
                         
                     end ;
@@ -313,11 +339,6 @@ if flag_intensitymap || flag_densitymap
     [ X1, Y1 ] = meshgrid( ((xMin+xDeltaCircle):xDeltaCircle:xMax-xDeltaCircle), ...
         ((yMin+yDeltaCircle):yDeltaCircle:yMax-yDeltaCircle) ) ;
 
-disp(min(min(X1))) ; 
-disp(max(max(X1))) ; 
-disp(min(min(Y1))) ; 
-disp(max(max(Y1))) ; 
-
     Iinterp = TriScatteredInterp(reshape(X1, xNumCircle*yNumCircle, 1), ...
         reshape(Y1, xNumCircle*yNumCircle, 1), ...
         reshape(I, xNumCircle*yNumCircle, 1), ...
@@ -331,11 +352,6 @@ disp(max(max(Y1))) ;
     [ X2, Y2 ] = meshgrid( ((xMin+xDeltaCircle):xDeltaCircle/10:xMax-xDeltaCircle), ...
         ((yMin+yDeltaCircle):yDeltaCircle/10:yMax-yDeltaCircle) ) ;
     
-disp(min(min(X2))) ; 
-disp(max(max(X2))) ; 
-disp(min(min(Y2))) ; 
-disp(max(max(Y2))) ; 
-
     Inew = Iinterp(X2, Y2) ;
     Dnew = Dinterp(X2, Y2) ;
     nContours = 20 ;
@@ -374,6 +390,15 @@ disp(max(max(Y2))) ;
         %   save to file
         guiPrint(f, 'FracPaQ2D_intensityP21') ;
         
+        %   print Intensity for whole map area
+        disp(' ') ; 
+        disp('Intensity for whole map:') ; 
+        if numPixelsPerMetre > 0
+            disp([num2str(sum(traceLengths)/mapArea), ' metre^-1']) ; 
+        else 
+            disp([num2str(sum(traceLengths)/mapArea), ' pixel^-1']) ; 
+        end ; 
+            
     end ;
     
     if flag_densitymap
@@ -410,6 +435,15 @@ disp(max(max(Y2))) ;
         %   save to file
         guiPrint(f, 'FracPaQ2D_densityP20') ;
         
+        %   print Density for whole map area
+        disp(' ') ; 
+        disp('Density for whole map:') ; 
+        if numPixelsPerMetre > 0
+            disp([num2str(length(traceLengths)/mapArea), ' metre^-2']) ; 
+        else 
+            disp([num2str(length(traceLengths)/mapArea), ' pixel^-2']) ; 
+        end ; 
+
     end ;
     
     %   write I, D and MTL fto file
@@ -417,11 +451,11 @@ disp(max(max(Y2))) ;
     fidDensity = fopen('FracPaQ2Ddensity.txt', 'wt') ;
     for i = 1:xNumCircle
         
-        xCentreCircle = xDeltaCircle * i ;
+        xCentreCircle = xMin + xDeltaCircle * i ;
         
         for j = 1:yNumCircle
             
-            yCentreCircle = yDeltaCircle * j ;
+            yCentreCircle = yMin + yDeltaCircle * j ;
             
             fprintf(fidIntensity, '%8.1f %8.1f %14.8f\n', xCentreCircle, yCentreCircle, I(j, i)) ;
             fprintf(fidDensity, '%8.1f %8.1f %14.8f\n', xCentreCircle, yCentreCircle, D(j, i)) ;
