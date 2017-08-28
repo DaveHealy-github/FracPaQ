@@ -1,6 +1,6 @@
 {
   "name": "FracPaQ",
   "tagline": "Quantification of Fracture Patterns",
-  "body": "### Welcome to FracPaQ on GitHub Pages.\r\nFracPaQ is a suite of MATLAB scripts designed to quantify patterns of fractures in rocks, and other materials.  The code has been developed by researchers at the University of Aberdeen, led by Dr. Dave Healy.  The initial release version is 1.6.  A number of enhancements are planned for future releases.  Please get in touch to find out more, and especially if you find any bugs!    \r\n",
+  "body": "### Welcome to FracPaQ on GitHub Pages.\r\nFracPaQ is a suite of MATLAB scripts designed to quantify patterns of fractures in rocks, and other materials.  The code has been developed by researchers at the University of Aberdeen, led by Dr. Dave Healy.  The current release version is 2.0.  A number of enhancements are planned for future releases.  Please get in touch to find out more, and especially if you find any bugs!    \r\n",
   "note": "Don't delete this file! It's used internally to help with page regeneration."
 }
