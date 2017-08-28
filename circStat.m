@@ -33,10 +33,12 @@ nAngles = length(vAngles) / 2 ;
 V = sum(cosd(2*vAngles(1:nAngles))) ; 
 W = sum(sind(2*vAngles(1:nAngles))) ; 
 
-cMean = atand(W/V)/2 ; 
+%cMean = atand(W/V)/2 ; 
+cMean = atan2d(W,V)/2 ; 
 if cMean < 0 
     cMean = cMean + 180 ; 
 end ; 
 cRes = sqrt(V^2 + W^2) / nAngles ; 
 cStddev = 180 * sqrt( 2 * (1 - cRes) ) / pi ; 
 
+end

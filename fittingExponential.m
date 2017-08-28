@@ -1,4 +1,4 @@
-function [lambda,xmin2,z2,Hpercentexp,Ppercentexp]=fittingExponential(x,uc,lc)
+function [lambda,xmin2,y,z2,Hpercentexp,Ppercentexp]=fittingExponential(x,uc,lc,sCol)
 
 %% [lambda,xmin2,HpercentExp,PpercentExp]=fittingExponential(x)
 
@@ -59,12 +59,14 @@ function [lambda,xmin2,z2,Hpercentexp,Ppercentexp]=fittingExponential(x,uc,lc)
 %% Command line parameters
 if exist('uc','var')==0 || uc==0
     uppercut=1;
-else uppercut=ceil(uc*length(x)/100);
+else
+    uppercut=ceil(uc*length(x)/100);
 end
 
 if exist('lc','var')==0 || lc==0
     lowercut=0;
-else lowercut=ceil(lc*length(x)/100);
+else
+    lowercut=ceil(lc*length(x)/100);
 end
 %% Estimate xmin and lambda
 
@@ -119,8 +121,10 @@ disp(['Probability of lengths being Exponentially distributed: ', num2str(Pperce
 
 % Call the function which plots the sorted empirical data and the
 % theoretical curve obtained using the MLE for 'lambda' and 'xmin'
-[c2,cn2]=PlotExp(x,z2,lambda,xmin2);
+[c2,cn2]=PlotExp(x,y,z2,lambda,xmin2,sCol);
 
 disp(' ') ; 
 disp('Exponential statistical parameters...') ;
 disp(['lambda: ', num2str(lambda)]) ; 
+
+end 

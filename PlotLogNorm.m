@@ -1,4 +1,4 @@
-function [c3,cn3]=PlotLogNorm(x,z4,mu,sigma,xmin3)
+function [c3,cn3]=PlotLogNorm(x,y,z4,mu,sigma,xmin3,sCol)
 
 %%
 % Author: Roberto Rizzo
@@ -44,16 +44,28 @@ set(gcf, 'PaperPositionMode', 'manual') ;
 set(gcf, 'PaperUnits', 'inches') ; 
 set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
-h(1)= semilogx(c3(:,1),c3(:,2),':bs','MarkerSize',5,'MarkerFaceColor','b');
+h(1)= semilogx(c3(:,1),c3(:,2),':s','Color',sCol,'MarkerSize',5,'MarkerFaceColor',sCol);
 hold on
-h(2)= semilogx(cn3(:,1),cn3(:,2),'b-.','LineWidth',2);
+h(2)= semilogx(cn3(:,1),cn3(:,2),'-.','Color',sCol,'LineWidth',2);
+
+%Locate the position of Upper and Lower cut-off if applied
+PosLc = max(y);
+PosUc = min(y);
+
+YL = ylim();
+
+plot([PosUc PosUc], YL, 'r--')
+plot([PosLc PosLc], YL, 'r--')
+
 hold off
 %set (gca, 'FontSize', 20, 'FontName', 'Calibri');
 grid on
 title('Lognormal Distribution MLE');
-legend('Observed Data','Estimated Data');
+legend('Observed Data','Estimated Data', 'Upper cut-off', 'Lower cut-off');
 ylabel('Pr(l \geq l)');
 xlabel('Length, units')
 dim = [ .2 .025 .3 .3 ] ; 
 str = [ '\mu = ', num2str(mu), ', \sigma = ', num2str(sigma) ] ; 
 annotation('textbox', dim, 'String', str, 'FitBoxToText', 'on', 'BackgroundColor', 'w') ; 
+
+end 

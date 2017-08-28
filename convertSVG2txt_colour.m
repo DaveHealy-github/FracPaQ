@@ -1,4 +1,4 @@
-function rc = convertSVG2txt(fName) 
+function rc = convertSVG2txt_colour(fName) 
 %   convertSVG2txt.m 
 %       reads in .SVG (version 1.1) file and writes out .txt file of (x,y) nodes  
 %       
@@ -82,6 +82,13 @@ for i = 1:nRawLines
         continue ;
     end ; 
     
+    if strfind(sThisLine, '</g')
+        fPoly = 0 ; 
+        fLine = 0 ; 
+%         disp('Found a </g ...') ; 
+        continue ;
+    end ; 
+    
     %   is this the end of a line?
     if strcmp(sThisLine(end), '/')
     
@@ -134,30 +141,85 @@ disp(['Built ', num2str(iLine), ' lines']) ;
 sNewPolyLines = sPolyLines(1:iPoly,1) ; 
 sNewLines = sLines(1:iLine, 1) ; 
 
+%   find how many colours 
+sAllLines = [ sNewPolyLines ; sNewLines ] ;
+iC = 0 ; 
+for i = 1:length(sAllLines)
+    
+    if iscellstr(sAllLines(i,:))
+        sThisLine = char(sAllLines(i,:)) ; 
+    else
+        continue ; 
+    end ; 
+    
+    %   find which colour file
+    iC = iC + 1 ; 
+    iColour = strfind(sThisLine, 'stroke="#') + 9 ; 
+    sAllColours(iC) = { sThisLine(iColour:iColour+5) } ; 
+    
+end ; 
+
+%   just get the unique colours 
+sAllColours = unique(sAllColours) ; 
+sAllColours(strcmp('',sAllColours)) = [] ; 
+nAllColours = length(sAllColours) ; 
+% disp(sAllColours) ; 
+% disp(nAllColours) ;
+
+if nAllColours < 2
+
+    fNewName = [ fName(1:end-4), '_converted.txt' ] ; 
+    fID(1) = fopen(fNewName, 'w') ; 
+%     disp(fNewName) ; 
+%     disp(fID(1)) ; 
+    
+else
+    
+    %   open one file per colour
+    for i = 1:nAllColours
+        fNewName = [ fName(1:end-4), '_colour', char(sAllColours(i)), '_converted.txt' ] ; 
+        fID(i) = fopen(fNewName, 'w') ; 
+%         disp(fNewName) ; 
+%         disp(fID(i)) ; 
+    end ; 
+    
+end ; 
+
 %   loop through polylines extracting (x,y) coordinate pairs 
-fNewName = [ fName(1:end-4), 'converted.txt' ] ; 
-fID = fopen(fNewName, 'w') ; 
 for i = 1:iPoly 
     
     if iscellstr(sNewPolyLines(i,:))
         sThisLine = char(sNewPolyLines(i,:)) ; 
     else
+%         disp(sNewPolyLines(i,:)) ;
         continue ; 
     end ; 
     lThisLine = length(sThisLine) ; 
     
-    %   find points 
-    iS = strfind(sThisLine, 'points="') ; 
-    iStartPoints = iS(1) + length('points="') ; 
-    iEndPoints = lThisLine - 2 ; 
-    sPoints = sThisLine(iStartPoints:iEndPoints) ; 
+    if lThisLine > 20 
+        %   find which colour file 
+        iColour = strfind(sThisLine, 'stroke="#') + 9 ; 
+        sColour = sThisLine(iColour:iColour+5) ; 
+    %     disp(sThisLine) ; 
+    %     disp(sColour) ; 
+        iColourFile = find(~cellfun('isempty', strfind(sAllColours, sColour))) ; 
 
-    %   strip out (x,y) pairs 
-    nPolyPoints = str2num(sPoints) ;
-    for j = 1:length(nPolyPoints)
-        fprintf(fID, '%12.4f\t', nPolyPoints(j)) ; 
+        %   find points 
+        iS = strfind(sThisLine, 'points="') ; 
+        iStartPoints = iS(1) + length('points="') ; 
+        iEndPoints = lThisLine - 2 ; 
+        sPoints = sThisLine(iStartPoints:iEndPoints) ; 
+
+        %   strip out (x,y) pairs 
+        nPolyPoints = str2num(sPoints) ;
+        for j = 1:length(nPolyPoints)
+            %   write to the colour file 
+            fprintf(fID(iColourFile), '%12.4f\t', nPolyPoints(j)) ; 
+        end ; 
+        if i <= iPoly && ~isempty(nPolyPoints)  
+            fprintf(fID(iColourFile), '\r\n') ; 
+        end ; 
     end ; 
-    fprintf(fID, '\n') ; 
     
 end ; 
 
@@ -172,25 +234,53 @@ for i = 1:iLine
     
     lThisLine = length(sThisLine) ; 
 
-    %   find points 
-    ix1 = strfind(sThisLine, 'x1="') + 4 ; 
-    iy1 = strfind(sThisLine, 'y1="') + 4 ; 
-    ix2 = strfind(sThisLine, 'x2="') + 4 ; 
-    iy2 = strfind(sThisLine, 'y2="') + 4 ; 
-    
-    x1 = str2double(sThisLine(ix1:iy1-7)) ; 
-    y1 = str2double(sThisLine(iy1:ix2-7)) ; 
-    x2 = str2double(sThisLine(ix2:iy2-7)) ; 
-    y2 = str2double(sThisLine(iy2:lThisLine-2)) ; 
-    
-    fprintf(fID, '%12.4f\t%12.4f\t%12.4f\t%12.4f\n', x1, y1, x2, y2) ; 
-    
+    if lThisLine > 20 
+        %   find which colour file 
+        iColour = strfind(sThisLine, 'stroke="#') + 9 ; 
+        sColour = sThisLine(iColour:iColour+5) ; 
+        iColourFile = find(~cellfun('isempty', strfind(sAllColours, sColour))) ; 
+%         disp(sThisLine) ; 
+%         disp(sColour) ; 
+%         disp(iColourFile) ; 
+%         disp(fID(iColourFile)) ; 
+
+        %   find points 
+        ix1 = strfind(sThisLine, 'x1="') + 4 ; 
+        iy1 = strfind(sThisLine, 'y1="') + 4 ; 
+        ix2 = strfind(sThisLine, 'x2="') + 4 ; 
+        iy2 = strfind(sThisLine, 'y2="') + 4 ;
+        fy2 = 1 ; 
+        if isempty(iy2)
+            iy2 = strfind(sThisLine, 'y2= "') + 5 ;
+            fy2 = 0 ; 
+        end ; 
+
+        x1 = str2double(sThisLine(ix1:iy1-7)) ; 
+        y1 = str2double(sThisLine(iy1:ix2-7)) ; 
+        if fy2 
+            x2 = str2double(sThisLine(ix2:iy2-7)) ; 
+        else 
+            x2 = str2double(sThisLine(ix2:iy2-8)) ; 
+        end ; 
+        y2 = str2double(deblank(sThisLine(iy2:max(strfind(sThisLine, '"'))-1))) ; 
+
+        %   write to the colour file 
+        if i < iLine
+            fprintf(fID(iColourFile), '%12.4f\t%12.4f\t%12.4f\t%12.4f\r\n', x1, y1, x2, y2) ; 
+        else
+            fprintf(fID(iColourFile), '%12.4f\t%12.4f\t%12.4f\t%12.4f', x1, y1, x2, y2) ; 
+        end ; 
+    end ; 
+
 end ;  
-fclose(fID) ; 
+
+for i = 1:nAllColours
+    fclose(fID(i)) ;
+end ; 
 
 if iPoly + iLine > 0 
-    rc = 1 ; 
-else 
+    rc = nAllColours ;
+else
     rc = 0 ; 
 end ; 
 

@@ -33,3 +33,5 @@ t = Tiff([fn, '.tif'], 'r+') ;
 t.setTag('Artist', 'FracPaQ2D version 1.8') ; 
 t.rewriteDirectory() ; 
 t.close() ; 
+
+end 

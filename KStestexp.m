@@ -71,3 +71,5 @@ nym=find(h==0);
 nym=numel(nym);
 
 Hpercentexp = (nym/rep)*100;
+
+end 

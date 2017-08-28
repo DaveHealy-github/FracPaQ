@@ -14,3 +14,5 @@ az = az1:azinc:az2 ;
 rs = r*sin(pi*az/180) ;
 rc = r*cos(pi*az/180) ;
 plot(rs, rc,'b','LineWidth',2) ;
+
+end 

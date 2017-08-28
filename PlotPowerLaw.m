@@ -1,4 +1,4 @@
-function [c,cn]=PlotPowerLaw(x,z,xmin,alpha)
+function [c,cn]=PlotPowerLaw(x,y,z,xmin,alpha,sCol)
 %%
 % Author: Roberto Rizzo
 % Aberdeen April 2015
@@ -43,10 +43,19 @@ set(gcf, 'PaperPositionMode', 'manual') ;
 set(gcf, 'PaperUnits', 'inches') ; 
 set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
-h(1) = loglog(c(:,1),c(:,2),':bs','MarkerSize',5,'MarkerFaceColor','b');
+h(1) = loglog(c(:,1),c(:,2),':s','Color',sCol,'MarkerSize',5,'MarkerFaceColor',sCol);
 hold on;
-h(2) = loglog(cn(:,1),cn(:,2),'b-.','LineWidth',2);
-hold off;
+h(2) = loglog(cn(:,1),cn(:,2),'-.','Color',sCol,'LineWidth',2);
+
+PosLc = max(y);
+PosUc = min(y);
+
+YL = ylim();
+
+plot([PosUc PosUc], YL, 'r--')
+plot([PosLc PosLc], YL, 'r--')
+
+hold off
 
 xr = [10.^floor(log10(min(x))) 10.^ceil(log10(max(x)))];
 xrt = (round(log10(xr(1))):2:round(log10(xr(2))));
@@ -60,9 +69,11 @@ set (gca,'YLim',yr,'YTick',10.^yrt);
 %set (gca, 'FontSize', 20, 'FontName', 'Calibri');
 grid on;
 title('Power Law Distribution MLE');
-legend('Observed Data','Estimated Data');
+legend('Observed Data','Estimated Data','Upper cut-off', 'Lower cut-off');
 ylabel ('Pr(l \geq l)');
 xlabel ('Length, units');
 dim = [ .2 .025 .3 .3 ] ; 
 str = [ '\alpha = ', num2str(alpha), ', \itx_{min}\rm = ', num2str(xmin) ] ; 
 annotation('textbox', dim, 'String', str, 'FitBoxToText', 'on', 'BackgroundColor', 'w') ; 
+
+end 

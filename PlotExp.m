@@ -1,4 +1,4 @@
-function [c2,cn2]=PlotExp(x,z2,lambda,xmin2)
+function [c2,cn2]=PlotExp(x,y,z2,lambda,xmin2,sCol)
 
 %%
 % Author: Roberto Rizzo
@@ -43,16 +43,26 @@ set(gcf, 'PaperPositionMode', 'manual') ;
 set(gcf, 'PaperUnits', 'inches') ; 
 set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
-h(1) = semilogy(c2(:,1),c2(:,2),':bs','MarkerSize',5,'MarkerFaceColor','b');
+h(1) = semilogy(c2(:,1),c2(:,2),':s','Color',sCol,'MarkerSize',5,'MarkerFaceColor',sCol);
 hold on
-h(2) = semilogy(cn2(:,1),cn2(:,2),'b-.','LineWidth',1);
+h(2) = semilogy(cn2(:,1),cn2(:,2),'-.','Color',sCol,'LineWidth',1);
+
+PosLc = max(y);
+PosUc = min(y);
+
+YL = ylim();
+
+plot([PosUc PosUc], YL, 'r--')
+plot([PosLc PosLc], YL, 'r--')
 hold off
 grid on
 %set (gca, 'FontSize', 20, 'FontName', 'Calibri');
 title('Exponential Distribution MLE');
-legend('Observed Data','Estimated Data');
+legend('Observed Data','Estimated Data','Upper cut-off', 'Lower cut-off');
 ylabel('Pr(l \geq l)');
 xlabel('Length, units')
 dim = [ .2 .025 .3 .3 ] ; 
 str = [ '\lambda = ', num2str(lambda) ] ; 
 annotation('textbox', dim, 'String', str, 'FitBoxToText', 'on', 'BackgroundColor', 'w') ;  
+
+end 

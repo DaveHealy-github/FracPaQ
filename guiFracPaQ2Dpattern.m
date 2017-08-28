@@ -1,5 +1,5 @@
 function guiFracPaQ2Dpattern(traces, numPixelsPerMetre, xMin, yMin, xMax, yMax, ...
-    flag_intensitymap, flag_densitymap, flag_triangle, flag_showcircles, nCircles, flag_revY, flag_revX)
+    flag_intensitymap, flag_densitymap, flag_triangle, flag_showcircles, nCircles, flag_revY, flag_revX, sColour)
 %   guiFracPaQ2Dpattern.m
 %       calculates and plots statistics of trace segment patterns
 %
@@ -106,7 +106,7 @@ if flag_showcircles
     %   mapped lines and circle centres
     hold on ;
     for k = 1:numTraces
-        plot( [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 0.75, 'Color', 'blue') ;
+        plot( [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 0.75, 'Color', sColour) ;
     end ;
     %   for each circle centre
     for i = 1:xNumCircle
@@ -307,11 +307,11 @@ if flag_triangle
     
     hold on ;
     triplot() ; 
-    tripts(triData, '', 0) ; 
-    tripts(triLinesCL2, '', 1) ; 
-    tripts(triLinesCL357, '', 1) ; 
-    tripts(triLinesCL2(2,:), '\it C_L\rm = 2', 2) ; 
-    tripts(triLinesCL357(2,:), '\it C_L\rm = 3.57', 2) ; 
+    tripts(triData, '', 0, sColour) ; 
+    tripts(triLinesCL2, '', 1, sColour) ; 
+    tripts(triLinesCL357, '', 1, sColour) ; 
+    tripts(triLinesCL2(2,:), '\it C_L\rm = 2', 2, sColour) ; 
+    tripts(triLinesCL357(2,:), '\it C_L\rm = 3.57', 2, sColour) ; 
     hold off ;
     title({['Connectivity of trace segments, Y:X:I = ', ...
         num2str(cY/cTot, '%5.2f'), ':', ...
@@ -544,3 +544,5 @@ end ;
 %
 % %   save to file
 % guiPrint(f, 'guiFracPaQ2D_length_v_distance') ;
+
+end 

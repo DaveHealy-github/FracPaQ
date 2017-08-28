@@ -160,3 +160,5 @@ for a = 1:nq
 end ;
 
 m_ij = pi * summqa / nq ; 
+
+end 

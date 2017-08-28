@@ -43,7 +43,7 @@ function varargout = guiFracPaQ2D(varargin)
 
 % Edit the above text to modify the response to help guiFracPaQ2D
 
-% Last Modified by GUIDE v2.5 22-Feb-2017 13:24:23
+% Last Modified by GUIDE v2.5 04-Jul-2017 13:54:50
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -97,7 +97,7 @@ set(handles.popupmenu_histolengthbins,'Value',2) ;
 set(handles.popupmenu_histoanglebins,'Value',2) ;
 set(handles.popupmenu_rosebins,'Value',2) ;
 
-handles.FracPaQversion = '1.8' ; 
+handles.FracPaQversion = '2.0' ; 
 disp(['FracPaQ version: ', handles.FracPaQversion]) ; 
 % Update handles structure
 guidata(hObject, handles);
@@ -143,7 +143,6 @@ if get(hObject, 'Value')
     set(handles.edit_aperturefactor, 'Enable', 'on') ; 
     set(handles.label_apertureexponent, 'Enable', 'on') ; 
     set(handles.edit_apertureexponent, 'Enable', 'on') ; 
-    set(handles.label_apertureequation, 'Enable', 'on') ; 
     set(handles.edit_lambda, 'Enable', 'on') ; 
     set(handles.label_lambda, 'Enable', 'on') ; 
     set(handles.edit_fixedaperture, 'Enable', 'on') ; 
@@ -155,7 +154,6 @@ else
     set(handles.edit_aperturefactor, 'Enable', 'off') ; 
     set(handles.label_apertureexponent, 'Enable', 'off') ; 
     set(handles.edit_apertureexponent, 'Enable', 'off') ; 
-    set(handles.label_apertureequation, 'Enable', 'off') ; 
     set(handles.edit_lambda, 'Enable', 'off') ; 
     set(handles.label_lambda, 'Enable', 'off') ; 
     set(handles.edit_fixedaperture, 'Enable', 'off') ; 
@@ -267,7 +265,18 @@ function checkbox_mle_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_mle
+if get(hObject, 'Value')
+    set(handles.edit_lc, 'Enable', 'on') ; 
+    set(handles.edit_uc, 'Enable', 'on') ; 
+    set(handles.label_lc, 'Enable', 'on') ; 
+    set(handles.label_uc, 'Enable', 'on') ; 
+else
+    set(handles.edit_lc, 'Enable', 'off') ; 
+    set(handles.edit_uc, 'Enable', 'off') ; 
+    set(handles.label_lc, 'Enable', 'off') ; 
+    set(handles.label_uc, 'Enable', 'off') ; 
 
+end ; 
 
 % --- Executes on button press in checkbox_histoangle.
 function checkbox_histoangle_Callback(hObject, eventdata, handles)
@@ -563,45 +572,70 @@ function pushbutton_browse_Callback(hObject, eventdata, handles)
 cla(handles.axes_tracemap) ; 
 handles.axes_tracemap.YDir = 'normal' ; 
 
-% %   for Linux and Mac users, offer access to *.svg input files 
-% if isunix
-%     sFileTypes = {'*.txt'; '*.svg'; '*.jpeg'; '*.jpg'; '*.tiff'; '*.tif'} ; 
-% else
-%     sFileTypes = {'*.txt'; '*.jpeg'; '*.jpg'; '*.tiff'; '*.tif'} ; 
-% end ; 
-
-%   v1.8 - all platforms get access to .svg input files 
+%   from v1.8 - all platforms get access to .svg input files 
 sFileTypes = {'*.txt'; '*.svg'; '*.jpeg'; '*.jpg'; '*.tiff'; '*.tif'} ; 
 
-[ handles.selfile, handles.selpath ] = uigetfile(sFileTypes, 'Select an input file for FracPaQ2D') ; 
+[ handles.selfile, handles.selpath ] = uigetfile(sFileTypes, 'Select input file(s) for FracPaQ2D') ; 
 
-if ~isequal(handles.selfile, 0) 
+if ~isempty(handles.selfile)
     
-    set(handles.edit_filename, 'String', handles.selfile) ; 
+    sFileName = char(handles.selfile) ; 
+
+    if ~isempty(regexp(sFileName, 'colour', 'ONCE')) 
+
+        iHex = regexp(sFileName, '[A-F,0-9]{6}', 'ONCE') ; 
+        %   check each file has 'HHHHHH' in the name i.e. a valid hex string for colour 
+        if isempty(iHex) 
+            hError = errordlg('For a colour file, all filenames must contain a 6 character hexadecimal colour code', 'Input error', 'modal') ; 
+            uicontrol(handles.edit_filename) ; 
+            flagError = true ; 
+            return ; 
+        else 
+            iRGB = strfind(sFileName, 'colour') ; 
+            sRGB = sFileName(iRGB+6:iRGB+11) ; 
+            sColour = hexRGB(sRGB) ; 
+            handles.cstrColours = cellstr(sColour) ; 
+        end ; 
+
+    else
+
+        %   MATLAB default blue 
+        sColour = '[0, 0, 1]' ; 
+        handles.cstrColours = cellstr(sColour) ; 
+
+    end ; 
+
+    handles.iCurrentColour = 1 ; 
+
+    set(handles.edit_filename, 'String', sFileName) ; 
     set(handles.pushbutton_preview, 'Enable', 'on') ; 
-    
-    if ~isempty(strfind(handles.selfile, '.tif')) || ...
-       ~isempty(strfind(handles.selfile, '.tiff')) || ...
-       ~isempty(strfind(handles.selfile, '.jpeg')) || ...
-       ~isempty(strfind(handles.selfile, '.jpg'))  
+
+    if ~isempty(strfind(sFileName, '.tif')) || ...
+       ~isempty(strfind(sFileName, '.tiff')) || ...
+       ~isempty(strfind(sFileName, '.jpeg')) || ...
+       ~isempty(strfind(sFileName, '.jpg'))  
         set(handles.radiobutton_image, 'Value', 1) ;
+        set(handles.radiobutton_node, 'Value', 0) ;
         set(handles.edit_houghpeaks, 'Enable', 'on') ; 
         set(handles.edit_houghthreshold, 'Enable', 'on') ; 
         set(handles.edit_fillgap, 'Enable', 'on') ; 
         set(handles.edit_minlength, 'Enable', 'on') ; 
     else 
         set(handles.radiobutton_node, 'Value', 1) ;
+        set(handles.radiobutton_image, 'Value', 0) ;
         set(handles.edit_houghpeaks, 'Enable', 'off') ; 
         set(handles.edit_houghthreshold, 'Enable', 'off') ; 
         set(handles.edit_fillgap, 'Enable', 'off') ; 
         set(handles.edit_minlength, 'Enable', 'off') ; 
     end ; 
+        
+else
     
-else 
     set(handles.edit_filename, 'String', '(no file selected)') ; 
     set(handles.pushbutton_preview, 'Enable', 'off') ; 
+    
 end ; 
-
+    
 set(handles.pushbutton_flipx, 'Enable', 'off') ; 
 set(handles.pushbutton_flipy, 'Enable', 'off') ; 
 set(handles.pushbutton_run, 'Enable', 'off') ; 
@@ -620,6 +654,7 @@ cla(handles.axes_tracemap) ;
 
 flagError = false ; 
 
+%   image file validation 
 if get(handles.radiobutton_image, 'Value')
     
     sValue = get(handles.edit_houghpeaks, 'String') ; 
@@ -654,19 +689,71 @@ if get(handles.radiobutton_image, 'Value')
         return ; 
     end ; 
 
-end ; 
+%   node file validation 
+else 
+    
+    sFilename = [ char(handles.selpath), char(handles.selfile) ] ; 
+    
+    %   convert .svg file to .txt file 
+    if ~isempty(strfind(sFilename, '.svg'))  
+        
+        nConvert = convertSVG2txt_colour(sFilename) ; 
+%         disp(nConvert) ; 
+        
+        if nConvert > 0 
+            
+            %   now handle possible multiple files 
+            if nConvert > 1 
+                
+                sFilenameHead = sFilename(1:strfind(sFilename, '.svg')-1) ; 
+                infoConvertedFiles = dir([sFilenameHead, '_colour*_converted.txt']) ;
+                handles.selmultifile = { infoConvertedFiles.name } ;
+                sColour = '' ;
+                for i = 1:nConvert 
+                    
+                    sThisFileName = char(handles.selmultifile(i)) ; 
+                    iHex = regexp(sThisFileName, '[A-F,0-9]{6}', 'ONCE') ; 
+                    
+%                     disp(sThisFileName) ; 
+%                     disp(iHex) ; 
+                     
+                    %   check each file has 'HHHHHH' in the name i.e. a valid hex string for colour 
+                    if isempty(iHex) 
+                        hError = errordlg('For a colour file, all filenames must contain a 6 character hexadecimal colour code', 'Input error', 'modal') ; 
+                        uicontrol(handles.edit_filename) ; 
+                        flagError = true ; 
+                        return ; 
+                    else 
+                        iRGB = strfind(sThisFileName, 'colour') ; 
+                        sRGB = sThisFileName(iRGB+6:iRGB+11) ; 
+                        sColour = [ sColour ; hexRGB(sRGB) ]  ; 
+                    end ; 
 
-%   convert .svg file to .txt file 
-if ~isempty(strfind(handles.selfile, '.svg'))  
-    sFilename = [ handles.selpath, handles.selfile ] ; 
-    fConvert = convertSVG2txt(sFilename) ; 
-    if fConvert 
-        handles.selfile = strrep(handles.selfile, '.svg', 'converted.txt') ; 
+                end ; 
+                
+                handles.cstrColours = cellstr(sColour) ; 
+                    
+            else
+                
+                handles.selmultifile = { } ; 
+                handles.selfile = strrep(handles.selfile, '.svg', '_converted.txt') ; 
+                
+            end ; 
+            
+        else
+            
+            hError = errordlg('Error converting .svg file to .txt; check .svg file is version 1.1', 'Input error', 'modal') ; 
+            uicontrol(handles.edit_filename) ; 
+            flagError = true ; 
+            
+        end ; 
+        
     else
-        hError = errordlg('Error converting .svg file to .txt; check .svg file is version 1.1', 'Input error', 'modal') ; 
-        uicontrol(handles.edit_filename) ; 
-        flagError = true ; 
+        
+        handles.selmultifile = { } ; 
+
     end ; 
+    
 end ; 
 
 sValue = get(handles.edit_scaling, 'String') ; 
@@ -681,8 +768,10 @@ end ;
 
 if ~flagError 
 
-    sFilename = [ handles.selpath, handles.selfile ] ; 
-    
+    sFilename = [ char(handles.selpath), char(handles.selfile) ] ; 
+    %   get the current RGB colour string 
+    sColour = char(handles.cstrColours(handles.iCurrentColour)) ; 
+
     if isempty(get(handles.edit_scaling, 'String'))
         nPixels = 0 ; 
     else
@@ -697,13 +786,56 @@ if ~flagError
         dminlength = str2double(get(handles.edit_minlength, 'String')) ;
 
         set(handles.text_message, 'String', 'Running Hough transform on image...') ;  
-
         [ handles.traces, handles.xmin, handles.ymin, handles.xmax, handles.ymax ] = guiFracPaQ2Dimage(sFilename, nPixels, ...
                                                             nHoughPeaks, dHoughThreshold, dfillgap, dminlength, handles.axes_tracemap) ; 
     else
-        set(handles.text_message, 'String', 'Reading node file...') ;                                 
         
-        [ handles.traces, handles.xmin, handles.ymin, handles.xmax, handles.ymax ] = guiFracPaQ2Dlist(sFilename, nPixels, handles.axes_tracemap) ; 
+        set(handles.text_message, 'String', 'Reading node file...') ;                                 
+
+        %   allow for multiple files, one for each colour 
+        if ~isempty(handles.selmultifile)
+
+            handles.traces = struct([]) ; 
+            handles.nTraces = 0 ; 
+            handles.nSegments = 0 ; 
+            handles.nNodes = 0 ;
+            handles.xmin = 3e38 ; 
+            handles.ymin = 3e38 ; 
+            handles.xmax = -3e38 ;
+            handles.ymax = -3e38 ; 
+            hold on ; 
+            for i = 1:length(handles.selmultifile) 
+                
+                sFilename = [ char(handles.selpath), char(handles.selmultifile(i)) ] ;
+                sColour = char(handles.cstrColours(i)) ; 
+                
+                [ traces, xmin, ymin, xmax, ymax ] = guiFracPaQ2Dlist(sFilename, nPixels, handles.axes_tracemap, sColour) ; 
+                
+                handles.traces = [ handles.traces, traces ] ; 
+
+                if xmin < handles.xmin
+                    handles.xmin = xmin ; 
+                end ; 
+                if ymin < handles.ymin 
+                    handles.ymin = ymin ; 
+                end ; 
+                if xmax > handles.xmax
+                    handles.xmax = xmax ; 
+                end ; 
+                if ymax > handles.ymax 
+                    handles.ymax = ymax ; 
+                end ; 
+                
+            end ; 
+            hold off ; 
+           
+        else
+            
+            hold on ; 
+            [ handles.traces, handles.xmin, handles.ymin, handles.xmax, handles.ymax ] = guiFracPaQ2Dlist(sFilename, nPixels, handles.axes_tracemap, sColour) ; 
+            hold off ; 
+            
+        end ; 
         
     end ; 
     
@@ -719,11 +851,10 @@ if ~flagError
     handles.nSegments = sum([handles.traces(:).nSegments]) ; 
     handles.nNodes = sum([handles.traces(:).nNodes]) ; 
 
-    set(handles.label_stats, 'String', {['Min. X dimension: ', num2str(handles.xmin)], ...
-                                        ['Min. Y dimension: ', num2str(handles.ymin)], ...
-                                        ['Max. X dimension: ', num2str(handles.xmax)], ...
-                                        ['Max. Y dimension: ', num2str(handles.ymax)], ...
-                                        ' ', ...
+    set(handles.label_stats, 'String', {['Min. X coordinate: ', num2str(handles.xmin)], ...
+                                        ['Min. Y coordinate: ', num2str(handles.ymin)], ...
+                                        ['Max. X coordinate: ', num2str(handles.xmax)], ...
+                                        ['Max. Y coordinate: ', num2str(handles.ymax)], ...
                                         ['Number of traces: ', num2str(handles.nTraces)], ...
                                         ['Number of segments: ', num2str(handles.nSegments)], ...
                                         ['Number of nodes: ', num2str(handles.nNodes)]}) ;
@@ -734,6 +865,9 @@ if ~flagError
     set(handles.pushbutton_flipx, 'Enable', 'on') ; 
     set(handles.pushbutton_flipy, 'Enable', 'on') ; 
     uicontrol(handles.pushbutton_run) ; 
+    
+    % Update handles structure
+    guidata(hObject, handles);
     
 end ; 
 
@@ -801,6 +935,13 @@ if ~flagError
     xmax = getappdata(hObject, 'xMax') ; 
     ymax = getappdata(hObject, 'yMax') ; 
 
+    %   get the current RGB colour string 
+    if ~isempty(handles.selmultifile)
+        sColour = '[ 0 0 1 ]' ; 
+    else
+        sColour = char(handles.cstrColours(handles.iCurrentColour)) ; 
+    end ; 
+    
     if length(traces) > 0 
 
         %   get values from text boxes 
@@ -823,6 +964,9 @@ if ~flagError
         end ;
         
         nNorth = str2double(get(handles.edit_degfromnorth, 'String')) ;
+        nMLE_lc = str2double(get(handles.edit_lc, 'String')) ;  
+        nMLE_uc = str2double(get(handles.edit_uc, 'String')) ;  
+        
         %   get values from drop down lists 
         list = get(handles.popupmenu_histolengthbins, 'String') ; 
         nHistoLengthBins = str2double(list{get(handles.popupmenu_histolengthbins, 'Value')}) ;
@@ -847,35 +991,52 @@ if ~flagError
         flag_crossplot = get(handles.checkbox_crossplot, 'Value') ;
         flag_censor = get(handles.checkbox_censor, 'Value') ; 
         flag_mle = get(handles.checkbox_mle, 'Value') ;
+        flag_blocksize = get(handles.checkbox_blocksize, 'Value') ; 
 
         flag_histoangle = get(handles.checkbox_histoangle, 'Value') ;
         flag_roseangle = get(handles.checkbox_rose, 'Value') ;
+        flag_rosemean = get(handles.checkbox_showrosemean, 'Value') ; 
         flag_cracktensor = get(handles.checkbox_cracktensor, 'Value') ;
         flag_roselengthweighted = get(handles.checkbox_roselengthweighted, 'Value') ; 
 
         flag_triangle = get(handles.checkbox_triangle, 'Value') ;
         flag_permellipse = get(handles.checkbox_permellipse, 'Value') ;
         
+        if length(handles.cstrColours) > 1 
+            flag_multicolour = 1 ; 
+        else 
+            flag_multicolour = 0 ; 
+        end ;
+
         if flag_tracemap 
-            guiFracPaQ2Dtracemap(traces, nPixels, xmin, ymin, xmax, ymax, flag_shownodes, flag_reverseY, flag_reverseX) ; 
+            guiFracPaQ2Dtracemap(traces, nPixels, nNorth, xmin, ymin, xmax, ymax, ...
+                    flag_shownodes, flag_reverseY, flag_reverseX, sColour, flag_multicolour) ; 
+            %   temporary code for testing new wavelet process; will
+            %   eventually hang this off a new button...
+%             a = [2, 8, 32] ;
+%             L = [1/2, 1/8, 1/32] ; 
+%             nTheta = 18 ; 
+%             fMorlet = 1 ; 
+%             guiFracPaQ2Dwavelet(traces, xmin, ymin, xmax, ymax, a, L, nTheta, fMorlet, sColour) ; 
         end ; 
 
-        flag_length = sum([flag_histolength, flag_logloglength]) ; 
+        flag_length = sum([flag_histolength, flag_logloglength, flag_blocksize]) ; 
         if flag_length
-            guiFracPaQ2Dlength_new(traces, nPixels, nNorth, xmax, ymax, nHistoLengthBins, ...
-                                    flag_histolength, flag_logloglength, flag_crossplot, flag_mle, flag_censor) ; 
+            guiFracPaQ2Dlength(traces, nPixels, nNorth, xmin, ymin, xmax, ymax, nHistoLengthBins, ...
+                                    flag_histolength, flag_logloglength, flag_crossplot, flag_mle, flag_censor, ...
+                                    flag_blocksize, flag_reverseY, flag_reverseX, sColour, nMLE_lc, nMLE_uc) ; 
         end ; 
 
         flag_angle = sum([flag_histoangle, flag_roseangle, flag_cracktensor]) ; 
         if flag_angle
             guiFracPaQ2Dangle(traces, nNorth, xmax, ymax, nHistoAngleBins, nRoseBins, ...
-                                    flag_histoangle, flag_roseangle, flag_reverseY, flag_reverseX, flag_cracktensor, flag_roselengthweighted) ; 
+                                    flag_histoangle, flag_roseangle, flag_reverseY, flag_reverseX, flag_cracktensor, flag_roselengthweighted, flag_rosemean, sColour) ; 
         end ; 
 
         flag_pattern = sum([flag_intensitymap, flag_densitymap, flag_triangle]) ; 
         if flag_pattern
             guiFracPaQ2Dpattern(traces, nPixels, xmin, ymin, xmax, ymax, ...
-                                    flag_intensitymap, flag_densitymap, flag_triangle, flag_showcircles, nCircles, flag_reverseY, flag_reverseX) ; 
+                                    flag_intensitymap, flag_densitymap, flag_triangle, flag_showcircles, nCircles, flag_reverseY, flag_reverseX, sColour) ; 
         end ; 
 
         if flag_permellipse
@@ -892,17 +1053,15 @@ if ~flagError
             guiFracPaQ2Dtensor(traces, xmin, ymin, xmax, ymax, nNorth, nLambda, ...
                                     flag_reverseY, flag_reverseX, ...
                                         nFixedAperture, nApertureFactor, nApertureExponent, ...
-                                            nPixels) ; 
+                                            nPixels, sColour) ; 
         end ; 
 
         set(handles.text_message, 'String', 'All done. Check current folder for plot figure .tif files.') ;   
-        
         uicontrol(handles.pushbutton_run) ; 
 
     else 
         
         errordlg('No traces found; check the input file is OK.') ; 
-        
         uicontrol(handles.pushbutton_browse) ; 
 
     end ; 
@@ -1209,6 +1368,77 @@ function edit_fixedaperture_Callback(hObject, eventdata, handles)
 % --- Executes during object creation, after setting all properties.
 function edit_fixedaperture_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to edit_fixedaperture (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushbutton_wavelet.
+function pushbutton_wavelet_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_wavelet (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in checkbox_showrosemean.
+function checkbox_showrosemean_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_showrosemean (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_showrosemean
+
+
+% --- Executes on button press in checkbox_blocksize.
+function checkbox_blocksize_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_blocksize (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_blocksize
+
+
+
+function edit_lc_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_lc (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_lc as text
+%        str2double(get(hObject,'String')) returns contents of edit_lc as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_lc_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_lc (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit_uc_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_uc (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_uc as text
+%        str2double(get(hObject,'String')) returns contents of edit_uc as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_uc_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_uc (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 

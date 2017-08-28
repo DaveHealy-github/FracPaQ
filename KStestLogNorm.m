@@ -73,6 +73,4 @@ nym=numel(nym);
 
 HpercentLN = (nym/rep)*100;
 
-    
-    
-    
+end 

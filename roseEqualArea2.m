@@ -1,4 +1,4 @@
-function roseEqualArea(roseAngles, delta, azimuth, roseLengths, fRosemean, sColour) 
+function roseEqualArea(roseAngles, delta, azimuth, roseLengths, sColour) 
 %   equal area rose diagram of trace segment angles
 %
 %   arguments:
@@ -31,16 +31,14 @@ function roseEqualArea(roseAngles, delta, azimuth, roseLengths, fRosemean, sColo
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-if fRosemean 
-    %   calculate circular statistics: mean and std dev 
-    [ roseMean, roseStddev, roseResultant ] = circStat(roseAngles) ; 
+%   calculate circular statistics: mean and std dev 
+[ roseMean, roseStddev, roseResultant ] = circStat(roseAngles) ; 
 
-    disp(' ') ; 
-    disp('Circular statistics:') ; 
-    disp(['Circular mean (degrees from North): ', num2str(roseMean)]) ; 
-    disp(['Circular standard deviation (degrees): ', num2str(roseStddev)]) ; 
-    disp(['Resultant: ', num2str(roseResultant)]) ; 
-end ; 
+disp(' ') ; 
+disp('Circular statistics:') ; 
+disp(['Circular mean (degrees from North): ', num2str(roseMean)]) ; 
+disp(['Circular standard deviation (degrees): ', num2str(roseStddev)]) ; 
+disp(['Resultant: ', num2str(roseResultant)]) ; 
 
 %   initialise 
 rinc = 0.0005 ; 
@@ -106,11 +104,18 @@ roseContours = [ max(x1Percent), max(x5Percent), max(x10Percent), max(x25Percent
 
 lim = roseContours(find(roseContours > lim, 1)) ; 
 
+segmentColours = [ hsv((180/delta)+1); flipud(hsv(180/delta)) ] ; 
+disp(size(segmentColours)) ; 
+disp(binAngles2) ; 
+disp(rAnglesPercent) ; 
+
 hold on ; 
-for i = 0:delta:binAngles
+for i = 1:max(size(binAngles))-1
+    [ xRoseAreaThis, yRoseAreaThis ] = pol2cart((pi/2 - binAngles2(i)*pi/180), rAnglesPercent(i)) ; 
     %   clumsy workaround to ?bug in fill() which won't allow FaceColor from a string 
-    h = fill(xRoseArea, yRoseArea, 'r', 'EdgeColor', sColour) ; 
-    set(h, 'FaceColor', sColour) ;
+    disp(segmentColours(i, :)) ; 
+    h = fill(xRoseAreaThis, yRoseAreaThis, 'r', 'EdgeColor', segmentColours(i,:)) ; 
+    set(h, 'FaceColor', segmentColours(i,:)) ;
 end ; 
 plot(x1Percent, y1Percent, '-k', x1Percent, -y1Percent, '-k', 'LineWidth', 0.5) ;
 plot(x5Percent, y5Percent, '-k', x5Percent, -y5Percent, '-k', 'LineWidth', 0.5) ;
@@ -119,10 +124,10 @@ plot(x25Percent, y25Percent, '-k', x25Percent, -y25Percent, '-k', 'LineWidth', 0
 plot(x50Percent, y50Percent, '-k', x50Percent, -y50Percent, '-k', 'LineWidth', 0.5) ;
 plot([-r50Percent*1.1, r50Percent*1.1], [0, 0], '-k', 'LineWidth', 0.5) ; 
 plot([0, 0], [-r50Percent*1.1, r50Percent*1.1], '-k', 'LineWidth', 0.5) ; 
-if fRosemean
-    plot([lim*sind(roseMean), -lim*sind(roseMean)], ...
-         [lim*cosd(roseMean), -lim*cosd(roseMean)], '-r', 'LineWidth', 1) ; 
-end ; 
+% plot([r50Percent*sind(roseMean), -r50Percent*sind(roseMean)], ...
+%      [r50Percent*cosd(roseMean), -r50Percent*cosd(roseMean)], '-r', 'LineWidth', 1) ; 
+plot([lim*sind(roseMean), -lim*sind(roseMean)], ...
+     [lim*cosd(roseMean), -lim*cosd(roseMean)], '-r', 'LineWidth', 1) ; 
 hold off ; 
 
 axis equal off ;

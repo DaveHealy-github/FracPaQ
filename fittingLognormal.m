@@ -1,4 +1,4 @@
-function [mu,sigma,xmin3,z4,HpercentLN,PpercentLN]=fittingLognormal(x,uc,lc)
+function [mu,sigma,xmin3,y,z4,HpercentLN,PpercentLN]=fittingLognormal(x,uc,lc,sCol)
 
 %% [mu,sigma,xmin3,HpercentLN,PpercentLN]=fittingLognormal(x)
 % Author: Roberto Emanuele Rizzo (rerizzo@abdn.ac.uk)
@@ -61,22 +61,26 @@ function [mu,sigma,xmin3,z4,HpercentLN,PpercentLN]=fittingLognormal(x,uc,lc)
 
 if exist('uc','var')==0 || uc==0
     uppercut=1;
-else uppercut=ceil(uc*length(x)/100);
-end
+else
+    uppercut=ceil(uc*length(x)/100);
+end ; 
 
 if exist('lc','var')==0 || lc==0
     lowercut=0;
-else lowercut=ceil(lc*length(x)/100);
-end
+else
+    lowercut=ceil(lc*length(x)/100);
+end ; 
 
 
 %% Estimate 'xmin', 'mu', 'sigma'
 
 % Reshape the input vector, making sure that 'x' is a one column vector
 x = reshape(x,numel(x),1);
+x=sort(x);
+y=x(uppercut:(end-lowercut));
 
 % Avoid repetitions searching all over unique values of the data set
-xmins=unique(x);
+xmins=unique(y);
 
 dat3=zeros(size(xmins));
 
@@ -128,9 +132,11 @@ disp(['Probability of lengths being Log-Normal distributed: ', num2str(PpercentL
 
 % Call the function which plots the sorted empirical data and the
 % theoretical curve obtained using the MLE for 'xmin', 'mu', 'sigma'
-[c3,cn3]=PlotLogNorm(x,z4,mu,sigma,xmin3);
+[c3,cn3]=PlotLogNorm(x,y,z4,mu,sigma,xmin3,sCol);
 
 disp(' ') ; 
 disp('Log-Normal statistical parameters...') ;
 disp(['mu: ', num2str(mu)]) ; 
 disp(['sigma: ', num2str(sigma)]) ;
+
+end 

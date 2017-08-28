@@ -1,4 +1,4 @@
-function roseLinear(roseAngles, delta, azimuth, roseLengths) 
+function roseLinear(roseAngles, delta, azimuth, roseLengths, sColour) 
 %   linear rose diagram of trace segment angles
 %
 %   arguments:
@@ -80,18 +80,14 @@ limX = max(xRoseArea) ;
 limY = max(yRoseArea) ;
 lim = max(limX, limY) ; 
 
-% disp(lim) ; 
-% disp(max(xRoseArea)) ; 
-% disp(max(yRoseArea)) ; 
-% disp(max(x10Percent)) ; 
-% disp(max(y10Percent)) ; 
-
-hold on ; 
-fill(xRoseArea, yRoseArea, 'b', 'EdgeColor', 'b') ; 
-hold off ; 
+%   clumsy workaround to ?bug in fill() which won't allow FaceColor from a string 
+h = fill(xRoseArea, yRoseArea, 'r', 'EdgeColor', sColour) ; 
+set(h, 'FaceColor', sColour) ; 
 
 axis equal off ;
 view(azimuth, 90) ; 
 xlim([ -lim lim ]) ; 
 ylim([ -lim lim ]) ; 
 box off ; 
+
+end 

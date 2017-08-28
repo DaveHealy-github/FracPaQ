@@ -1,4 +1,4 @@
-function [alpha,xmin,z,HpercentPL,PpercentPL]=fittingPL(x,uc,lc,finite)
+function [alpha,xmin,y,z,HpercentPL,PpercentPL]=fittingPL(x,uc,lc,sCol,finite)
 
 %% [alpha,xmin,z,HpercentPL,PpercentPL]=fittingPL(x)
 % Author: Roberto Emanuele Rizzo (rerizzo@abdn.ac.uk)
@@ -144,11 +144,11 @@ disp(['Probability of lengths being Power law distributed: ', num2str(PpercentPL
 % Call the function which plots the sorted empirical data and the
 % theoretical curve obtained using the MLE for 'alpha' and 'xmin'
 
-[c,cn]=PlotPowerLaw(x,z,xmin,alpha);
+[c,cn]=PlotPowerLaw(x,y,z,xmin,alpha,sCol);
 
 disp(' ') ; 
 disp('Power law statistical parameters...') ;
 disp(['alpha: ', num2str(alpha)]) ; 
 disp(['x_min: ', num2str(xmin)]) ;
 
-
+end 

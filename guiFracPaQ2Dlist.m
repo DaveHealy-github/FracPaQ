@@ -1,4 +1,4 @@
-function [ traces, xMin, yMin, xMax, yMax ] = guiFracPaQ2Dlist(fnList, numPixelsPerMetre, ax)
+function [ traces, xMin, yMin, xMax, yMax ] = guiFracPaQ2Dlist(fnList, numPixelsPerMetre, ax, sColour)
 %   guiFracPaQ2Dlist.m 
 %       returns traces from supplied file of end points  
 %       
@@ -63,6 +63,9 @@ for i = 1:nTraces
             traces(i).Node(j).y = pointY ; 
             traces(i).maxCols = k + 1 ; 
             
+            %   add colour attribute for multicolour input files 
+            traces(i).Colour = sColour ; 
+            
             k = k + 2 ; 
             
             if pointX < xMin 
@@ -82,10 +85,21 @@ for i = 1:nTraces
             
             if j > 1 
                 
-                s = s + 1 ; 
+                %   check for duplicate points, e.g. from mistaken double
+                %   click in Adobe or Corel when building .SVG file
+                if pointX == traces(i).Node(j-1).x && ...  
+                   pointY == traces(i).Node(j-1).y
+                   
+                   continue ; 
+                   
+                else 
+                    
+                    s = s + 1 ; 
                 
-                traces(i).Segment(s).Point1 = [ traces(i).Node(j-1).x, traces(i).Node(j-1).y ] ;
-                traces(i).Segment(s).Point2 = [ pointX, pointY ] ;
+                    traces(i).Segment(s).Point1 = [ traces(i).Node(j-1).x, traces(i).Node(j-1).y ] ;
+                    traces(i).Segment(s).Point2 = [ pointX, pointY ] ;
+                    
+                end ; 
                 
             end ; 
             
@@ -106,10 +120,10 @@ nSegments = sum([traces(:).nSegments]) ;
 nNodes = sum([traces(:).nNodes]) ; 
 close(hWait) ;
 
-hold on ; 
+% hold on ; 
 for k = 1:nTraces
     
-    plot(ax, [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 0.75, 'Color', 'blue') ;
+    plot(ax, [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 0.75, 'Color', sColour) ;
 
     node1index = 1 ; 
     
@@ -204,7 +218,7 @@ for k = 1:nTraces
     end ; 
     
 end ; 
-hold off ; 
+% hold off ; 
 axis on equal ; 
 box on ; 
 xlim([xMin xMax]) ; 
@@ -216,3 +230,5 @@ else
     xlabel('X, pixels') ; 
     ylabel('Y, pixels') ; 
 end ;
+
+end  

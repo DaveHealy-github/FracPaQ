@@ -1,4 +1,4 @@
-function guiFracPaQ2Dtensor(traces, xMin, yMin, xMax, yMax, northCorrection, nLambda, flag_revY, flag_revX, nAperture, nApertureFactor, nApertureExponent, nPixels) 
+function guiFracPaQ2Dtensor(traces, xMin, yMin, xMax, yMax, northCorrection, nLambda, flag_revY, flag_revX, nAperture, nApertureFactor, nApertureExponent, nPixels, sColour) 
 %   guiFracPaQ2Dtensor.m
 %
 %   Dave Healy
@@ -27,12 +27,8 @@ function guiFracPaQ2Dtensor(traces, xMin, yMin, xMax, yMax, northCorrection, nLa
 
 %   trace segment angles are measured from Y-axis, clockwise is positive 
 traceAngles = [ traces.segmentAngle ]' ; 
-traceAngles = round(traceAngles - northCorrection) ; 
-
 traceLengths = [ traces.segmentLength ] ;
 nTraces = length(traces) ; 
-
-traceAngles = traceAngles ; 
 
 if flag_revX 
     traceAngles = 180 - traceAngles ; 
@@ -49,6 +45,7 @@ N12 = 0 ;
 
 %   we need the poles to the traces, so add 90 degrees
 traceAnglesPoles = traceAngles + 90 ; 
+traceAnglesPoles(isnan(traceAnglesPoles)) = 0 ; 
 
 %   calculate N11, N22 and N12 
 for i = 1:nSegments  
@@ -112,14 +109,14 @@ k2 = eigVal(1,1) ;
 thetatrace = acos(eigVec(2,2)) * 180 / pi ; 
 kratio = k1 / k2 ; 
 if flag_revX 
-    kazimuth = thetatrace ; 
+    kazimuth = thetatrace - northCorrection ; 
 else
-    kazimuth = 180 - thetatrace ; 
+    kazimuth = 180 - thetatrace - northCorrection ; 
 end ; 
 if flag_revY 
-    kazimuth = thetatrace ; 
+    kazimuth = thetatrace - northCorrection ; 
 else
-    kazimuth = 180 - thetatrace ; 
+    kazimuth = 180 - thetatrace - northCorrection ; 
 end ; 
 
 disp(' ') ; 
@@ -159,7 +156,7 @@ set(gcf, 'PaperPositionMode', 'manual') ;
 set(gcf, 'PaperUnits', 'inches') ; 
 set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
-plotEllipse(ek1, ek2, kazimuth) ; 
+plotEllipse(ek1, ek2, kazimuth, sColour) ; 
 
 title({['Permeability in direction of flow, k_1:k_2=', ...
             num2str(round(kratio), '%i'), ':1, ', ...
@@ -178,7 +175,7 @@ set(gcf, 'PaperPositionMode', 'manual') ;
 set(gcf, 'PaperUnits', 'inches') ; 
 set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
-plotEllipse(ek1, ek2, kazimuth) ; 
+plotEllipse(ek1, ek2, kazimuth, sColour) ; 
 
 title({['Permeability in direction of gradient, k_1:k_2=', ...
             num2str(round(kratio), '%i'), ':1, ', ...
@@ -186,3 +183,5 @@ title({['Permeability in direction of gradient, k_1:k_2=', ...
 
 %   save to file 
 guiPrint(f, 'FracPaQ2D_permtensor_gradient') ; 
+
+end 
