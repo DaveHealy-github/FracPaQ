@@ -688,6 +688,8 @@ if get(handles.radiobutton_image, 'Value')
         flagError = true ; 
         return ; 
     end ; 
+    
+    handles.selmultifile = { } ; 
 
 %   node file validation 
 else 
