@@ -181,24 +181,25 @@ xlabel('X, pixels') ;
 ylabel('Y, pixels') ; 
 
 %   show 3D surface of H to visualise peaks - helps selection of threshold 
-scrsz = get(0,'ScreenSize') ;
-%f = figure('OuterPosition',[1 scrsz(4)/2 scrsz(3)/2 scrsz(4)/2]) ; 
 f = figure ; 
 set(gcf, 'PaperPositionMode', 'manual') ; 
 set(gcf, 'PaperUnits', 'inches') ; 
-set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
+set(gcf, 'PaperPosition', [ 0.25 0.25 9 9 ]) ; 
 
-[ newX, newY ] = meshgrid(-90:houghThetaRes:(90-houghThetaRes), ...
-                    -(round(norm(size(BW)))-1):houghRhoRes:(round(norm(size(BW)))-1)) ; 
+if xMax > yMax
+    [ newX, newY ] = meshgrid(-90:houghThetaRes:(90-houghThetaRes), ...
+                        -(round(norm(size(BW)))):houghRhoRes:(round(norm(size(BW))))) ; 
+else
+    [ newX, newY ] = meshgrid(-90:houghThetaRes:(90-houghThetaRes), ...
+                        -(round(norm(size(BW)))-1):houghRhoRes:(round(norm(size(BW)))-1)) ; 
+end ; 
 
 Hthreshold = zeros(size(H)) ; 
-Hthresholdlog10 = zeros(size(H)) ; 
 Hthreshold(:,:) = peakThreshold ; 
-Hthresholdlog10(:,:) = log10(peakThreshold) ; 
 
 subplot(2, 2, 1) ; 
 imshow(Iin) ; 
-title('Binary image') ; 
+title({'Raw binary image';''}) ; 
 axis on equal ; 
 box on ; 
 set(gca,'YDir','normal') ; 
@@ -206,16 +207,7 @@ xlim([0 xMax]) ;
 ylim([0 yMax]) ; 
 xlabel('X, pixels') ; 
 ylabel('Y, pixels') ; 
-
-% mesh(newX, newY, H) ; 
-% axis tight on square ; 
-% box on ; 
-% set(gca,'YDir', 'reverse') ; 
-% title('Hough peaks, 3D') ; 
-% xlabel('\theta, degrees') ; 
-% ylabel('\rho, pixels') ;
-% zlabel('H') ; 
-% colormap(hot) ; 
+colormap(bone) ; 
 
 subplot(2, 2, 2) ; 
 hold on ; 
@@ -225,25 +217,11 @@ hold off ;
 axis tight on square ; 
 box on ; 
 view(090, 0) ; 
-title('Hough peaks, side') ; 
+title({'Hough peaks, side view';''}) ; 
 xlabel('\theta, degrees') ; 
 ylabel('\rho, pixels') ;
 zlabel('H') ; 
 colormap(hot) ; 
-
-% subplot(2, 2, 3) ; 
-% hold on ; 
-% mesh(newX, newY, log10(H)) ; 
-% surf(newX, newY, Hthresholdlog10) ; 
-% hold off ; 
-% axis tight on square ; 
-% box on ; 
-% view(090, 0) ; 
-% title('Hough peaks, side') ; 
-% xlabel('\theta, degrees') ; 
-% ylabel('\rho, pixels') ;
-% zlabel('log_{10} H') ; 
-% colormap(hot) ; 
 
 subplot(2, 2, 3) ; 
 mesh(newX, newY, H) ; 
@@ -253,7 +231,7 @@ view(0, 90) ;
 xlabel('\theta, degrees') ; 
 ylabel('\rho, pixels') ; 
 set(gca,'YDir', 'reverse') ; 
-title('Hough peaks, plan') ;
+title({'Hough peaks, plan view';''}) ;
 colormap(hot) ; 
 
 subplot(2, 2, 4) ; 
@@ -263,27 +241,13 @@ surf(newX, newY, Hthreshold) ;
 axis tight on square ; 
 box on ; 
 view(0, 0) ; 
-title('Hough peaks, side') ; 
+title({'Hough peaks, side view';''}) ; 
 xlabel('\theta, degrees') ; 
 ylabel('\rho, pixels') ;
 zlabel('H') ; 
 colormap(hot) ; 
-% 
-% subplot(2, 3, 6) ; 
-% hold on ; 
-% mesh(newX, newY, log10(H)) ; 
-% surf(newX, newY, Hthresholdlog10) ; 
-% hold off ; 
-% axis tight on square ; 
-% box on ; 
-% view(0, 0) ; 
-% title('Hough peaks, side') ; 
-% xlabel('\theta, degrees') ; 
-% ylabel('\rho, pixels') ;
-% zlabel('log_{10} H') ; 
-% colormap(hot) ; 
 
 %   save to file 
-%print(f, '-djpeg', '-r300', 'FracPaQ2Dhough.jpeg') ; 
+guiPrint(f, 'FracPaQ2D_Houghstuff') ; 
 
 end 

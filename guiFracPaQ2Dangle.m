@@ -1,5 +1,6 @@
 function guiFracPaQ2Dangle(traces, northCorrection, xMax, yMax, nHistoBins, nRoseBins, ...
-                flag_histoangle, flag_roseangle, flag_revY, flag_revX, flag_cracktensor, flag_roselengthweighted, flag_rosemean, sColour)
+                flag_histoangle, flag_roseangle, flag_revY, flag_revX, flag_cracktensor, ...
+                flag_roselengthweighted, flag_rosemean, flag_rosecolour, sColour)
 %   guiFracPaQ2Dangle.m 
 %       calculates and plots statistics of trace segment angles  
 %       
@@ -84,8 +85,11 @@ if flag_roseangle
     end ; 
     
     if flag_equalarea 
-%         rosePlot(traceAngles2, 360/nRoseBins, 1, 1) ; 
-        roseEqualArea(traceAngles2, nRoseBins, 0, traceLengths2, flag_rosemean, sColour) ; 
+        if flag_rosecolour
+            roseEqualAreaColour(traceAngles2, nRoseBins, 0, traceLengths2, flag_rosemean, sColour) ; 
+        else
+            roseEqualArea(traceAngles2, nRoseBins, 0, traceLengths2, flag_rosemean, sColour) ; 
+        end ; 
         if flag_roselengthweighted 
             title({['Segment angles (equal area, length weighted), n=', num2str(length(traceLengths))];''}) ; 
         else
@@ -94,7 +98,6 @@ if flag_roseangle
         %   save to file 
         guiPrint(f, 'FracPaQ2D_roseangleEqArea') ; 
     else
-%         rosePlot(traceAngles2, 360/nRoseBins, 1, 0) ; 
         roseLinear(traceAngles2, nRoseBins, 0, traceLengths2, flag_rosemean, sColour) ; 
         if flag_roselengthweighted 
             title({['Segment angles (linear, length weighted), n=', num2str(length(traceLengths))];''}) ; 

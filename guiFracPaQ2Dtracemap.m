@@ -1,4 +1,6 @@
-function guiFracPaQ2Dtracemap(traces, nPixelsPerMetre, nNorth, xMin, yMin, xMax, yMax, flag_shownodes, flag_revY, flag_revX, sColour, fMulticolour) 
+function guiFracPaQ2Dtracemap(traces, nPixelsPerMetre, nNorth, xMin, yMin, xMax, yMax, ...
+                flag_shownodes, flag_revY, flag_revX, sColour, ...
+                fMulticolour) 
 %   guiFracPaQ2Dtracemap.m 
 %       calculates and plots statistics of line trace segment lengths  
 %       
@@ -139,21 +141,20 @@ set(gcf, 'PaperPositionMode', 'manual') ;
 set(gcf, 'PaperUnits', 'inches') ; 
 set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
-traceLengths = round([ traces.totalLength ]) + 1 ; 
-traceColourMap = newCM(0, max(traceLengths)) ; 
+maxtraceLength = max([traces.totalLength]) ; 
+traceColourMap = cmocean('haline') ; 
 colormap(traceColourMap);
 
 hold on ; 
 for k = 1:nTraces
-    if traces(k).totalLength < 1 
-        iC = 1 ; 
-    else 
-        iC = round(traces(k).totalLength) ; 
-    end ;
+    iC = round( ( traces(k).totalLength / maxtraceLength ) * 256 ) ; 
+    if iC < 1 
+       iC = 1 ; 
+    end ; 
     plot( [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 0.75, 'color', traceColourMap(iC,:) ) ;
 end ; 
 hold off ;
-caxis([0 max(traceLengths)]) ; 
+caxis([0 maxtraceLength]) ; 
 c = colorbar('southoutside') ; 
 axis on equal ; 
 box on ; 
@@ -185,17 +186,16 @@ set(gcf, 'PaperPositionMode', 'manual') ;
 set(gcf, 'PaperUnits', 'inches') ; 
 set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
-segmentLengths = round([ traces.segmentLength ]) + 1 ; 
-segmentColourMap = newCM(0, max(segmentLengths)) ; 
+maxsegmentLength = max([traces.segmentLength]) ; 
+segmentColourMap = cmocean('haline') ; 
 colormap(segmentColourMap);
 
 hold on ; 
 for k = 1:nTraces
     for l = 1:traces(k).nSegments
-        if traces(k).segmentLength(l) < 1 
+        iC = round( ( traces(k).segmentLength(l) / maxsegmentLength ) * 256 ) ; 
+        if iC < 1 
             iC = 1 ; 
-        else 
-            iC = round(traces(k).segmentLength(l)) ; 
         end ; 
         plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
               [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
@@ -203,7 +203,7 @@ for k = 1:nTraces
     end ; 
 end ; 
 hold off ;
-caxis([0 max(segmentLengths)]) ; 
+caxis([0 maxsegmentLength]) ; 
 c = colorbar('southoutside') ; 
 axis on equal ; 
 box on ; 

@@ -191,3 +191,4 @@ legend('0^{th}', '2^{nd}', '4^{th}', '8^{th}', 'Location', 'southoutside', 'Orie
 
 guiPrint(f, 'FracPaQ2D_cracktensor') ; 
 
+end 

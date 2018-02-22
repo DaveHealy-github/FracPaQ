@@ -43,7 +43,7 @@ function varargout = guiFracPaQ2D(varargin)
 
 % Edit the above text to modify the response to help guiFracPaQ2D
 
-% Last Modified by GUIDE v2.5 04-Jul-2017 13:54:50
+% Last Modified by GUIDE v2.5 18-Jan-2018 20:55:50
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -97,8 +97,8 @@ set(handles.popupmenu_histolengthbins,'Value',2) ;
 set(handles.popupmenu_histoanglebins,'Value',2) ;
 set(handles.popupmenu_rosebins,'Value',2) ;
 
-handles.FracPaQversion = '2.0' ; 
-disp(['FracPaQ version: ', handles.FracPaQversion]) ; 
+handles.FracPaQversion = '2.2' ; 
+disp(['FracPaQ version ', handles.FracPaQversion]) ; 
 % Update handles structure
 guidata(hObject, handles);
 
@@ -256,6 +256,10 @@ else
     set(handles.checkbox_mle, 'Enable', 'off') ; 
     set(handles.checkbox_censor, 'Value', 0) ; 
     set(handles.checkbox_mle, 'Value', 0) ; 
+    set(handles.edit_lc, 'Enable', 'off') ; 
+    set(handles.edit_uc, 'Enable', 'off') ; 
+    set(handles.label_lc, 'Enable', 'off') ; 
+    set(handles.label_uc, 'Enable', 'off') ; 
 end ; 
 
 % --- Executes on button press in checkbox_mle.
@@ -275,7 +279,6 @@ else
     set(handles.edit_uc, 'Enable', 'off') ; 
     set(handles.label_lc, 'Enable', 'off') ; 
     set(handles.label_uc, 'Enable', 'off') ; 
-
 end ; 
 
 % --- Executes on button press in checkbox_histoangle.
@@ -307,12 +310,19 @@ if get(hObject, 'Value')
     set(handles.edit_degfromnorth, 'Enable', 'on') ; 
     set(handles.label_degfromnorth, 'Enable', 'on') ; 
     set(handles.checkbox_roselengthweighted, 'Enable', 'on') ; 
+    set(handles.checkbox_showrosemean, 'Enable', 'on') ; 
+    set(handles.checkbox_rosecolour, 'Enable', 'on') ; 
 else 
     set(handles.text_rosebins, 'Enable', 'off') ; 
     set(handles.popupmenu_rosebins, 'Enable', 'off') ; 
     set(handles.edit_degfromnorth, 'Enable', 'off') ; 
     set(handles.label_degfromnorth, 'Enable', 'off') ; 
     set(handles.checkbox_roselengthweighted, 'Enable', 'off') ; 
+    set(handles.checkbox_showrosemean, 'Enable', 'off') ; 
+    set(handles.checkbox_rosecolour, 'Enable', 'off') ; 
+    set(handles.checkbox_roselengthweighted, 'Value', false) ; 
+    set(handles.checkbox_showrosemean, 'Value', false) ; 
+    set(handles.checkbox_rosecolour, 'Value', false) ; 
 end ; 
 
 
@@ -582,7 +592,6 @@ if ~isempty(handles.selfile)
     sFileName = char(handles.selfile) ; 
 
     if ~isempty(regexp(sFileName, 'colour', 'ONCE')) 
-
         iHex = regexp(sFileName, '[A-F,0-9]{6}', 'ONCE') ; 
         %   check each file has 'HHHHHH' in the name i.e. a valid hex string for colour 
         if isempty(iHex) 
@@ -598,11 +607,9 @@ if ~isempty(handles.selfile)
         end ; 
 
     else
-
         %   MATLAB default blue 
         sColour = '[0, 0, 1]' ; 
         handles.cstrColours = cellstr(sColour) ; 
-
     end ; 
 
     handles.iCurrentColour = 1 ; 
@@ -610,10 +617,10 @@ if ~isempty(handles.selfile)
     set(handles.edit_filename, 'String', sFileName) ; 
     set(handles.pushbutton_preview, 'Enable', 'on') ; 
 
-    if ~isempty(strfind(sFileName, '.tif')) || ...
-       ~isempty(strfind(sFileName, '.tiff')) || ...
-       ~isempty(strfind(sFileName, '.jpeg')) || ...
-       ~isempty(strfind(sFileName, '.jpg'))  
+    if ~isempty(strfind(upper(sFileName), '.TIF')) || ...
+       ~isempty(strfind(upper(sFileName), '.TIFF')) || ...
+       ~isempty(strfind(upper(sFileName), '.JPEG')) || ...
+       ~isempty(strfind(upper(sFileName), '.JPG'))  
         set(handles.radiobutton_image, 'Value', 1) ;
         set(handles.radiobutton_node, 'Value', 0) ;
         set(handles.edit_houghpeaks, 'Enable', 'on') ; 
@@ -689,6 +696,17 @@ if get(handles.radiobutton_image, 'Value')
         return ; 
     end ; 
     
+    Iinfo = imfinfo(get(handles.edit_filename, 'String')) ; 
+    if Iinfo.BitDepth ~= 8 || ~strcmp('grayscale', Iinfo.ColorType)
+        disp('Image file format error - check BitDepth (8) and ColorType(''grayscale'')') ; 
+        disp(Iinfo) ; 
+        hError = errordlg({'Selected image file is not 8-bit & grayscale';'Check Command Window for file info, BitDepth and ColorType'}, ... 
+                                'Input error', 'modal') ; 
+        uicontrol(handles.edit_filename) ; 
+        flagError = true ; 
+        return ; 
+    end ; 
+
     handles.selmultifile = { } ; 
 
 %   node file validation 
@@ -994,12 +1012,15 @@ if ~flagError
         flag_censor = get(handles.checkbox_censor, 'Value') ; 
         flag_mle = get(handles.checkbox_mle, 'Value') ;
         flag_blocksize = get(handles.checkbox_blocksize, 'Value') ; 
+        flag_seglenvario = get(handles.checkbox_seglenvariogram, 'Value') ; 
 
         flag_histoangle = get(handles.checkbox_histoangle, 'Value') ;
         flag_roseangle = get(handles.checkbox_rose, 'Value') ;
         flag_rosemean = get(handles.checkbox_showrosemean, 'Value') ; 
-        flag_cracktensor = get(handles.checkbox_cracktensor, 'Value') ;
         flag_roselengthweighted = get(handles.checkbox_roselengthweighted, 'Value') ; 
+        flag_rosecolour = get(handles.checkbox_rosecolour, 'Value') ; 
+        
+        flag_cracktensor = get(handles.checkbox_cracktensor, 'Value') ;
 
         flag_triangle = get(handles.checkbox_triangle, 'Value') ;
         flag_permellipse = get(handles.checkbox_permellipse, 'Value') ;
@@ -1011,28 +1032,29 @@ if ~flagError
         end ;
 
         if flag_tracemap 
-            guiFracPaQ2Dtracemap(traces, nPixels, nNorth, xmin, ymin, xmax, ymax, ...
-                    flag_shownodes, flag_reverseY, flag_reverseX, sColour, flag_multicolour) ; 
-            %   temporary code for testing new wavelet process; will
-            %   eventually hang this off a new button...
-%             a = [2, 8, 32] ;
-%             L = [1/2, 1/8, 1/32] ; 
-%             nTheta = 18 ; 
-%             fMorlet = 1 ; 
-%             guiFracPaQ2Dwavelet(traces, xmin, ymin, xmax, ymax, a, L, nTheta, fMorlet, sColour) ; 
+            guiFracPaQ2Dtracemap(traces, nPixels, nNorth, ...
+                    xmin, ymin, xmax, ymax, ...
+                    flag_shownodes, flag_reverseY, flag_reverseX, sColour, ...
+                    flag_multicolour) ; 
         end ; 
 
-        flag_length = sum([flag_histolength, flag_logloglength, flag_blocksize]) ; 
+        flag_length = sum([flag_histolength, flag_logloglength, flag_blocksize, flag_seglenvario]) ; 
         if flag_length
-            guiFracPaQ2Dlength(traces, nPixels, nNorth, xmin, ymin, xmax, ymax, nHistoLengthBins, ...
-                                    flag_histolength, flag_logloglength, flag_crossplot, flag_mle, flag_censor, ...
-                                    flag_blocksize, flag_reverseY, flag_reverseX, sColour, nMLE_lc, nMLE_uc) ; 
+            guiFracPaQ2Dlength(traces, nPixels, nNorth, xmin, ymin, xmax, ymax, ...
+                               nHistoLengthBins, flag_histolength, flag_logloglength, ...
+                               flag_crossplot, flag_mle, flag_censor, ...
+                               flag_blocksize, flag_reverseY, flag_reverseX, ...
+                               sColour, nMLE_lc, nMLE_uc, flag_seglenvario) ; 
         end ; 
 
         flag_angle = sum([flag_histoangle, flag_roseangle, flag_cracktensor]) ; 
         if flag_angle
             guiFracPaQ2Dangle(traces, nNorth, xmax, ymax, nHistoAngleBins, nRoseBins, ...
-                                    flag_histoangle, flag_roseangle, flag_reverseY, flag_reverseX, flag_cracktensor, flag_roselengthweighted, flag_rosemean, sColour) ; 
+                                    flag_histoangle, flag_roseangle, ...
+                                    flag_reverseY, flag_reverseX, ...
+                                    flag_cracktensor, ...
+                                    flag_roselengthweighted, flag_rosemean, ...
+                                    flag_rosecolour, sColour) ; 
         end ; 
 
         flag_pattern = sum([flag_intensitymap, flag_densitymap, flag_triangle]) ; 
@@ -1449,3 +1471,29 @@ function edit_uc_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in pushbutton_Wavelet.
+function pushbutton_Wavelet_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_Wavelet (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+guiWaveletDialog ; 
+
+% --- Executes on button press in checkbox_rosecolour.
+function checkbox_rosecolour_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_rosecolour (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_rosecolour
+
+
+% --- Executes on button press in checkbox_seglenvariogram.
+function checkbox_seglenvariogram_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_seglenvariogram (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_seglenvariogram

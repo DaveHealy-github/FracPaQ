@@ -35,7 +35,6 @@ if fRosemean
     %   calculate circular statistics: mean and std dev 
     [ roseMean, roseStddev, roseResultant ] = circStat(roseAngles) ; 
 
-    disp(' ') ; 
     disp('Circular statistics:') ; 
     disp(['Circular mean (degrees from North): ', num2str(roseMean)]) ; 
     disp(['Circular standard deviation (degrees): ', num2str(roseStddev)]) ; 
@@ -69,6 +68,20 @@ j = 1 ;
 [ numAngles, ~, indBins ] = histcounts(roseAngles, binAngles) ; 
 %numAngles = histc(roseAngles, binAngles) ; 
 
+%   fix 'bug' in histcounts() that rounds into 'wrong' bins at 0, 180 and
+%   360
+i1 = 1 ; 
+inhalf = (360/delta) / 2 ; 
+inhalfnext = inhalf + 1 ; 
+in = 360/delta ; 
+
+n1 = (numAngles(i1) + numAngles(inhalfnext)) / 2 ; 
+n2 = (numAngles(inhalf) + numAngles(in)) / 2 ; 
+numAngles(i1) = n1 ; 
+numAngles(inhalf) = n2 ;
+numAngles(inhalfnext) = n1 ; 
+numAngles(in)  = n2 ; 
+
 %   go through the bins... 
 for i = 1:max(size(binAngles))-1
     
@@ -98,6 +111,7 @@ end ;
 rAnglesPercent = r1Percent .* sqrt(numAnglesPercent) ; 
 
 [ xRoseArea, yRoseArea ] = pol2cart((pi/2 - binAngles2*pi/180), rAnglesPercent) ; 
+
 limX = max(xRoseArea) ; 
 limY = max(yRoseArea) ;
 lim = max(limX, limY) ; 

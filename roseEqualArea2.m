@@ -1,4 +1,4 @@
-function roseEqualArea(roseAngles, delta, azimuth, roseLengths, sColour) 
+function roseEqualArea2(roseAngles, delta, azimuth, roseLengths, sColour) 
 %   equal area rose diagram of trace segment angles
 %
 %   arguments:

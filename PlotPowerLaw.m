@@ -30,7 +30,7 @@ function [c,cn]=PlotPowerLaw(x,y,z,xmin,alpha,sCol)
 % Handles for the plot
 h = zeros(2,1);
 x=unique(x);
-% Construtc the empirical C.D.F.
+% Construct the empirical C.D.F.
 c = [sort(x) (length(x):-1:1)'./length(x)];
 
 % Construct the theoretical C.D.F.
@@ -57,15 +57,15 @@ plot([PosLc PosLc], YL, 'r--')
 
 hold off
 
-xr = [10.^floor(log10(min(x))) 10.^ceil(log10(max(x)))];
-xrt = (round(log10(xr(1))):2:round(log10(xr(2))));
-if length(xrt)<4, xrt = (round(log10(xr(1))):1:round(log10(xr(2)))); end;
-yr = [10.^floor(log10(1/length(x))) 1];
-yrt = (round(log10(yr(1))):2:round(log10(yr(2))));
-if length(yrt)<4, yrt = (round(log10(yr(1))):1:round(log10(yr(2)))); end;
+% xr = [10.^floor(log10(min(x))) 10.^ceil(log10(max(x)))];
+% xrt = (round(log10(xr(1))):2:round(log10(xr(2))));
+% if length(xrt)<4, xrt = (round(log10(xr(1))):1:round(log10(xr(2)))); end;
+% yr = [10.^floor(log10(1/length(x))) 1];
+% yrt = (round(log10(yr(1))):2:round(log10(yr(2))));
+% if length(yrt)<4, yrt = (round(log10(yr(1))):1:round(log10(yr(2)))); end;
 
-set (gca,'XLim',xr,'XTick',10.^xrt);
-set (gca,'YLim',yr,'YTick',10.^yrt);
+% set (gca,'XLim',xr,'XTick',10.^xrt);
+% set (gca,'YLim',yr,'YTick',10.^yrt);
 %set (gca, 'FontSize', 20, 'FontName', 'Calibri');
 grid on;
 title('Power Law Distribution MLE');

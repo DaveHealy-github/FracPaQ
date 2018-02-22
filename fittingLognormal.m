@@ -76,6 +76,7 @@ end ;
 
 % Reshape the input vector, making sure that 'x' is a one column vector
 x = reshape(x,numel(x),1);
+x(x==0)=[];
 x=sort(x);
 y=x(uppercut:(end-lowercut));
 

@@ -161,8 +161,12 @@ end ;
 
 %   just get the unique colours 
 sAllColours = unique(sAllColours) ; 
-sAllColours(strcmp('',sAllColours)) = [] ; 
-nAllColours = length(sAllColours) ; 
+sAllColours(strcmp('',sAllColours)) = [] ;
+if isempty(sAllColours) 
+    nAllColours = 1 ; 
+else 
+    nAllColours = length(sAllColours) ; 
+end ; 
 % disp(sAllColours) ; 
 % disp(nAllColours) ;
 
@@ -199,10 +203,15 @@ for i = 1:iPoly
     if lThisLine > 20 
         %   find which colour file 
         iColour = strfind(sThisLine, 'stroke="#') + 9 ; 
-        sColour = sThisLine(iColour:iColour+5) ; 
+        if isempty(iColour)
+            sColour = '000000' ; 
+            iColourFile = 1 ; 
+        else 
+            sColour = sThisLine(iColour:iColour+5) ; 
     %     disp(sThisLine) ; 
     %     disp(sColour) ; 
-        iColourFile = find(~cellfun('isempty', strfind(sAllColours, sColour))) ; 
+            iColourFile = find(~cellfun('isempty', strfind(sAllColours, sColour))) ; 
+        end ; 
 
         %   find points 
         iS = strfind(sThisLine, 'points="') ; 
@@ -237,8 +246,13 @@ for i = 1:iLine
     if lThisLine > 20 
         %   find which colour file 
         iColour = strfind(sThisLine, 'stroke="#') + 9 ; 
-        sColour = sThisLine(iColour:iColour+5) ; 
-        iColourFile = find(~cellfun('isempty', strfind(sAllColours, sColour))) ; 
+        if isempty(iColour)
+            sColour = '000000' ; 
+            iColourFile = 1 ; 
+        else 
+            sColour = sThisLine(iColour:iColour+5) ; 
+            iColourFile = find(~cellfun('isempty', strfind(sAllColours, sColour))) ; 
+        end ; 
 %         disp(sThisLine) ; 
 %         disp(sColour) ; 
 %         disp(iColourFile) ; 

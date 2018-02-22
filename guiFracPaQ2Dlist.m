@@ -231,4 +231,27 @@ else
     ylabel('Y, pixels') ; 
 end ;
 
+%   new code to enable wavelet analysis
+%   print the tracemap to a hidden figure file for later use 
+% hold on ; 
+fwave = figure ; 
+fwave.Visible = 'off' ; 
+set(gcf, 'PaperPositionMode', 'manual') ; 
+set(gcf, 'PaperUnits', 'inches') ; 
+set(gcf, 'PaperPosition', [ 0.25 0.25 27 27 ]) ; 
+maxTraceLength = max([traces(:).totalLength]) ; 
+% disp(maxTraceLength) ; 
+hold on ; 
+for k = 1:nTraces
+    if traces(k).totalLength >= (0.45 * maxTraceLength) 
+        plot([ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 4, 'Color', 'k') ;
+    else
+        plot([ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 1, 'Color', 'k') ;
+    end ;         
+end ; 
+hold off ; 
+axis equal off ;  
+print(fwave, 'FracPaQ2D_wavelet_traces.png', '-dpng', '-r72') ; 
+close(fwave) ; 
+
 end  

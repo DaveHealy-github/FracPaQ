@@ -1,6 +1,7 @@
-function guiFracPaQ2Dlength_new(traces, nPixelsPerMetre, northCorrection, xMin, yMin, xMax, yMax, nBins, ...
-                                flag_histolength, flag_logloglength, flag_crossplot, flag_mle, flag_censor, ...
-                                flag_blocksize, flag_revY, flag_revX, sColour, nlc, nuc)
+function guiFracPaQ2Dlength_new(traces, nPixelsPerMetre, northCorrection, xMin, yMin, xMax, yMax, ...
+                                nBins, flag_histolength, flag_logloglength, flag_crossplot, ...
+                                flag_mle, flag_censor, flag_blocksize, flag_revY, flag_revX, ...
+                                sColour, nlc, nuc, flag_seglenvariogram)
 %   guiFracPaQ2Dlength.m 
 %       calculates and plots statistics of line trace segment lengths  
 %       
@@ -539,6 +540,47 @@ if flag_blocksize
     title({['Block sizes (areas), n=', num2str(nBlocks)];''}) ; 
     
     guiPrint(gcf, 'FracPaQ2D_blocksizehisto') ;
+
+end ; 
+
+%   variogram of segment lengths
+if flag_seglenvariogram 
+    
+    f = figure ; 
+    set(gcf, 'PaperPositionMode', 'manual') ; 
+    set(gcf, 'PaperUnits', 'inches') ; 
+    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
+
+    iseg = 0 ; 
+    nTraces = length(traces) ; 
+    nSegments = sum([traces(:).nSegments]) ;
+    xcoords = zeros(1,nSegments) ; 
+    ycoords = zeros(1,nSegments) ; 
+    seglengths = zeros(1,nSegments) ; 
+    for i = 1:nTraces
+        for j = 1:traces(i).nSegments
+            iseg = iseg + 1 ; 
+            xcoords(iseg) = traces(i).Segment(j).midpointX ; 
+            ycoords(iseg) = traces(i).Segment(j).midpointY ; 
+            seglengths(iseg) = traces(i).segmentLength(j) ; 
+        end ; 
+    end ; 
+    % disp(xcoords) ; 
+    % disp(ycoords) ; 
+    % disp(seglengths) ; 
+
+    d = variogram([xcoords' ycoords'], seglengths', 'nrbins', 30) ; 
+
+    plot(d.distance, d.val, 'rs') ;
+    % axis([0 params.maxdist 0 max(S.val)*1.1]) ;
+    xlabel('h') ;
+    ylabel('\gamma (h)') ;
+    box on ; 
+    grid on ; 
+    title({['Semivariogram, n=', num2str(nSegments)];''}) ;
+
+    %   save to file 
+    guiPrint(f, 'FracPaQ2D_segmentlength_variogram') ; 
 
 end ; 
 
