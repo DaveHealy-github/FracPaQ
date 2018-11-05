@@ -43,19 +43,24 @@ end ;
 
 %   initialise 
 rinc = 0.0005 ; 
+
 r1Percent = 50 ; 
 r5Percent = r1Percent * sqrt(5) ; 
 r10Percent = r1Percent * sqrt(10) ; 
-r25Percent = r1Percent * sqrt(25) ; 
+r20Percent = r1Percent * sqrt(20) ; 
+r30Percent = r1Percent * sqrt(30) ; 
 r50Percent = r1Percent * sqrt(50) ; 
+
 x1Percent = -r1Percent:rinc:r1Percent ;
 y1Percent = sqrt(r1Percent^2 - x1Percent.^2) ; 
 x5Percent = -r5Percent:rinc:r5Percent ;
 y5Percent = sqrt(r5Percent^2 - x5Percent.^2) ; 
 x10Percent = -r10Percent:rinc:r10Percent ;
 y10Percent = sqrt(r10Percent^2 - x10Percent.^2) ; 
-x25Percent = -r25Percent:rinc:r25Percent ;
-y25Percent = sqrt(r25Percent^2 - x25Percent.^2) ; 
+x20Percent = -r20Percent:rinc:r20Percent ;
+y20Percent = sqrt(r20Percent^2 - x20Percent.^2) ; 
+x30Percent = -r30Percent:rinc:r30Percent ;
+y30Percent = sqrt(r30Percent^2 - x30Percent.^2) ; 
 x50Percent = -r50Percent:rinc:r50Percent ;
 y50Percent = sqrt(r50Percent^2 - x50Percent.^2) ; 
 
@@ -116,8 +121,8 @@ limX = max(xRoseArea) ;
 limY = max(yRoseArea) ;
 lim = max(limX, limY) ; 
 
-roseContours = [ max(x1Percent), max(x5Percent), max(x10Percent), max(x25Percent), max(x50Percent) ] ; 
-
+roseContours = [ max(x1Percent), max(x5Percent), max(x10Percent), ...
+                 max(x20Percent), max(x30Percent), max(x50Percent) ] ; 
 lim = roseContours(find(roseContours > lim, 1)) ; 
 
 hold on ; 
@@ -126,13 +131,26 @@ for i = 0:delta:binAngles
     h = fill(xRoseArea, yRoseArea, 'r', 'EdgeColor', sColour) ; 
     set(h, 'FaceColor', sColour) ;
 end ; 
-plot(x1Percent, y1Percent, '-k', x1Percent, -y1Percent, '-k', 'LineWidth', 0.5) ;
-plot(x5Percent, y5Percent, '-k', x5Percent, -y5Percent, '-k', 'LineWidth', 0.5) ;
-plot(x10Percent, y10Percent, '-k', x10Percent, -y10Percent, '-k', 'LineWidth', 0.5) ;
-plot(x25Percent, y25Percent, '-k', x25Percent, -y25Percent, '-k', 'LineWidth', 0.5) ;
-plot(x50Percent, y50Percent, '-k', x50Percent, -y50Percent, '-k', 'LineWidth', 0.5) ;
-plot([-r50Percent*1.1, r50Percent*1.1], [0, 0], '-k', 'LineWidth', 0.5) ; 
-plot([0, 0], [-r50Percent*1.1, r50Percent*1.1], '-k', 'LineWidth', 0.5) ; 
+if max(x1Percent) <= lim
+    plot(x1Percent, y1Percent, '-k', x1Percent, -y1Percent, '-k', 'LineWidth', 0.25) ;
+end ; 
+if max(x5Percent) <= lim
+    plot(x5Percent, y5Percent, '-k', x5Percent, -y5Percent, '-k', 'LineWidth', 0.25) ;
+end ; 
+if max(x10Percent) <= lim
+    plot(x10Percent, y10Percent, '-k', x10Percent, -y10Percent, '-k', 'LineWidth', 0.25) ;
+end ; 
+if max(x20Percent) <= lim
+    plot(x20Percent, y20Percent, '-k', x20Percent, -y20Percent, '-k', 'LineWidth', 0.25) ;
+end ; 
+if max(x30Percent) <= lim
+    plot(x30Percent, y30Percent, '-k', x30Percent, -y30Percent, '-k', 'LineWidth', 0.25) ;
+end ; 
+if max(x50Percent) <= lim
+    plot(x50Percent, y50Percent, '-k', x50Percent, -y50Percent, '-k', 'LineWidth', 0.25) ;
+end ; 
+plot([-r50Percent*1.1, r50Percent*1.1], [0, 0], '-k', 'LineWidth', 0.25) ; 
+plot([0, 0], [-r50Percent*1.1, r50Percent*1.1], '-k', 'LineWidth', 0.25) ; 
 if fRosemean
     plot([lim*sind(roseMean), -lim*sind(roseMean)], ...
          [lim*cosd(roseMean), -lim*cosd(roseMean)], '-r', 'LineWidth', 1) ; 
@@ -147,7 +165,9 @@ text(-(r5Percent), 0, '5%', 'Clipping', 'on', ...
     'BackgroundColor', 'w', 'FontSize', 8, 'HorizontalAlignment', 'right') ; 
 text(-(r10Percent), 0, '10%', 'Clipping', 'on', ...
     'BackgroundColor', 'w', 'FontSize', 8, 'HorizontalAlignment', 'right') ; 
-text(-(r25Percent), 0, '25%', 'Clipping', 'on', ...
+text(-(r20Percent), 0, '20%', 'Clipping', 'on', ...
+    'BackgroundColor', 'w', 'FontSize', 8, 'HorizontalAlignment', 'right') ; 
+text(-(r30Percent), 0, '30%', 'Clipping', 'on', ...
     'BackgroundColor', 'w', 'FontSize', 8, 'HorizontalAlignment', 'right') ; 
 text(-(r50Percent), 0, '50%', 'Clipping', 'on', ...
     'BackgroundColor', 'w', 'FontSize', 8, 'HorizontalAlignment', 'right') ; 

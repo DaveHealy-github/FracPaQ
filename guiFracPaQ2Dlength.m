@@ -143,24 +143,28 @@ fclose(fidLength) ;
 
 if flag_histolength 
 
+    %   histogram of trace lengths 
     f = figure ; 
     set(gcf, 'PaperPositionMode', 'manual') ; 
     set(gcf, 'PaperUnits', 'inches') ; 
     set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
-    %   histogram of trace lengths 
-    % subplot(2, 2, 2) ; 
     [ nTraceLengths, binTraceLengths ] = hist(traceLengths, ...
                                 minTraceLength:(maxTraceLength-minTraceLength)/nBins:maxTraceLength) ; 
 
+    yyaxis left ;                         
+    bar(binTraceLengths, nTraceLengths, 1, 'FaceColor', sColour) ;
     hold on ; 
+    plot([minTraceLength, minTraceLength], [0, max(nTraceLengths)*1.2], '-r', 'LineWidth', 1) ;  
+    plot([maxTraceLength, maxTraceLength], [0, max(nTraceLengths)*1.2], '-r', 'LineWidth', 1) ;  
+%     plot([maxPossTraceLength, maxPossTraceLength], [0, max(nTraceLengths)], '--r', 'LineWidth', 1) ;  
+    ylim([0 max(nTraceLengths)*1.2]) ; 
+    ylabel('Frequency') ; 
+    yyaxis right ; 
     bar(binTraceLengths, (nTraceLengths/sum(nTraceLengths))*100, 1, 'FaceColor', sColour) ;
-    plot([minTraceLength, minTraceLength], [0, max(nTraceLengths)], '-r', 'LineWidth', 1) ;  
-    plot([maxTraceLength, maxTraceLength], [0, max(nTraceLengths)], '-r', 'LineWidth', 1) ;  
-    %plot([maxPossTraceLength, maxPossTraceLength], [0, 100], '-r', 'LineWidth', 2) ;  
     hold off ; 
     xlim([0 maxTraceLength*1.1]) ; 
-    ylim([0 max((nTraceLengths/sum(nTraceLengths))*100)*1.1]) ; 
+    ylim([0 max((nTraceLengths/sum(nTraceLengths))*100)*1.2]) ; 
     if nPixelsPerMetre > 0 
         xlabel('Trace length, metres') ; 
     else 
@@ -175,24 +179,28 @@ if flag_histolength
     %   save to file 
     guiPrint(f, 'FracPaQ2D_histotracelength') ; 
 
+    %   histogram of segment lengths 
     f = figure ; 
     set(gcf, 'PaperPositionMode', 'manual') ; 
     set(gcf, 'PaperUnits', 'inches') ; 
     set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
-    %   histogram of segment lengths 
-    % subplot(2, 2, 2) ; 
     [ nSegmentLengths, binSegmentLengths ] = hist(traceSegmentLengths, ...
                                 minSegmentLength:(maxSegmentLength-minSegmentLength)/nBins:maxSegmentLength) ; 
 
+    yyaxis left ; 
+    bar(binSegmentLengths, nSegmentLengths, 1, 'FaceColor', sColour) ;
     hold on ; 
+    plot([minSegmentLength, minSegmentLength], [0, max(nSegmentLengths)*1.2], '-r', 'LineWidth', 1) ;  
+    plot([maxSegmentLength, maxSegmentLength], [0, max(nSegmentLengths)*1.2], '-r', 'LineWidth', 1) ;  
+%     plot([maxPossTraceLength, maxPossTraceLength], [0, max(nSegmentLengths)], '--r', 'LineWidth', 1) ;  
+    ylim([0 max(nSegmentLengths)*1.2]) ; 
+    ylabel('Frequency') ; 
+    yyaxis right ; 
     bar(binSegmentLengths, (nSegmentLengths/sum(nSegmentLengths))*100, 1, 'FaceColor', sColour) ;
-    plot([minSegmentLength, minSegmentLength], [0, max(nSegmentLengths)], '-r', 'LineWidth', 1) ;  
-    plot([maxSegmentLength, maxSegmentLength], [0, max(nSegmentLengths)], '-r', 'LineWidth', 1) ;  
-    %plot([maxPossTraceLength, maxPossTraceLength], [0, 100], '-r', 'LineWidth', 2) ;  
     hold off ; 
     xlim([0 maxSegmentLength*1.1]) ; 
-    ylim([0 max((nSegmentLengths/sum(nSegmentLengths))*100)*1.1]) ; 
+    ylim([0 max((nSegmentLengths/sum(nSegmentLengths))*100)*1.2]) ; 
     if nPixelsPerMetre > 0 
         xlabel('Segment length, metres') ; 
     else 
@@ -212,6 +220,38 @@ end ;
 %   cumulative log-log plot of trace lengths 
 if flag_logloglength 
 
+    %   trace lengths density distribution 
+    f = figure ; 
+    set(gcf, 'PaperPositionMode', 'manual') ; 
+    set(gcf, 'PaperUnits', 'inches') ; 
+    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
+
+    [ nTraceLengths, binTraceLengths ] = hist(traceLengths, ... 
+                                 minTraceLength:(maxTraceLength-minTraceLength)/nBins:maxTraceLength) ; 
+    loglog(binTraceLengths, nTraceLengths, 's', ...
+        'LineWidth', 1, 'Color', sColour, 'MarkerFaceColor', sColour) ;
+    hold on ; 
+    plot([minTraceLength, minTraceLength], [0.1, max(nTraceLengths)*1.2], '-r', 'LineWidth', 1) ;  
+    plot([maxTraceLength, maxTraceLength], [0.1, max(nTraceLengths)*1.2], '-r', 'LineWidth', 1) ;  
+    hold off ; 
+    set(gca,'XTick', [1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3, 1e4]) ; 
+    xlim([minTraceLength*0.9 maxTraceLength*1.1]) ; 
+    ylim([0.1 max(nTraceLengths)*1.2]) ; 
+    if nPixelsPerMetre > 0 
+        xlabel('Trace length, metres') ; 
+    else 
+        xlabel('Trace length, pixels') ; 
+    end ; 
+    ylabel('Frequency, n(L)') ; 
+    axis on square ; 
+    box on ; 
+    grid on ; 
+    title({['Density distribution of trace lengths, n=', num2str(length(traceLengths))];''}) ; 
+    
+        %   save to file 
+    guiPrint(f, 'FracPaQ2D_loglogplottracelengthdensity') ; 
+    
+    %   trace lengths cumulative distribution 
     f = figure ; 
     set(gcf, 'PaperPositionMode', 'manual') ; 
     set(gcf, 'PaperUnits', 'inches') ; 
@@ -220,72 +260,113 @@ if flag_logloglength
     if nPixelsPerMetre > 0 
         [ nTraceLengths, binTraceLengths ] = hist(traceLengths, minTraceLength:(maxTraceLength-minTraceLength)/1000:maxTraceLength) ; 
         cLengths = cumsum(nTraceLengths) ; 
-        loglog((minTraceLength:(maxTraceLength-minTraceLength)/1000:maxTraceLength), (max(cLengths) - cLengths), 's', ... 
-               [minTraceLength, minTraceLength], [1, max(cLengths)*1.2], '-r', ...
-               [maxTraceLength, maxTraceLength], [1, max(cLengths)*1.2], '-r', ...
-               [maxPossTraceLength, maxPossTraceLength], [1, max(cLengths)*1.2], '--r', ...
-               'LineWidth', 1, 'Color', sColour, 'MarkerFaceColor', sColour) ; 
+        loglog((minTraceLength:(maxTraceLength-minTraceLength)/1000:maxTraceLength), ...
+               (max(cLengths) - cLengths), 's', 'LineWidth', 1, 'Color', sColour, 'MarkerFaceColor', sColour) ; 
+        hold on ; 
+        plot([minTraceLength, minTraceLength], [0.1, max(cLengths)*1.2], '-r', 'LineWidth', 1) ; 
+        plot([maxTraceLength, maxTraceLength], [0.1, max(cLengths)*1.2], '-r', 'LineWidth', 1) ; 
+        plot([maxPossTraceLength, maxPossTraceLength], [0.1, max(cLengths)*1.2], '--r', 'LineWidth', 1) ; 
+        hold off ; 
     else 
         [ nTraceLengths, binTraceLengths ] = hist(traceLengths, minTraceLength:maxTraceLength) ; 
         cLengths = cumsum(nTraceLengths) ; 
         loglog((minTraceLength:maxTraceLength), (max(cLengths) - cLengths), 's', ... 
-               [minTraceLength, minTraceLength], [1, max(cLengths)*1.2], '-r', ...
-               [maxTraceLength, maxTraceLength], [1, max(cLengths)*1.2], '-r', ...
-               [maxPossTraceLength, maxPossTraceLength], [1, max(cLengths)*1.2], '--r', ...
                'LineWidth', 1, 'Color', sColour, 'MarkerFaceColor', sColour) ; 
+        hold on ;   
+        plot([minTraceLength, minTraceLength], [0.1, max(cLengths)*1.2], '-r', 'LineWidth', 1) ; 
+        plot([maxTraceLength, maxTraceLength], [0.1, max(cLengths)*1.2], '-r', 'LineWidth', 1) ; 
+        plot([maxPossTraceLength, maxPossTraceLength], [0.1, max(cLengths)*1.2], '--r', 'LineWidth', 1) ; 
+        hold off ; 
     end ; 
     set(gca,'XTick', [1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3, 1e4]) ; 
     xlim([minTraceLength*0.9 maxPossTraceLength*1.1]) ; 
-    ylim([1 max(cLengths)*1.1]) ; 
+    ylim([0.1 max(cLengths)*1.2]) ; 
     if nPixelsPerMetre > 0 
         xlabel('Trace length, metres') ; 
     else 
         xlabel('Trace length, pixels') ; 
     end ; 
-    ylabel('Cumulative frequency') ; 
+    ylabel('Cumulative frequency, C(L)') ; 
     axis on square ; 
     box on ; 
     grid on ; 
-    title({['Trace lengths, n=', num2str(length(traceLengths))];''}) ; 
+    title({['Cumulative distribution of trace lengths, n=', num2str(length(traceLengths))];''}) ; 
 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_loglogplottracelength') ; 
 
+    %   segment lengths density distribution 
+    f = figure ; 
+    set(gcf, 'PaperPositionMode', 'manual') ; 
+    set(gcf, 'PaperUnits', 'inches') ; 
+    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
+
+    [ nSegmentLengths, binSegmentLengths ] = hist(traceSegmentLengths, ... 
+                                 minSegmentLength:(maxSegmentLength-minSegmentLength)/nBins:maxSegmentLength) ; 
+    loglog(binSegmentLengths, nSegmentLengths, 's', ...
+        'LineWidth', 1, 'Color', sColour, 'MarkerFaceColor', sColour) ;
+    hold on ; 
+    plot([minSegmentLength, minSegmentLength], [0.1, max(nSegmentLengths)*1.2], '-r', 'LineWidth', 1) ;  
+    plot([maxSegmentLength, maxSegmentLength], [0.1, max(nSegmentLengths)*1.2], '-r', 'LineWidth', 1) ;  
+    hold off ; 
+    set(gca,'XTick', [1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3, 1e4]) ; 
+    xlim([minSegmentLength*0.9 maxSegmentLength*1.1]) ; 
+    ylim([0.1 max(nSegmentLengths)*1.2]) ; 
+    if nPixelsPerMetre > 0 
+        xlabel('Segment length, metres') ; 
+    else 
+        xlabel('Segment length, pixels') ; 
+    end ; 
+    ylabel('Frequency, n(L)') ; 
+    axis on square ; 
+    box on ; 
+    grid on ; 
+    title({['Density distribution of segment lengths, n=', num2str(length(traceSegmentLengths))];''}) ; 
+    
+        %   save to file 
+    guiPrint(f, 'FracPaQ2D_loglogplotsegmentlengthdensity') ; 
+
+    %   segment lengths cumulative distribution 
     f = figure ; 
     set(gcf, 'PaperPositionMode', 'manual') ; 
     set(gcf, 'PaperUnits', 'inches') ; 
     set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
     if nPixelsPerMetre > 0 
-        [ nSegmentLengths, binSegmentLengths ] = hist(traceSegmentLengths, minSegmentLength:(maxSegmentLength-minSegmentLength)/1000:maxSegmentLength) ; 
+        [ nSegmentLengths, binSegmentLengths ] = hist(traceSegmentLengths, ...
+                minSegmentLength:(maxSegmentLength-minSegmentLength)/1000:maxSegmentLength) ; 
         cLengths = cumsum(nSegmentLengths) ; 
-        loglog((minSegmentLength:(maxSegmentLength-minSegmentLength)/1000:maxSegmentLength), (max(cLengths) - cLengths), 's', ... 
-               [minSegmentLength, minSegmentLength], [1, max(cLengths)*1.2], '-r', ...
-               [maxSegmentLength, maxSegmentLength], [1, max(cLengths)*1.2], '-r', ...
-               [maxPossTraceLength, maxPossTraceLength], [1, max(cLengths)*1.2], '--r', ...
-               'LineWidth', 1, 'Color', sColour, 'MarkerFaceColor', sColour) ; 
+        loglog((minSegmentLength:(maxSegmentLength-minSegmentLength)/1000:maxSegmentLength), ...
+               (max(cLengths) - cLengths), 's', 'LineWidth', 1, 'Color', sColour, 'MarkerFaceColor', sColour) ; 
+        hold on ; 
+        plot([minSegmentLength, minSegmentLength], [0.1, max(cLengths)*1.2], '-r', 'LineWidth', 1) ; 
+        plot([maxSegmentLength, maxSegmentLength], [0.1, max(cLengths)*1.2], '-r', 'LineWidth', 1) ; 
+        plot([maxPossTraceLength, maxPossTraceLength], [0.1, max(cLengths)*1.2], '--r', 'LineWidth', 1) ; 
+        hold off ; 
     else 
         [ nSegmentLengths, binSegmentLengths ] = hist(traceSegmentLengths, minSegmentLength:maxSegmentLength) ; 
         cLengths = cumsum(nSegmentLengths) ; 
         loglog((minSegmentLength:maxSegmentLength), (max(cLengths) - cLengths), 's', ... 
-               [minSegmentLength, minSegmentLength], [1, max(cLengths)*1.2], '-r', ...
-               [maxSegmentLength, maxSegmentLength], [1, max(cLengths)*1.2], '-r', ...
-               [maxPossTraceLength, maxPossTraceLength], [1, max(cLengths)*1.2], '--r', ...
-               'LineWidth', 1, 'Color', sColour, 'MarkerFaceColor', sColour) ; 
+               'LineWidth', 1, 'Color', sColour, 'MarkerFaceColor', sColour) ;
+        hold on ; 
+        plot([minSegmentLength, minSegmentLength], [0.1, max(cLengths)*1.2], '-r', 'LineWidth', 1) ; 
+        plot([maxSegmentLength, maxSegmentLength], [0.1, max(cLengths)*1.2], '-r', 'LineWidth', 1) ;
+        plot([maxPossTraceLength, maxPossTraceLength], [0.1, max(cLengths)*1.2], '--r', 'LineWidth', 1) ;
+        hold off ;        
     end ; 
     set(gca,'XTick', [1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3, 1e4]) ; 
     xlim([minSegmentLength*0.9 maxPossTraceLength*1.1]) ; 
-    ylim([1 max(cLengths)*1.1]) ; 
+    ylim([0.1 max(cLengths)*1.2]) ; 
     if nPixelsPerMetre > 0 
         xlabel('Segment length, metres') ; 
     else 
         xlabel('Segment length, pixels') ; 
     end ; 
-    ylabel('Cumulative frequency') ; 
+    ylabel('Cumulative frequency, C(L)') ; 
     axis on square ; 
     box on ; 
     grid on ; 
-    title({['Segment lengths, n=', num2str(length(traceSegmentLengths))];''}) ; 
+    title({['Cumulative distribution of segment lengths, n=', num2str(length(traceSegmentLengths))];''}) ; 
 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_loglogplotsegmentlength') ; 

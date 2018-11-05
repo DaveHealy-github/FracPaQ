@@ -117,13 +117,13 @@ for i = 1:max(size(binAngles))-1
     h = fill(xRoseAreaThis, yRoseAreaThis, 'r', 'EdgeColor', segmentColours(i,:)) ; 
     set(h, 'FaceColor', segmentColours(i,:)) ;
 end ; 
-plot(x1Percent, y1Percent, '-k', x1Percent, -y1Percent, '-k', 'LineWidth', 0.5) ;
-plot(x5Percent, y5Percent, '-k', x5Percent, -y5Percent, '-k', 'LineWidth', 0.5) ;
-plot(x10Percent, y10Percent, '-k', x10Percent, -y10Percent, '-k', 'LineWidth', 0.5) ;
-plot(x25Percent, y25Percent, '-k', x25Percent, -y25Percent, '-k', 'LineWidth', 0.5) ;
-plot(x50Percent, y50Percent, '-k', x50Percent, -y50Percent, '-k', 'LineWidth', 0.5) ;
-plot([-r50Percent*1.1, r50Percent*1.1], [0, 0], '-k', 'LineWidth', 0.5) ; 
-plot([0, 0], [-r50Percent*1.1, r50Percent*1.1], '-k', 'LineWidth', 0.5) ; 
+plot(x1Percent, y1Percent, '-k', x1Percent, -y1Percent, '-k', 'LineWidth', 0.25) ;
+plot(x5Percent, y5Percent, '-k', x5Percent, -y5Percent, '-k', 'LineWidth', 0.25) ;
+plot(x10Percent, y10Percent, '-k', x10Percent, -y10Percent, '-k', 'LineWidth', 0.25) ;
+plot(x25Percent, y25Percent, '-k', x25Percent, -y25Percent, '-k', 'LineWidth', 0.25) ;
+plot(x50Percent, y50Percent, '-k', x50Percent, -y50Percent, '-k', 'LineWidth', 0.25) ;
+plot([-r50Percent*1.1, r50Percent*1.1], [0, 0], '-k', 'LineWidth', 0.25) ; 
+plot([0, 0], [-r50Percent*1.1, r50Percent*1.1], '-k', 'LineWidth', 0.25) ; 
 % plot([r50Percent*sind(roseMean), -r50Percent*sind(roseMean)], ...
 %      [r50Percent*cosd(roseMean), -r50Percent*cosd(roseMean)], '-r', 'LineWidth', 1) ; 
 plot([lim*sind(roseMean), -lim*sind(roseMean)], ...

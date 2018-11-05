@@ -43,7 +43,7 @@ function varargout = guiFracPaQ2D(varargin)
 
 % Edit the above text to modify the response to help guiFracPaQ2D
 
-% Last Modified by GUIDE v2.5 18-Jan-2018 20:55:50
+% Last Modified by GUIDE v2.5 02-Nov-2018 09:03:38
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -97,7 +97,7 @@ set(handles.popupmenu_histolengthbins,'Value',2) ;
 set(handles.popupmenu_histoanglebins,'Value',2) ;
 set(handles.popupmenu_rosebins,'Value',2) ;
 
-handles.FracPaQversion = '2.2' ; 
+handles.FracPaQversion = '2.4' ; 
 disp(['FracPaQ version ', handles.FracPaQversion]) ; 
 % Update handles structure
 guidata(hObject, handles);
@@ -110,6 +110,17 @@ if nReleaseYear < 2015
     uiwait(h) ; 
 end ; 
 
+%Reposition each panel to same location as panel 1
+set(handles.uibgTabLengths,'position',get(handles.uibgTabMaps,'position'));
+set(handles.uibgTabAngles,'position',get(handles.uibgTabMaps,'position'));
+set(handles.uibgTabFluid,'position',get(handles.uibgTabMaps,'position'));
+set(handles.uibgTabWavelets,'position',get(handles.uibgTabMaps,'position'));
+
+set(handles.uibgTabMaps, 'Visible', 'off') ; 
+set(handles.uibgTabLengths, 'Visible', 'off') ; 
+set(handles.uibgTabAngles, 'Visible', 'off') ; 
+set(handles.uibgTabFluid, 'Visible', 'off') ; 
+set(handles.uibgTabWavelets, 'Visible', 'off') ; 
 
 % --- Outputs from this function are returned to the command line.
 function varargout = guiFracPaQ2D_OutputFcn(hObject, eventdata, handles) 
@@ -882,9 +893,16 @@ if ~flagError
     set(handles.text_message, 'String', 'Ready. Click Run to generate maps and graphs.') ;     
   
     set(handles.pushbutton_run, 'Enable', 'on') ; 
+    set(handles.pbMapsTab, 'Enable', 'on') ; 
+    set(handles.pbLengthsTab, 'Enable', 'on') ; 
+    set(handles.pbAnglesTab, 'Enable', 'on') ; 
+    set(handles.pbFluidTab, 'Enable', 'on') ; 
+    set(handles.pbWaveletsTab, 'Enable', 'on') ; 
     set(handles.pushbutton_flipx, 'Enable', 'on') ; 
     set(handles.pushbutton_flipy, 'Enable', 'on') ; 
-    uicontrol(handles.pushbutton_run) ; 
+%    uicontrol(handles.pushbutton_run) ; 
+    uicontrol(handles.pbMapsTab) ; 
+    set(handles.uibgTabMaps, 'Visible', 'on') ; 
     
     % Update handles structure
     guidata(hObject, handles);
@@ -898,6 +916,30 @@ function pushbutton_run_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 flagError = false ; 
+
+sValue = get(handles.edit_sigma1, 'String') ; 
+if isnan(str2double(sValue))
+    hError = errordlg('Sigma 1 must be a number', 'Input error', 'modal') ; 
+    uicontrol(handles.edit_sigma1) ; 
+    flagError = true ; 
+    return ; 
+end ; 
+
+sValue = get(handles.edit_sigma2, 'String') ; 
+if isnan(str2double(sValue))
+    hError = errordlg('Sigma 2 must be a number', 'Input error', 'modal') ; 
+    uicontrol(handles.edit_sigma2) ; 
+    flagError = true ; 
+    return ; 
+end ; 
+
+sValue = get(handles.edit_thetasigma1, 'String') ; 
+if isnan(str2double(sValue)) || str2double(sValue) > 180.0 || str2double(sValue) < 0.0
+    hError = errordlg('Angle must be a number and between 0-180', 'Input error', 'modal') ; 
+    uicontrol(handles.edit_thetasigma1) ; 
+    flagError = true ; 
+    return ; 
+end ; 
 
 sValue = get(handles.edit_numscancircles, 'String') ; 
 if isnan(str2double(sValue)) || str2double(sValue) < 2
@@ -987,6 +1029,10 @@ if ~flagError
         nMLE_lc = str2double(get(handles.edit_lc, 'String')) ;  
         nMLE_uc = str2double(get(handles.edit_uc, 'String')) ;  
         
+        nSigma1 = str2double(get(handles.edit_sigma1, 'String')) ; 
+        nSigma2 = str2double(get(handles.edit_sigma2, 'String')) ; 
+        nThetaSigma1 = str2double(get(handles.edit_thetasigma1, 'String')) ; 
+        
         %   get values from drop down lists 
         list = get(handles.popupmenu_histolengthbins, 'String') ; 
         nHistoLengthBins = str2double(list{get(handles.popupmenu_histolengthbins, 'Value')}) ;
@@ -1000,7 +1046,16 @@ if ~flagError
         %   call the various maps & graphs 
         flag_tracemap = get(handles.checkbox_tracemap, 'Value') ; 
         flag_shownodes = get(handles.checkbox_shownodes, 'Value') ; 
-
+        flag_sliptendency = get(handles.checkbox_sliptendency, 'Value') ; 
+        flag_dilationtendency = get(handles.checkbox_dilationtendency, 'Value') ; 
+        flag_tracesbylength = get(handles.checkbox_tracemaplength, 'Value') ; 
+        flag_segmentsbylength = get(handles.checkbox_segmentmaplength, 'Value') ; 
+        flag_segmentsbystrike = get(handles.checkbox_segmentmapstrike, 'Value') ; 
+        if sum([flag_tracemap, flag_sliptendency, flag_dilationtendency, flag_tracesbylength, ...
+                flag_segmentsbylength, flag_segmentsbystrike]) > 0 
+            flag_tracemap_any = true ; 
+        end ; 
+        
         flag_intensitymap = get(handles.checkbox_intensitymap, 'Value') ; 
         flag_densitymap = get(handles.checkbox_densitymap, 'Value') ; 
         flag_showcircles = get(handles.checkbox_showcircles, 'Value') ; 
@@ -1031,11 +1086,13 @@ if ~flagError
             flag_multicolour = 0 ; 
         end ;
 
-        if flag_tracemap 
+        if flag_tracemap_any 
             guiFracPaQ2Dtracemap(traces, nPixels, nNorth, ...
                     xmin, ymin, xmax, ymax, ...
                     flag_shownodes, flag_reverseY, flag_reverseX, sColour, ...
-                    flag_multicolour) ; 
+                    flag_multicolour, flag_tracemap, flag_sliptendency, flag_dilationtendency, ...
+                    flag_tracesbylength, flag_segmentsbylength, flag_segmentsbystrike, ...
+                    nSigma1, nSigma2, nThetaSigma1) ; 
         end ; 
 
         flag_length = sum([flag_histolength, flag_logloglength, flag_blocksize, flag_seglenvario]) ; 
@@ -1089,7 +1146,54 @@ if ~flagError
         uicontrol(handles.pushbutton_browse) ; 
 
     end ; 
-    
+   
+end ; 
+
+%   only validate wavelet input if wavelet analysis selected...
+if get(handles.checkbox_wavelet, 'Value') 
+
+    flagWaveError = false ; 
+
+    sValue = get(handles.edit_aString, 'String') ; 
+    if isempty(str2double(sValue)) 
+        hError = errordlg('a values must all be whole numbers, e.g. 2 4 8', 'Input error', 'modal') ; 
+        uicontrol(handles.edit_aString) ; 
+        flagWaveError = true ; 
+        return ; 
+    else 
+        handles.a = str2num(sValue) ; 
+    end ; 
+
+    sValue = get(handles.edit_LString, 'String') ; 
+    if isempty(str2double(sValue)) 
+        hError = errordlg('L values must all be whole numbers, e.g. 2 4 8', 'Input error', 'modal') ; 
+        uicontrol(handles.edit_LString) ; 
+        flagWaveError = true ; 
+        return ; 
+    else 
+        handles.L = 1 ./ str2num(sValue) ; 
+    end ; 
+
+    sValue = get(handles.edit_DegString, 'String') ; 
+    if isnan(str2double(sValue)) || str2double(sValue) < 1 || str2double(sValue) > 360
+        hError = errordlg('Angular increment must be a whole number, 1-360', 'Input error', 'modal') ; 
+        uicontrol(handles.edit_DegString) ; 
+        flagWaveError = true ; 
+        return ; 
+    else 
+        handles.nTheta = str2num(sValue) ; 
+    end ; 
+
+    if get(handles.radiobutton_Morlet, 'Value')
+        handles.fMorlet = true ; 
+    else 
+        handles.fMorlet = false ; 
+    end ; 
+
+    if ~flagWaveError
+        guiFracPaQ2Dwavelet2(handles.a, handles.L, handles.nTheta, handles.fMorlet, '[0 0 1]') ; 
+    end ; 
+
 end ; 
 
 % --- Executes on button press in radiobutton_image.
@@ -1219,102 +1323,6 @@ end ;
 set(handles.text_message, 'String', 'X-axis flipped.') ;   
 
 
-% --- Executes on selection change in popupmenu_rosebins.
-function popupmenu8_Callback(hObject, eventdata, handles)
-% hObject    handle to popupmenu_rosebins (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_rosebins contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu_rosebins
-
-
-% --- Executes during object creation, after setting all properties.
-function popupmenu8_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to popupmenu_rosebins (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on selection change in popupmenu_histoanglebins.
-function popupmenu7_Callback(hObject, eventdata, handles)
-% hObject    handle to popupmenu_histoanglebins (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu_histoanglebins contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu_histoanglebins
-
-
-% --- Executes during object creation, after setting all properties.
-function popupmenu7_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to popupmenu_histoanglebins (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on button press in checkbox_crossplot.
-function checkbox21_Callback(hObject, eventdata, handles)
-% hObject    handle to checkbox_crossplot (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of checkbox_crossplot
-
-
-
-function edit12_Callback(hObject, eventdata, handles)
-% hObject    handle to edit_degfromnorth (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of edit_degfromnorth as text
-%        str2double(get(hObject,'String')) returns contents of edit_degfromnorth as a double
-
-
-% --- Executes during object creation, after setting all properties.
-function edit12_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit_degfromnorth (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-% --- Executes on button press in checkbox_rose.
-function checkbox20_Callback(hObject, eventdata, handles)
-% hObject    handle to checkbox_rose (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of checkbox_rose
-
-
-% --- Executes on button press in checkbox_histoangle.
-function checkbox19_Callback(hObject, eventdata, handles)
-% hObject    handle to checkbox_histoangle (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of checkbox_histoangle
-
-
 % --- Executes on button press in checkbox_cracktensor.
 function checkbox_cracktensor_Callback(hObject, eventdata, handles)
 % hObject    handle to checkbox_cracktensor (see GCBO)
@@ -1402,13 +1410,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in pushbutton_wavelet.
-function pushbutton_wavelet_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_wavelet (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
 % --- Executes on button press in checkbox_showrosemean.
 function checkbox_showrosemean_Callback(hObject, eventdata, handles)
 % hObject    handle to checkbox_showrosemean (see GCBO)
@@ -1473,14 +1474,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in pushbutton_Wavelet.
-function pushbutton_Wavelet_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton_Wavelet (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-guiWaveletDialog ; 
-
 % --- Executes on button press in checkbox_rosecolour.
 function checkbox_rosecolour_Callback(hObject, eventdata, handles)
 % hObject    handle to checkbox_rosecolour (see GCBO)
@@ -1497,3 +1490,326 @@ function checkbox_seglenvariogram_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_seglenvariogram
+
+
+% --- Executes on button press in pbMapsTab.
+function pbMapsTab_Callback(hObject, eventdata, handles)
+% hObject    handle to pbMapsTab (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.uibgTabMaps, 'Visible', 'on') ; 
+set(handles.uibgTabLengths, 'Visible', 'off') ; 
+set(handles.uibgTabAngles, 'Visible', 'off') ; 
+set(handles.uibgTabFluid, 'Visible', 'off') ; 
+set(handles.uibgTabWavelets, 'Visible', 'off') ; 
+
+
+% --- Executes on button press in pbLengthsTab.
+function pbLengthsTab_Callback(hObject, eventdata, handles)
+% hObject    handle to pbLengthsTab (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.uibgTabMaps, 'Visible', 'off') ; 
+set(handles.uibgTabLengths, 'Visible', 'on') ; 
+set(handles.uibgTabAngles, 'Visible', 'off') ; 
+set(handles.uibgTabFluid, 'Visible', 'off') ; 
+set(handles.uibgTabWavelets, 'Visible', 'off') ; 
+
+
+% --- Executes on button press in pbAnglesTab.
+function pbAnglesTab_Callback(hObject, eventdata, handles)
+% hObject    handle to pbAnglesTab (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.uibgTabMaps, 'Visible', 'off') ; 
+set(handles.uibgTabLengths, 'Visible', 'off') ; 
+set(handles.uibgTabAngles, 'Visible', 'on') ; 
+set(handles.uibgTabFluid, 'Visible', 'off') ; 
+set(handles.uibgTabWavelets, 'Visible', 'off') ; 
+
+
+% --- Executes on button press in pbFluidTab.
+function pbFluidTab_Callback(hObject, eventdata, handles)
+% hObject    handle to pbFluidTab (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.uibgTabMaps, 'Visible', 'off') ; 
+set(handles.uibgTabLengths, 'Visible', 'off') ; 
+set(handles.uibgTabAngles, 'Visible', 'off') ; 
+set(handles.uibgTabFluid, 'Visible', 'on') ; 
+set(handles.uibgTabWavelets, 'Visible', 'off') ; 
+
+
+% --- Executes on button press in pbWaveletsTab.
+function pbWaveletsTab_Callback(hObject, eventdata, handles)
+% hObject    handle to pbWaveletsTab (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.uibgTabMaps, 'Visible', 'off') ; 
+set(handles.uibgTabLengths, 'Visible', 'off') ; 
+set(handles.uibgTabAngles, 'Visible', 'off') ; 
+set(handles.uibgTabFluid, 'Visible', 'off') ; 
+set(handles.uibgTabWavelets, 'Visible', 'on') ; 
+
+
+% --- Executes on button press in checkbox_tracemaplength.
+function checkbox_tracemaplength_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_tracemaplength (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_tracemaplength
+
+
+% --- Executes on button press in checkbox_segmentmaplength.
+function checkbox_segmentmaplength_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_segmentmaplength (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_segmentmaplength
+
+
+% --- Executes on button press in checkbox_segmentmapstrike.
+function checkbox_segmentmapstrike_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_segmentmapstrike (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_segmentmapstrike
+
+
+
+function edit_sigma1_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_sigma1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_sigma1 as text
+%        str2double(get(hObject,'String')) returns contents of edit_sigma1 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_sigma1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_sigma1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in checkbox_dilationtendency.
+function checkbox_dilationtendency_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_dilationtendency (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_dilationtendency
+if get(hObject, 'Value') || get(handles.checkbox_sliptendency, 'Value')
+    set(handles.edit_sigma1, 'Enable', 'on') ; 
+    set(handles.edit_sigma2, 'Enable', 'on') ; 
+    set(handles.edit_thetasigma1, 'Enable', 'on') ; 
+    set(handles.label_sigma1, 'Enable', 'on') ; 
+    set(handles.label_sigma2, 'Enable', 'on') ; 
+    set(handles.label_thetasigma1, 'Enable', 'on') ; 
+else 
+    set(handles.edit_sigma1, 'Enable', 'off') ; 
+    set(handles.edit_sigma2, 'Enable', 'off') ; 
+    set(handles.edit_thetasigma1, 'Enable', 'off') ; 
+    set(handles.label_sigma1, 'Enable', 'off') ; 
+    set(handles.label_sigma2, 'Enable', 'off') ; 
+    set(handles.label_thetasigma1, 'Enable', 'off') ; 
+end ; 
+
+
+% --- Executes on button press in checkbox_sliptendency.
+function checkbox_sliptendency_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_sliptendency (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_sliptendency
+if get(hObject, 'Value') || get(handles.checkbox_dilationtendency, 'Value')
+    set(handles.edit_sigma1, 'Enable', 'on') ; 
+    set(handles.edit_sigma2, 'Enable', 'on') ; 
+    set(handles.edit_thetasigma1, 'Enable', 'on') ; 
+    set(handles.label_sigma1, 'Enable', 'on') ; 
+    set(handles.label_sigma2, 'Enable', 'on') ; 
+    set(handles.label_thetasigma1, 'Enable', 'on') ; 
+else 
+    set(handles.edit_sigma1, 'Enable', 'off') ; 
+    set(handles.edit_sigma2, 'Enable', 'off') ; 
+    set(handles.edit_thetasigma1, 'Enable', 'off') ; 
+    set(handles.label_sigma1, 'Enable', 'off') ; 
+    set(handles.label_sigma2, 'Enable', 'off') ; 
+    set(handles.label_thetasigma1, 'Enable', 'off') ; 
+end ; 
+
+
+
+function edit_sigma2_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_sigma2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_sigma2 as text
+%        str2double(get(hObject,'String')) returns contents of edit_sigma2 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_sigma2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_sigma2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit_thetasigma1_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_thetasigma1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_thetasigma1 as text
+%        str2double(get(hObject,'String')) returns contents of edit_thetasigma1 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_thetasigma1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_thetasigma1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit_aString_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_aString (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_aString as text
+%        str2double(get(hObject,'String')) returns contents of edit_aString as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_aString_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_aString (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit_LString_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_LString (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_LString as text
+%        str2double(get(hObject,'String')) returns contents of edit_LString as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_LString_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_LString (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit_DegString_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_DegString (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_DegString as text
+%        str2double(get(hObject,'String')) returns contents of edit_DegString as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_DegString_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_DegString (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in radiobutton_Morlet.
+function radiobutton_Morlet_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobutton_Morlet (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobutton_Morlet
+if get(hObject, 'Value') 
+    handles.fMorlet = true ; 
+end ; 
+
+% --- Executes on button press in radiobutton_Mexican.
+function radiobutton_Mexican_Callback(hObject, eventdata, handles)
+% hObject    handle to radiobutton_Mexican (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of radiobutton_Mexican
+if get(hObject, 'Value') 
+    handles.fMorlet = false ; 
+end ; 
+
+% --- Executes on button press in checkbox_wavelet.
+function checkbox_wavelet_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_wavelet (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_wavelet
+if get(hObject, 'Value') 
+    set(handles.edit_aString, 'Enable', 'on') ; 
+    set(handles.edit_LString, 'Enable', 'on') ; 
+    set(handles.edit_DegString, 'Enable', 'on') ; 
+    set(handles.radiobutton_Morlet, 'Enable', 'on') ; 
+    set(handles.radiobutton_Mexican, 'Enable', 'on') ; 
+    set(handles.label_aString, 'Enable', 'on') ; 
+    set(handles.label_LString, 'Enable', 'on') ; 
+    set(handles.label_DegString, 'Enable', 'on') ; 
+else 
+    set(handles.edit_aString, 'Enable', 'off') ; 
+    set(handles.edit_LString, 'Enable', 'off') ; 
+    set(handles.edit_DegString, 'Enable', 'off') ; 
+    set(handles.radiobutton_Morlet, 'Enable', 'off') ; 
+    set(handles.radiobutton_Mexican, 'Enable', 'off') ; 
+    set(handles.label_aString, 'Enable', 'off') ; 
+    set(handles.label_LString, 'Enable', 'off') ; 
+    set(handles.label_DegString, 'Enable', 'off') ; 
+end ; 

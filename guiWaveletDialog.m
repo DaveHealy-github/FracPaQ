@@ -199,7 +199,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in radiobutton_Morlet.
+% --- Executes on button press in radiobut  ton_Morlet.
 function radiobutton_Morlet_Callback(hObject, eventdata, handles)
 % hObject    handle to radiobutton_Morlet (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
