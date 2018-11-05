@@ -119,10 +119,17 @@ if flag_histoangle
     set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
     [ nAngles, binAngles ] = hist(traceAngles2, 0:360/nHistoBins:360) ; 
+    yyaxis left ; 
+    bar(binAngles, nAngles, 1, 'FaceColor', sColour) ; 
+    ylabel('Frequency') ; 
+    ylim([0 max(nAngles)*1.1]) ; 
+    yyaxis right ; 
+    hold on ; 
     bar(binAngles, (nAngles/sum(nAngles))*100, 1, 'FaceColor', sColour) ; 
-    xlim([-10 370]) ; 
+    hold off ; 
     ylim([0 max((nAngles/sum(nAngles))*100)*1.1]) ; 
     xlabel('Trace segment angle, degrees') ; 
+    xlim([-10 370]) ; 
     ylabel('Frequency, %') ; 
     set(gca,'XTick', 0:60:360) ; 
     axis on square ; 
