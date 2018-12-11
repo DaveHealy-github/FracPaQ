@@ -1051,6 +1051,8 @@ if ~flagError
         flag_tracesbylength = get(handles.checkbox_tracemaplength, 'Value') ; 
         flag_segmentsbylength = get(handles.checkbox_segmentmaplength, 'Value') ; 
         flag_segmentsbystrike = get(handles.checkbox_segmentmapstrike, 'Value') ; 
+        
+        flag_tracemap_any = false ; 
         if sum([flag_tracemap, flag_sliptendency, flag_dilationtendency, flag_tracesbylength, ...
                 flag_segmentsbylength, flag_segmentsbystrike]) > 0 
             flag_tracemap_any = true ; 
