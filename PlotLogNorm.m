@@ -40,9 +40,6 @@ cn3 = [z4 1-logncdf(z4,mu,sigma)];
 cn3(:,2) = cn3(:,2).* c3(find(c3(:,1)>=xmin3,1,'first'),2);
 
 f = figure;
-set(gcf, 'PaperPositionMode', 'manual') ; 
-set(gcf, 'PaperUnits', 'inches') ; 
-set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
 h(1)= semilogx(c3(:,1),c3(:,2),':s','Color',sCol,'MarkerSize',5,'MarkerFaceColor',sCol);
 hold on

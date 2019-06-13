@@ -152,10 +152,6 @@ ek1 = sqrt(k1) ;
 ek2 = sqrt(k2) ; 
 
 f = figure ; 
-set(gcf, 'PaperPositionMode', 'manual') ; 
-set(gcf, 'PaperUnits', 'inches') ; 
-set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
 plotEllipse(ek1, ek2, kazimuth, sColour) ; 
 
 title({['Permeability in direction of flow, k_1:k_2=', ...
@@ -171,10 +167,6 @@ ek1 = 1 / sqrt(k1) ;
 ek2 = 1 / sqrt(k2) ; 
 
 f = figure ; 
-set(gcf, 'PaperPositionMode', 'manual') ; 
-set(gcf, 'PaperUnits', 'inches') ; 
-set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
 plotEllipse(ek1, ek2, kazimuth, sColour) ; 
 
 title({['Permeability in direction of gradient, k_1:k_2=', ...

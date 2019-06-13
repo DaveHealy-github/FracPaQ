@@ -206,9 +206,6 @@ end ;
 
 lw = 1.5 ; 
 f = figure ; 
-set(gcf, 'PaperPositionMode', 'manual') ; 
-set(gcf, 'PaperUnits', 'inches') ; 
-set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 polarplot(0:(2*pi/ninc):2*pi, F0, '-m', 'LineWidth', lw) ; 
 hold on ; 
 polarplot(0:(2*pi/ninc):2*pi, F2, '-b', 'LineWidth', lw) ; 

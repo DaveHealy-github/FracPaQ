@@ -46,9 +46,6 @@ dataImageBW = ( ( double(dataImage) - double(maxBW) ) .* -1 ) ./ double(maxBW) ;
 
 %   trace map, inverted 
 f = figure ; 
-set(gcf, 'PaperPositionMode', 'manual') ; 
-set(gcf, 'PaperUnits', 'inches') ; 
-set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
 imshow(dataImageBW, 'InitialMagnification', 33) ; 
 set(gca,'YDir','reverse') ; 
@@ -132,9 +129,6 @@ for ia = 1:na
 
     %   WC map    
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
     imshow(WCnorm_theta, 'InitialMagnification', 33, 'Colormap', cmocean('thermal')) ; 
     set(gca,'YDir','reverse') ; 
@@ -151,9 +145,6 @@ for ia = 1:na
 
     %   equal area rose     
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
     thetaopt2_deg = thetaopt2 .* 180 / pi ;
     for i = 1:max(size(thetaopt2_deg))
@@ -170,9 +161,6 @@ for ia = 1:na
 
     %   WC histo     
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
     [ nwc, binwc ] = hist(reshape(WCnorm_theta, nxImage*nyImage, 1), 20) ; 
     hold on ; 

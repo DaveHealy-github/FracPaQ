@@ -1,4 +1,4 @@
-function guiFracPaQ2Dlength_new(traces, nPixelsPerMetre, northCorrection, xMin, yMin, xMax, yMax, ...
+function guiFracPaQ2Dlength(traces, nPixelsPerMetre, northCorrection, xMin, yMin, xMax, yMax, ...
                                 nBins, flag_histolength, flag_logloglength, flag_crossplot, ...
                                 flag_mle, flag_censor, flag_blocksize, flag_revY, flag_revX, ...
                                 sColour, nlc, nuc, flag_seglenvariogram)
@@ -28,8 +28,6 @@ function guiFracPaQ2Dlength_new(traces, nPixelsPerMetre, northCorrection, xMin, 
 % DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-disp(flag_blocksize) ; 
 
 maxPossTraceLength = ceil(sqrt(xMax^2 + yMax^2)) ; 
 
@@ -145,10 +143,6 @@ if flag_histolength
 
     %   histogram of trace lengths 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     [ nTraceLengths, binTraceLengths ] = hist(traceLengths, ...
                                 minTraceLength:(maxTraceLength-minTraceLength)/nBins:maxTraceLength) ; 
 
@@ -181,10 +175,6 @@ if flag_histolength
 
     %   histogram of segment lengths 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     [ nSegmentLengths, binSegmentLengths ] = hist(traceSegmentLengths, ...
                                 minSegmentLength:(maxSegmentLength-minSegmentLength)/nBins:maxSegmentLength) ; 
 
@@ -222,10 +212,6 @@ if flag_logloglength
 
     %   trace lengths density distribution 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     [ nTraceLengths, binTraceLengths ] = hist(traceLengths, ... 
                                  minTraceLength:(maxTraceLength-minTraceLength)/nBins:maxTraceLength) ; 
     loglog(binTraceLengths, nTraceLengths, 's', ...
@@ -253,10 +239,6 @@ if flag_logloglength
     
     %   trace lengths cumulative distribution 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     if nPixelsPerMetre > 0 
         [ nTraceLengths, binTraceLengths ] = hist(traceLengths, minTraceLength:(maxTraceLength-minTraceLength)/1000:maxTraceLength) ; 
         cLengths = cumsum(nTraceLengths) ; 
@@ -297,10 +279,6 @@ if flag_logloglength
 
     %   segment lengths density distribution 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     [ nSegmentLengths, binSegmentLengths ] = hist(traceSegmentLengths, ... 
                                  minSegmentLength:(maxSegmentLength-minSegmentLength)/nBins:maxSegmentLength) ; 
     loglog(binSegmentLengths, nSegmentLengths, 's', ...
@@ -328,10 +306,6 @@ if flag_logloglength
 
     %   segment lengths cumulative distribution 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     if nPixelsPerMetre > 0 
         [ nSegmentLengths, binSegmentLengths ] = hist(traceSegmentLengths, ...
                 minSegmentLength:(maxSegmentLength-minSegmentLength)/1000:maxSegmentLength) ; 
@@ -376,10 +350,6 @@ end ;
 if flag_crossplot 
     
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     hold on ; 
     plot(traceSegmentAngles2, [traceSegmentLengths'; traceSegmentLengths'], 's', ...
                 'Color', sColour, 'MarkerFaceColor', sColour, 'MarkerSize', 2) ; 
@@ -542,9 +512,6 @@ if flag_blocksize
     
     %   plot trace map with block centroids 
     figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
     hold on ; 
     for k = 1:nTraces
         plot( [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 0.75, 'Color', sColour) ;
@@ -573,9 +540,6 @@ if flag_blocksize
 
     %   plot loglog plot of area v frequency 
     figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
     s2 = regionprops(BW3, 'Area') ; 
     areas = cat(1, s2.Area) ; 
     incArea = ( max(areas) - min(areas) ) / 1e3 ; 
@@ -600,10 +564,6 @@ if flag_blocksize
     
     %   plot histogram of area v frequency
     figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-    
     incArea = ( max(areas) - min(areas) ) / 30 ; 
     [ nAreas, binAreas ] = hist(areas, min(areas):incArea:max(areas)) ;
     bar(binAreas, (nAreas/sum(nAreas))*100, 1, 'FaceColor', sColour) ;
@@ -628,10 +588,6 @@ end ;
 if flag_seglenvariogram 
     
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     iseg = 0 ; 
     nTraces = length(traces) ; 
     nSegments = sum([traces(:).nSegments]) ;
@@ -654,7 +610,11 @@ if flag_seglenvariogram
 
     plot(d.distance, d.val, 'rs') ;
     % axis([0 params.maxdist 0 max(S.val)*1.1]) ;
-    xlabel('h') ;
+    if nPixelsPerMetre > 0 
+        xlabel('h, metres') ; 
+    else 
+        xlabel('h, pixels') ; 
+    end ; 
     ylabel('\gamma (h)') ;
     box on ; 
     grid on ; 
