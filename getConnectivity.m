@@ -1,4 +1,6 @@
-function [ Y, X, I ] = getConnectivity(traces, segments, xMax, yMax) 
+function [ Y, X, I ] = getConnectivity(traces, segments, xMin, yMin, xMax, yMax, ...
+                                       nBlocks, ... 
+                                       flag_revX, flag_revY, numPixelsPerMetre) 
 
 %% Copyright
 % Permission is hereby granted, free of charge, to any person obtaining a
@@ -19,6 +21,22 @@ function [ Y, X, I ] = getConnectivity(traces, segments, xMax, yMax)
 % DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
+%
+%   Modified by Nikolai Andrianov (DTU, Denmark) - January 2019 
+%   Modified by Dave Healy (Aberdeen) - January 2019 
+
+hWait = waitbar(0.2, 'Calculating connectivity nodes...', 'Name', 'I-Y-X connectivity') ;
+
+% Keep a reference to the corresponding trace in segments 
+k = 0 ;
+for i = 1:length(traces)
+    for j = 1:traces(i).nSegments
+        k = k + 1 ;
+        segmentTrace(k) = i ;
+    end
+end
+
+connectivityTraces = true ; 
 
 Y = 0 ; 
 X = 0 ; 
@@ -42,39 +60,47 @@ for i = 1:size(segments,1)
 
         for j = i+1:size(segments,1) 
 
-            %   check that the scan line is not the same as the matched line 
-            if intScan.coincAdjacencyMatrix(1, j) < 1 
+%             waitbar((i*j)/(size(segments,1)^2), hWait, 'Calculating node coordinates...') ;
+            
+            % Account for trace intersections only if the segments belong
+            % to different traces, and account for all segment intersections
+            if ((connectivityTraces && (segmentTrace(i) ~= segmentTrace(j))) || ~connectivityTraces)
+            
+                %   check that the scan line is not the same as the matched line 
+                if intScan.coincAdjacencyMatrix(1, j) < 1 
 
-                %   is there an intersection? 
-                if intScan.intAdjacencyMatrix(1, j) > 0
+                    %   is there an intersection? 
+                    if intScan.intAdjacencyMatrix(1, j) > 0
 
-                    nInt = nInt + 1 ; 
+                        nInt = nInt + 1 ; 
 
-                    %   get coords of intersection 
-                    xint(nInt) = intScan.intMatrixX(1, j) ; 
-                    yint(nInt) = intScan.intMatrixY(1, j) ; 
+                        %   get coords of intersection 
+                        xint(nInt) = intScan.intMatrixX(1, j) ; 
+                        yint(nInt) = intScan.intMatrixY(1, j) ; 
 
-                    %   if this intersection point is also the end of either line  
-                    if ( xint(nInt) == scanXY(1) && yint(nInt) == scanXY(2) ) 
-                        Y = Y + 1 ; 
-                        fint(nInt) = 'Y' ; 
-                    elseif ( xint(nInt) == scanXY(3) && yint(nInt) == scanXY(4) )
-                        Y = Y + 1 ; 
-                        fint(nInt) = 'Y' ; 
-                    elseif ( xint(nInt) == segments(j, 1) && yint(nInt) == segments(j, 2) )
-                        Y = Y + 1 ; 
-                        fint(nInt) = 'Y' ; 
-                    elseif ( xint(nInt) == segments(j, 3) && yint(nInt) == segments(j, 4) )
-                        Y = Y + 1 ; 
-                        fint(nInt) = 'Y' ; 
-                    else 
-                        X = X + 1 ; 
-                        fint(nInt) = 'X' ; 
+                        %   if this intersection point is also the end of either line  
+                        if ( xint(nInt) == scanXY(1) && yint(nInt) == scanXY(2) ) 
+                            Y = Y + 1 ; 
+                            fint(nInt) = 'Y' ; 
+                        elseif ( xint(nInt) == scanXY(3) && yint(nInt) == scanXY(4) )
+                            Y = Y + 1 ; 
+                            fint(nInt) = 'Y' ; 
+                        elseif ( xint(nInt) == segments(j, 1) && yint(nInt) == segments(j, 2) )
+                            Y = Y + 1 ; 
+                            fint(nInt) = 'Y' ; 
+                        elseif ( xint(nInt) == segments(j, 3) && yint(nInt) == segments(j, 4) )
+                            Y = Y + 1 ; 
+                            fint(nInt) = 'Y' ; 
+                        else 
+                            X = X + 1 ; 
+                            fint(nInt) = 'X' ; 
+                        end ; 
+
                     end ; 
 
-                end ; 
-
-            end ;
+                end ;
+            
+            end
 
         end ; 
 
@@ -82,67 +108,300 @@ for i = 1:size(segments,1)
     
 end ; 
 
-disp('Before intersection adjustment:') ; 
+% Get the coordinates of I nodes
+Ntr = size(traces,2);
+XI = zeros(Ntr*2, 2);
+for i = 1:Ntr
+    Nnt = length(traces(i).Node); % Number of nodes in traces
+    XI(2*i-1, 1) = traces(i).Node(1).x;
+    XI(2*i-1, 2) = traces(i).Node(1).y;
+    XI(2*i, 1)   = traces(i).Node(Nnt).x;
+    XI(2*i, 2)   = traces(i).Node(Nnt).y;    
+end
+
+waitbar(0.5, hWait, 'Removing duplicates...') ;
+% Remove duplicates just in case
+[XIU, iu, tmp] = unique(XI, 'stable', 'rows');
+Nip = size(XIU, 1);
+XI = reshape(XIU, Nip, 2);
+
+disp('Initial I-Y-X node count:') ; 
 disp(['I: ', num2str(I)]) ; 
 disp(['Y: ', num2str(Y)]) ; 
 disp(['X: ', num2str(X)]) ; 
+
 %   ONLY run this for when the number of traces < number segments 
 %   - i.e. NOT for maps generated by image analysis/Hough transform  
 %   correct for extra 'Y' nodes when a trace 'kinks' on intersecting another
 %   segment; this is currently 3 'Y' nodes, but should be 1 'X' node
-if max(size(traces)) < max(size(segments))
+if max(size(traces)) < max(size(segments)) && nInt > 0 
 
-    for i = 1:nInt 
+    % Get to the columnwise coordinates
+    xint = xint';
+    yint = yint';
+    Xc = [xint, yint];
+    
+    % Intersections' coordinates without duplicates
+    [XU, iu, tmp] = unique(Xc, 'stable', 'rows');
+    Np = size(XU, 1);
+    XU = reshape(XU, Np, 2);
 
-        if ~isnan(xint(i)) && fint(i) == 'Y'
-
-            ix = find(xint == xint(i), nInt) ; 
-            iy = find(yint == yint(i), nInt) ; 
-
-            if length(ix) > 1 && length(iy) > 1  
-
-                Y = Y - length(ix) ; 
-                X = X + 1 ; 
-
-                %   make sure we only deal with each duplicate once 
-                xint(ix) = NaN ; 
-                yint(iy) = NaN ; 
-
-            end ;
-
-        end ; 
-
-    end ; 
+    % For the trace connectivity case replace all Y nodes with X unless they
+    % coincide with I nodes
+    nodeType = fint(iu)';
+%     if (connectivityTraces)
+%         [XYI, ixyi, tmp] = intersect(XU, XI, 'rows');
+%         indX = setdiff( [1:Np]', ixyi);
+%         nodeTypeXYI = nodeType(ixyi);
+%         nodeType(indX) = 'X';
+%     end    
+    
+    % Get the number and coordinates of unique X and Y nodes
+    indX = find(nodeType == 'X') ;
+    indY = find(nodeType == 'Y') ;
+    
+    X = length(indX);
+    Y = length(indY);
+    
+    dx = (max(XU(:,1)) - min(XU(:, 1))) / 200;
+        
+%     % Replace the original implementation with the one below    
+%     for i = 1:nInt 
+% 
+%         if ~isnan(xint(i)) && fint(i) == 'Y'
+% 
+%             ix = find(xint == xint(i), nInt) ; 
+%             iy = find(yint == yint(i), nInt) ; 
+% 
+%             if length(ix) > 1 && length(iy) > 1  
+%                 
+%                 figure(1)
+%                 hold on
+%                 plot(xint(i), yint(i), 'o', 'Color', 'r')
+% 
+%                 Y = Y - length(ix) ; 
+%                 X = X + 1 ; 
+% 
+%                 %   make sure we only deal with each duplicate once 
+%                 xint(ix) = NaN ; 
+%                 yint(iy) = NaN ; 
+% 
+%             end ;
+% 
+%         end ; 
+% 
+%     end ; 
     
 end ;
 
-disp('After intersection adjustment:') ; 
+disp('After removing duplicates and adjusting Y->X:') ; 
 disp(['I: ', num2str(I)]) ; 
 disp(['Y: ', num2str(Y)]) ; 
 disp(['X: ', num2str(X)]) ; 
 
-%   also remove any I points that lie on the edge of the area; censoring 
-xMaxr = round(xMax) ; 
-yMaxr = round(yMax) ; 
-for i = 1:size(traces,2) 
+% Replace the original implementation with the one below
+% %   also remove any I points that lie on the edge of the area; censoring 
+% xMaxr = round(xMax) ; 
+% yMaxr = round(yMax) ; 
+% for i = 1:size(traces,2) 
+% 
+%     maxNode = traces(i).nNodes ; 
+%     
+%     if round(traces(i).Node(1).x) == xMin || round(traces(i).Node(1).x) == xMaxr
+%         I = I - 1 ; 
+%     elseif round(traces(i).Node(1).y) == yMin || round(traces(i).Node(1).y) == yMaxr
+%         I = I - 1 ; 
+%     elseif round(traces(i).Node(maxNode).x) == xMin || round(traces(i).Node(maxNode).x) == xMaxr
+%         I = I - 1 ; 
+%     elseif round(traces(i).Node(maxNode).y) == xMax || round(traces(i).Node(maxNode).y) == yMaxr
+%         I = I - 1 ; 
+%     else 
+%         continue ; 
+%     end ; 
+%         
+% end ; 
 
-    maxNode = traces(i).nNodes ; 
-    
-    if round(traces(i).Node(1).x) == 0 || round(traces(i).Node(1).x) == xMaxr 
-        I = I - 1 ; 
-    elseif round(traces(i).Node(1).y) == 0 || round(traces(i).Node(1).y) == yMaxr
-        I = I - 1 ; 
-    elseif round(traces(i).Node(maxNode).x) == 0 || round(traces(i).Node(maxNode).x) == xMaxr
-        I = I - 1 ; 
-    elseif round(traces(i).Node(maxNode).y) == 0 || round(traces(i).Node(maxNode).y) == yMaxr
-        I = I - 1 ; 
-    else 
-        continue ; 
-    end ; 
-        
+% Excluding the I nodes lying on boundaries
+ib = find( (XI(:,1) == xMin) | (XI(:,1) == xMax) | (XI(:,2) == yMin) | (XI(:,2) == yMax));
+Nip = size(XI, 1);
+indI = setdiff( [1:Nip]', ib);
+
+% Exclude the I nodes coinciding with X and Y nodes
+if nInt > 0 
+    XIi= setdiff(XI(indI,:), XU(indX,:), 'rows');
+    XI = setdiff(XIi, XU(indY,:), 'rows');
 end ; 
 
-disp('After censoring:') ; 
+I = size(XI(indI), 1);
+
+waitbar(0.75, hWait, 'Building maps...') ;
+
+%   node marker map 
+f = figure ;
+% set(gcf, 'PaperPositionMode', 'manual') ;
+% set(gcf, 'PaperUnits', 'inches') ;
+% set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ;
+% set(gcf, 'PaperUnits', 'centimeters') ;
+% set(gcf, 'PaperPosition', [ 2 2 21 29.7 ]) ;
+
+ms = 2 ;     
+hold on ;         
+for k = 1:length(traces)
+
+    plot( [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 0.5, 'Color', 'k') ;
+
+end ; 
+
+if nInt > 0 
+    hi = plot(XI(:,1), XI(:,2), 'o', 'Color', 'b', 'MarkerFaceColor', 'b', 'MarkerSize', ms, 'DisplayName', 'I') ; 
+    hx = plot(XU(indX,1), XU(indX,2), 'o', 'Color', 'r', 'MarkerFaceColor', 'r', 'MarkerSize', ms, 'DisplayName', 'X') ; 
+    %         tind = [1:length(indX)];
+    %         text(XU(indX,1)+dx, XU(indX,2), num2str(tind(:)), 'Color', 'r');        
+    hy = plot(XU(indY,1), XU(indY,2), 'o', 'Color', 'g', 'MarkerFaceColor', 'g', 'MarkerSize', ms, 'DisplayName', 'Y') ;
+    %         tind = [1:length(indY)];
+    %         text(XU(indY,1)+dx, XU(indY,2), num2str(tind(:)), 'Color', 'g'); 
+    hold off ; 
+    %     tind = [1:length(XI(:,1))] ;
+    %     text(XI(:,1)+dx, XI(:,2), num2str(tind(:)), 'Color', 'b') ;        
+    legend([hx, hy, hi], 'Location', 'southoutside', 'Orientation', 'horizontal') ; 
+else 
+    hi = plot(XI(:,1), XI(:,2), 'o', 'Color', 'b', 'MarkerFaceColor', 'b', 'MarkerSize', ms, 'DisplayName', 'I') ; 
+    hold off ; 
+    %     tind = [1:length(XI(:,1))] ;
+    %     text(XI(:,1)+dx, XI(:,2), num2str(tind(:)), 'Color', 'b') ;        
+    legend([hi], 'Location', 'southoutside', 'Orientation', 'horizontal') ; 
+end ; 
+grid on ; 
+box on ; 
+axis equal ; 
+xlim([xMin xMax]) ;
+ylim([yMin yMax]) ;
+if flag_revX
+    set(gca, 'XDir', 'reverse') ;
+end ;
+if flag_revY
+    set(gca, 'YDir', 'reverse') ;
+end ;
+if numPixelsPerMetre > 0
+    xlabel('X, metres') ;
+    ylabel('Y, metres') ;
+else
+    xlabel('X, pixels') ;
+    ylabel('Y, pixels') ;
+end ;
+title({'Connectivity node types';['n_I=', num2str(I), ', n_Y=', num2str(Y), ', n_X=', num2str(X)]}) ;
+
+close(hWait) ;
+
+%   save to file
+guiPrint(f, 'FracPaQ2D_IYXnodes_traces') ;
+    
+%   heatmaps of node types 
+if xMax-xMin > yMax-yMin
+    nyBlocks = nBlocks ; 
+    nxBlocks = round( ((yMax-yMin)/(xMax-xMin)) * nBlocks ) ; 
+elseif yMax-yMin > xMax-xMin
+    nxBlocks = nBlocks ; 
+    nyBlocks = round( ((xMax-xMin)/(yMax-yMin)) * nBlocks ) ; 
+else
+    nxBlocks = nBlocks ; 
+    nyBlocks = nBlocks ; 
+end ; 
+Nxbins = nxBlocks ; 
+Nybins = nyBlocks ; 
+% [NX, CX] = hist3([XU(indX,1), XU(indX,2)], [Nxbins,Nybins]) ; 
+% [NY, CY] = hist3([XU(indY,1), XU(indY,2)], [Nxbins,Nybins]) ; 
+if nInt > 0 
+    [NXY, CXY] = hist3([[XU(indX,1); XU(indY,1)], [XU(indX,2); XU(indY,2)]], [Nxbins, Nybins]) ; 
+else 
+    NXY = 0 ; 
+    CXY = 0 ; 
+end ; 
+[NI, CI] = hist3([XI(:,1), XI(:,2)], [Nxbins, Nybins]) ; 
+maxBar = max([max(max(NXY)), max(max(NI))]) ; 
+
+if nInt > 0 
+    f = figure ;
+%     set(gcf, 'PaperPositionMode', 'manual') ;
+%     set(gcf, 'PaperUnits', 'centimeters') ;
+%     set(gcf, 'PaperPosition', [ 2 2 21 29.7 ]) ;
+
+    imagesc(cell2mat(CXY(1,1)), cell2mat(CXY(1,2)), NXY') ; 
+    box on ; 
+    axis equal ; 
+    ax = gca ; 
+    ax.YDir = 'normal' ;
+    xlim([xMin xMax]) ;
+    ylim([yMin yMax]) ;
+    if flag_revX
+        set(gca, 'XDir', 'reverse') ;
+    end ;
+    if flag_revY
+        set(gca, 'YDir', 'reverse') ;
+    end ;
+    if numPixelsPerMetre > 0
+        xlabel('X, metres') ;
+        ylabel('Y, metres') ;
+    else
+        xlabel('X, pixels') ;
+        ylabel('Y, pixels') ;
+    end ;
+    c = colorbar('southoutside') ; 
+    c.Label.String = 'Number of (X+Y)-nodes' ; 
+    title({['(X+Y)-nodes, n_X+n_Y=', num2str(X+Y)];''}) ;
+    cmap = colormap('hot') ; 
+    cmap = flipud(cmap) ; 
+    colormap(cmap) ; 
+    caxis([0 maxBar]) ; 
+
+    %   save to file
+    guiPrint(f, 'FracPaQ2D_XYnodes_traces_heat') ;
+end ; 
+
+if min(size(NI)) > 1 
+    f = figure ;
+%     set(gcf, 'PaperPositionMode', 'manual') ;
+%     set(gcf, 'PaperUnits', 'centimeters') ;
+%     set(gcf, 'PaperPosition', [ 2 2 21 29.7 ]) ;
+    
+    [xg, yg] = meshgrid(cell2mat(CI(1,1)), cell2mat(CI(1,2))) ; 
+%     [xq, yq] = meshgrid(linspace(min(min(cell2mat(CI(1,1)))), max(max(cell2mat(CI(1,1)))), newpoints), ...  
+%                         linspace(min(min(cell2mat(CI(1,2)))), max(max(cell2mat(CI(1,2)))), newpoints)) ; 
+%     NIinterp = interp2(xg, yg, NI', xq, yq, 'cubic') ; 
+%     contourf(xq, yq, NIinterp, nLevels) ; 
+    imagesc(cell2mat(CI(1,1)), cell2mat(CI(1,2)), NI') ; 
+    box on ; 
+    axis equal ; 
+    ax = gca ; 
+    ax.YDir = 'normal' ;
+    xlim([xMin xMax]) ;
+    ylim([yMin yMax]) ;
+    if flag_revX
+        set(gca, 'XDir', 'reverse') ;
+    end ;
+    if flag_revY
+        set(gca, 'YDir', 'reverse') ;
+    end ;
+    if numPixelsPerMetre > 0
+        xlabel('X, metres') ;
+        ylabel('Y, metres') ;
+    else
+        xlabel('X, pixels') ;
+        ylabel('Y, pixels') ;
+    end ;
+    c = colorbar('southoutside') ; 
+    c.Label.String = 'Number of I-nodes' ; 
+    title({['I-nodes, n_I=', num2str(I)];''}) ;
+    cmap = colormap('hot') ; 
+    cmap = flipud(cmap) ; 
+    colormap(cmap) ; 
+    caxis([0 maxBar]) ; 
+
+    %   save to file
+    guiPrint(f, 'FracPaQ2D_Inodes_traces_heat') ;
+end ; 
+
+disp('After removing boundary I nodes:') ; 
 disp(['I: ', num2str(I)]) ; 
 disp(['Y: ', num2str(Y)]) ; 
 disp(['X: ', num2str(X)]) ; 

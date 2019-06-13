@@ -101,9 +101,6 @@ for ia = 1:na
     end ;
 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 9 9 ]) ; 
 
     subplot(2,2,1) ; 
     imshow(dataImageBW, 'InitialMagnification', 33) ; 

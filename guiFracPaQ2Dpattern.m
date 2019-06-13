@@ -1,12 +1,23 @@
 function guiFracPaQ2Dpattern(traces, numPixelsPerMetre, xMin, yMin, xMax, yMax, ...
-    flag_intensitymap, flag_densitymap, flag_triangle, flag_showcircles, nCircles, flag_revY, flag_revX, sColour)
+                             nBlocks, ... 
+                             flag_intensitymap, flag_densitymap, ... 
+                             flag_triangle, flag_showcircles, ...
+                             nCircles, flag_revY, flag_revX, sColour)
 %   guiFracPaQ2Dpattern.m
 %       calculates and plots statistics of trace segment patterns
 %
 %   David Healy
 %   July 2014
 %   d.healy@abdn.ac.uk
-
+%
+%   Modified by:
+%   Nikolai Andrianov 
+%   January 2019 
+%
+%   Modified by:
+%   David Healy 
+%   February 2019 
+%
 %% Copyright
 % Permission is hereby granted, free of charge, to any person obtaining a
 % copy of this software and associated documentation files (the
@@ -99,10 +110,6 @@ end ;
 if flag_showcircles
     
     f = figure ;
-    set(gcf, 'PaperPositionMode', 'manual') ;
-    set(gcf, 'PaperUnits', 'inches') ;
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ;
-    
     %   mapped lines and circle centres
     hold on ;
     for k = 1:numTraces
@@ -114,9 +121,6 @@ if flag_showcircles
         for j = 1:yNumCircle
             yCentreCircle = yMin + yDeltaCircle * j ;
             %   *** need to draw the circles actual size here
-%             plot( xCentreCircle, yCentreCircle, ...
-%                 'or', 'MarkerEdgeColor', 'r', ...
-%                 'MarkerSize', 12) ;
             %   use rectangle() with 'Curvature' at [1 1] 
             pos = [ xCentreCircle - rCircle, yCentreCircle - rCircle, 2*rCircle, 2*rCircle ] ; 
             rectangle('Position', pos, 'Curvature', [1 1], 'LineWidth', 0.25, 'EdgeColor', 'r') ; 
@@ -282,16 +286,16 @@ if flag_triangle
         end ;
         
     end ;
-    
-    [ cY, cX, cI ] = getConnectivity(traces, segmentsxy, xMax, yMax) ;
-    disp(' ') ;
+     
+    [cY, cX, cI] = getConnectivity(traces, segmentsxy, xMin, yMin, xMax, yMax, ...
+                                   nBlocks, flag_revX, flag_revY, numPixelsPerMetre) ;
     cTot = cY + cX + cI ;
     disp('Connectivity...') ;
     disp(['Y:X:I = ', ...
         num2str(cY/cTot, '%5.2f'), ':', ...
         num2str(cX/cTot, '%5.2f'), ':', ...
         num2str(cI/cTot, '%5.2f')]) ;
-    disp(['Total number of connections: ', num2str(cTot, '%4.0f')]) ;
+    disp(['Total number of I-Y-X nodes: ', num2str(cTot, '%4.0f')]) ;
     xX = 0.5 * ( 2 * cX + cI ) / cTot ;
     yX = sqrt(3) * 0.5 * cI / cTot ;
     triData = [ (cY/cTot)*100, (cX/cTot)*100, (cI/cTot)*100 ] ;
@@ -301,10 +305,6 @@ if flag_triangle
     triLinesCL357 = [ (8.3/9.3)*100, 0, (1/9.3)*100 ; 0, (0.8925/1.8925)*100, (1/1.8925)*100 ] ; 
     
     f = figure ;
-    set(gcf, 'PaperPositionMode', 'manual') ;
-    set(gcf, 'PaperUnits', 'inches') ;
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ;
-    
     hold on ;
     triplot() ; 
     tripts(triData, '', 0, sColour) ; 
@@ -313,10 +313,13 @@ if flag_triangle
     tripts(triLinesCL2(2,:), '\it C_L\rm = 2', 2, sColour) ; 
     tripts(triLinesCL357(2,:), '\it C_L\rm = 3.57', 2, sColour) ; 
     hold off ;
-    title({['Connectivity of trace segments, Y:X:I = ', ...
-        num2str(cY/cTot, '%5.2f'), ':', ...
-        num2str(cX/cTot, '%5.2f'), ':', ...
-        num2str(cI/cTot, '%5.2f')];''}) ;
+    
+    % Title with fractions of Y, X, I
+    title({'Connectivity of traces'; ...
+           ['Y:X:I = ', ...
+            num2str(cY/cTot, '%5.2f'), ':', ...
+            num2str(cX/cTot, '%5.2f'), ':', ...
+            num2str(cI/cTot, '%5.2f')];''}) ;
     
     %   save to file
     guiPrint(f, 'FracPaQ2D_IYXtriangle') ;
@@ -332,37 +335,17 @@ end ;
 
 if flag_intensitymap || flag_densitymap
     
-    %   interpolate I and D over reduced X, Y
-    [ X1, Y1 ] = meshgrid( ((xMin+xDeltaCircle):xDeltaCircle:xMax-xDeltaCircle), ...
-        ((yMin+yDeltaCircle):yDeltaCircle:yMax-yDeltaCircle) ) ;
-
-    Iinterp = TriScatteredInterp(reshape(X1, xNumCircle*yNumCircle, 1), ...
-        reshape(Y1, xNumCircle*yNumCircle, 1), ...
-        reshape(I, xNumCircle*yNumCircle, 1), ...
-        'natural') ;
-    Dinterp = TriScatteredInterp(reshape(X1, xNumCircle*yNumCircle, 1), ...
-        reshape(Y1, xNumCircle*yNumCircle, 1), ...
-        reshape(D, xNumCircle*yNumCircle, 1), ...
-        'natural') ;
-    
-    %   create new, finer, X, Y grid
-    [ X2, Y2 ] = meshgrid( ((xMin+xDeltaCircle):xDeltaCircle/10:xMax-xDeltaCircle), ...
-        ((yMin+yDeltaCircle):yDeltaCircle/10:yMax-yDeltaCircle) ) ;
-    
-    Inew = Iinterp(X2, Y2) ;
-    Dnew = Dinterp(X2, Y2) ;
-    nContours = 20 ;
-    
     if flag_intensitymap
         %   plot trace intensity, I
         f = figure ;
-        set(gcf, 'PaperPositionMode', 'manual') ;
-        set(gcf, 'PaperUnits', 'inches') ;
-        set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ;
+%         contourf(X2, Y2, Inew, nContours) ;
+        xv = xMin+xDeltaCircle:xDeltaCircle:xMax-xDeltaCircle ; 
+        yv = yMin+yDeltaCircle:yDeltaCircle:yMax-yDeltaCircle ; 
         
-        cmocean('thermal') ;
-        
-        contourf(X2, Y2, Inew, nContours) ;
+        imagesc(xv, yv, I) ; 
+
+        ax = gca ; 
+        ax.YDir = 'normal' ;
         axis on equal ;
         box on ;
         xlim([xMin xMax]) ;
@@ -373,17 +356,25 @@ if flag_intensitymap || flag_densitymap
         if flag_revY
             set(gca, 'YDir', 'reverse') ;
         end ;
+        title({'Estimated Intensity of segments (P21)';''}) ;
         if numPixelsPerMetre > 0
-            title({'Estimated Intensity of trace segments (P21), metre^{-1}';''}) ;
             xlabel('X, metres') ;
             ylabel('Y, metres') ;
         else
-            title({'Estimated Intensity of trace segments (P21), pixel^{-1}';''}) ;
             xlabel('X, pixels') ;
             ylabel('Y, pixels') ;
         end ;
-        colorbar ; % ('location', 'southoutside') ;
-        
+        c = colorbar('location', 'southoutside') ;
+        if numPixelsPerMetre > 0
+            c.Label.String = 'Intensity of segments (P21), metre^{-1}' ; 
+        else 
+            c.Label.String = 'Intensity of segments (P21), pixel^{-1}' ; 
+        end 
+        cmap = colormap('hot') ; 
+        cmap = flipud(cmap) ; 
+        colormap(cmap) ; 
+        caxis([0 max(max(I))]) ; 
+
         %   save to file
         guiPrint(f, 'FracPaQ2D_intensityP21') ;
         
@@ -401,13 +392,16 @@ if flag_intensitymap || flag_densitymap
     if flag_densitymap
         %   plot trace density, D
         f = figure ;
-        set(gcf, 'PaperPositionMode', 'manual') ;
-        set(gcf, 'PaperUnits', 'inches') ;
-        set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ;
+%         contourf(X2, Y2, Dnew, nContours) ;
         
-        cmocean('thermal') ;
+        xv = xMin+xDeltaCircle:xDeltaCircle:xMax-xDeltaCircle ; 
+        yv = yMin+yDeltaCircle:yDeltaCircle:yMax-yDeltaCircle ; 
         
-        contourf(X2, Y2, Dnew, nContours) ;
+        imagesc(xv, yv, D) ; 
+
+        ax = gca ; 
+        ax.YDir = 'normal' ;
+
         axis on equal ;
         box on ;
         xlim([xMin xMax]) ;
@@ -418,16 +412,24 @@ if flag_intensitymap || flag_densitymap
         if flag_revY
             set(gca, 'YDir', 'reverse') ;
         end ;
+        title({'Estimated Density of segments (P20)';''}) ;
         if numPixelsPerMetre > 0
-            title({'Estimated Density of trace segments (P20), metre^{-2}';''}) ;
             xlabel('X, metres') ;
             ylabel('Y, metres') ;
         else
-            title({'Estimated Density of trace segments (P20), pixel^{-2}';''}) ;
             xlabel('X, pixels') ;
             ylabel('Y, pixels') ;
         end ;
-        colorbar ; % ('location', 'southoutside') ;
+        c = colorbar('southoutside') ; 
+        if numPixelsPerMetre > 0
+            c.Label.String = 'Density of segments (P20), metre^{-2}' ; 
+        else
+            c.Label.String = 'Density of segments (P20), pixel^{-2}' ; 
+        end
+        cmap = colormap('hot') ; 
+        cmap = flipud(cmap) ; 
+        colormap(cmap) ; 
+        caxis([0 max(max(D))]) ; 
         
         %   save to file
         guiPrint(f, 'FracPaQ2D_densityP20') ;
@@ -465,84 +467,5 @@ if flag_intensitymap || flag_densitymap
     
 end ;
 
-% %   plot trace length versus distance from arbitrary line (e.g. a fault)
-% %   use distance of trace centre measured perpendicular to the line
-% x1_line = 700 ;
-% y1_line = 200 ;
-%
-% x2_line = 300 ;
-% y2_line = 1050 ;
-%
-% f = figure ;
-% set(gcf, 'PaperPositionMode', 'manual') ;
-% set(gcf, 'PaperUnits', 'inches') ;
-% set(gcf, 'PaperPosition', [ 0.25 0.25 8 15 ]) ;
-%
-% subplot(3,1,1) ;
-% hold on ;
-% for k = 1:numTraces
-%
-%     plot( [ traces(k).Node.x ]', [ traces(k).Node.y ]', '-b', 'LineWidth', 1) ;
-%     plot( [ x1_line, x2_line ], [ y1_line, y2_line ], '-r', 'LineWidth', 1) ;
-%
-% end ;
-% hold off ;
-% axis on equal ;
-% box on ;
-% xlim([xMin xMax]) ;
-% ylim([yMin yMax]) ;
-% if numPixelsPerMetre > 0
-%     xlabel('X, metres') ;
-%     ylabel('Y, metres') ;
-% else
-%     xlabel('X, pixels') ;
-%     ylabel('Y, pixels') ;
-% end ;
-% title(['Mapped trace segments, n=', num2str(length(traceLengths))]) ;
-%
-% subplot(3,1,2) ;
-% hold on ;
-% for i = 1:numTraces
-%
-%     %   calculate perpendicular distance from trace centre to line
-%     traces(i).perpDistance = ( ( x2_line - x1_line ) * ( y1_line - traces(i).midpointY ) ...
-%                                     - ( x1_line - traces(i).midpointX ) * ( y2_line - y1_line ) ) ...
-%                                 / sqrt( ( x2_line - x1_line )^2 + ( y2_line - y1_line )^2 ) ;
-%
-%     plot(abs(traces(i).perpDistance), traces(i).totalLength, 'ob') ;
-%
-% end ;
-% hold off ;
-% xlabel('Perpendicular distance from line, units');
-% ylabel('Trace length, units') ;
-% box on ;
-% grid on ;
-% title('Do fracture sizes vary with distance from a fault?') ;
-%
-% subplot(3,1,3) ;
-% hold on ;
-% for i = 1:numTraces
-%
-%     for j = 1:traces(i).nSegments
-%
-%         %   calculate perpendicular distance from trace centre to line
-%         traces(i).Segment(j).perpDistance = ( ( x2_line - x1_line ) * ( y1_line - traces(i).Segment(j).midpointY ) ...
-%                                         - ( x1_line - traces(i).Segment(j).midpointX ) * ( y2_line - y1_line ) ) ...
-%                                     / sqrt( ( x2_line - x1_line )^2 + ( y2_line - y1_line )^2 ) ;
-%
-%         plot(abs(traces(i).Segment(j).perpDistance), traces(i).segmentLength(j), 'ob') ;
-%
-%     end ;
-%
-% end ;
-% hold off ;
-% xlabel('Perpendicular distance from line, units');
-% ylabel('Segment length, units') ;
-% box on ;
-% grid on ;
-% title('Do fracture sizes vary with distance from a fault?') ;
-%
-% %   save to file
-% guiPrint(f, 'guiFracPaQ2D_length_v_distance') ;
 
 end 

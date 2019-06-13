@@ -43,7 +43,7 @@ function varargout = guiFracPaQ2D(varargin)
 
 % Edit the above text to modify the response to help guiFracPaQ2D
 
-% Last Modified by GUIDE v2.5 02-Nov-2018 09:03:38
+% Last Modified by GUIDE v2.5 11-Jun-2019 12:03:42
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -97,8 +97,10 @@ set(handles.popupmenu_histolengthbins,'Value',2) ;
 set(handles.popupmenu_histoanglebins,'Value',2) ;
 set(handles.popupmenu_rosebins,'Value',2) ;
 
-handles.FracPaQversion = '2.4' ; 
+handles.FracPaQversion = '2.6' ; 
 disp(['FracPaQ version ', handles.FracPaQversion]) ; 
+handles.graphx = [0, 0] ; 
+handles.graphy = [0, 0] ; 
 % Update handles structure
 guidata(hObject, handles);
 
@@ -115,12 +117,14 @@ set(handles.uibgTabLengths,'position',get(handles.uibgTabMaps,'position'));
 set(handles.uibgTabAngles,'position',get(handles.uibgTabMaps,'position'));
 set(handles.uibgTabFluid,'position',get(handles.uibgTabMaps,'position'));
 set(handles.uibgTabWavelets,'position',get(handles.uibgTabMaps,'position'));
+set(handles.uibgTabGraphs,'position',get(handles.uibgTabMaps,'position'));
 
 set(handles.uibgTabMaps, 'Visible', 'off') ; 
 set(handles.uibgTabLengths, 'Visible', 'off') ; 
 set(handles.uibgTabAngles, 'Visible', 'off') ; 
 set(handles.uibgTabFluid, 'Visible', 'off') ; 
 set(handles.uibgTabWavelets, 'Visible', 'off') ; 
+set(handles.uibgTabGraphs, 'Visible', 'off') ; 
 
 % --- Outputs from this function are returned to the command line.
 function varargout = guiFracPaQ2D_OutputFcn(hObject, eventdata, handles) 
@@ -140,7 +144,13 @@ function checkbox_triangle_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_triangle
-
+if get(hObject, 'Value')
+    set(handles.label_numblocksmap, 'Enable', 'on') ; 
+    set(handles.edit_numblocksmap, 'Enable', 'on') ; 
+else 
+    set(handles.label_numblocksmap, 'Enable', 'off') ; 
+    set(handles.edit_numblocksmap, 'Enable', 'off') ; 
+end ; 
 
 % --- Executes on button press in checkbox_permellipse.
 function checkbox_permellipse_Callback(hObject, eventdata, handles)
@@ -584,6 +594,42 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
+% --- Executes on button press in pushbutton_selectgraphendpoints.
+function pushbutton_selectgraphendpoints_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton_selectgraphendpoints (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+[x, y] = ginput(2) ; 
+handles.graphx = x ; 
+handles.graphy = y ; 
+
+cla(handles.axes_tracemap) ; 
+
+%   allow for multiple files, one for each colour 
+if ~isempty(handles.selmultifile)
+
+    hold on ; 
+    for i = 1:length(handles.selmultifile) 
+
+        sFilename = [ char(handles.selpath), char(handles.selmultifile(i)) ] ;
+        sColour = char(handles.cstrColours(i)) ; 
+        [ ~, ~, ~, ~, ~ ] = guiFracPaQ2Dlist(sFilename, handles.nPixels, handles.axes_tracemap, sColour) ; 
+
+    end ; 
+    plot(handles.axes_tracemap, x, y, '-sr', 'LineWidth', 1) ;
+    hold off ; 
+
+else
+    hold on ; 
+    [ ~, ~, ~, ~, ~ ] = guiFracPaQ2Dlist(handles.sFilename, handles.nPixels, handles.axes_tracemap, handles.sColour) ; 
+    plot(handles.axes_tracemap, x, y, '-sr', 'LineWidth', 1) ;
+    hold off ; 
+end ; 
+
+% Update handles structure
+guidata(hObject, handles);
+
 % --- Executes on button press in pushbutton_browse.
 function pushbutton_browse_Callback(hObject, eventdata, handles)
 % hObject    handle to pushbutton_browse (see GCBO)
@@ -809,6 +855,10 @@ if ~flagError
         nPixels = str2double(get(handles.edit_scaling, 'String')) ; 
     end ; 
     
+    handles.nPixels = nPixels ; 
+    handles.sColour = sColour ; 
+    handles.sFilename = sFilename ; 
+    
     if get(handles.radiobutton_image, 'Value') 
         
         nHoughPeaks = str2double(get(handles.edit_houghpeaks, 'String')) ;
@@ -898,6 +948,7 @@ if ~flagError
     set(handles.pbAnglesTab, 'Enable', 'on') ; 
     set(handles.pbFluidTab, 'Enable', 'on') ; 
     set(handles.pbWaveletsTab, 'Enable', 'on') ; 
+    set(handles.pbGraphsTab, 'Enable', 'on') ; 
     set(handles.pushbutton_flipx, 'Enable', 'on') ; 
     set(handles.pushbutton_flipy, 'Enable', 'on') ; 
 %    uicontrol(handles.pushbutton_run) ; 
@@ -989,6 +1040,50 @@ if isnan(str2double(sValue)) || str2double(sValue) < 0.0 || str2double(sValue) >
     return ; 
 end ; 
 
+sValue = get(handles.edit_numblocksmap, 'String') ; 
+if isnan(str2double(sValue)) || str2double(sValue) <= 1.0 
+    hError = errordlg('Number of blocks in heat maps must be an integer, >= 2', 'Input error', 'modal') ; 
+    uicontrol(handles.edit_numblocksmap) ; 
+    flagError = true ; 
+    return ; 
+end ; 
+
+sValue = get(handles.edit_numscancirclesgraph, 'String') ; 
+if isnan(str2double(sValue)) || str2double(sValue) <= 1.0 
+    hError = errordlg('Number of scan circles along line must be an integer, >= 2', 'Input error', 'modal') ; 
+    uicontrol(handles.edit_numscancirclesgraph) ; 
+    flagError = true ; 
+    return ; 
+end ; 
+
+flag_tracelengthgraphalong = get(handles.checkbox_tracelengthgraphalong, 'Value') ;
+flag_segmentlengthgraphalong = get(handles.checkbox_segmentlengthgraphalong, 'Value') ;
+flag_segmentanglegraphalong = get(handles.checkbox_segmentstrikegraphalong, 'Value') ;
+flag_intensitygraphalong = get(handles.checkbox_intensitygraphalong, 'Value') ;
+flag_densitygraphalong = get(handles.checkbox_densitygraphalong, 'Value') ;
+flag_tracelengthgraphfrom = get(handles.checkbox_tracelengthgraphfrom, 'Value') ;
+flag_segmentlengthgraphfrom = get(handles.checkbox_segmentlengthgraphfrom, 'Value') ;
+flag_segmentanglegraphfrom = get(handles.checkbox_segmentanglegraphfrom, 'Value') ;
+
+flag_graph_any = false ; 
+
+if sum([flag_tracelengthgraphalong, flag_segmentlengthgraphalong, flag_segmentanglegraphalong, ...
+        flag_intensitygraphalong, flag_densitygraphalong, ... 
+        flag_tracelengthgraphfrom, flag_segmentlengthgraphfrom, flag_segmentanglegraphfrom]) > 0 
+    
+    flag_graph_any = true ; 
+
+    linex = handles.graphx ; 
+    liney = handles.graphy ; 
+    if sum(linex) == 0 && sum(liney) == 0
+        hError = errordlg('Please select a line with two end points', 'Input error', 'modal') ; 
+        uicontrol(handles.pushbutton_selectgraphendpoints) ; 
+        flagError = true ; 
+        return ; 
+    end 
+
+end ; 
+
 if ~flagError 
     
     traces = getappdata(hObject, 'Traces') ; 
@@ -1033,6 +1128,9 @@ if ~flagError
         nSigma2 = str2double(get(handles.edit_sigma2, 'String')) ; 
         nThetaSigma1 = str2double(get(handles.edit_thetasigma1, 'String')) ; 
         
+        nBlocks = str2double(get(handles.edit_numblocksmap, 'String')) ; 
+        nScanCircles = str2double(get(handles.edit_numscancirclesgraph, 'String')) ; 
+
         %   get values from drop down lists 
         list = get(handles.popupmenu_histolengthbins, 'String') ; 
         nHistoLengthBins = str2double(list{get(handles.popupmenu_histolengthbins, 'Value')}) ;
@@ -1088,6 +1186,7 @@ if ~flagError
             flag_multicolour = 0 ; 
         end ;
 
+        set(handles.text_message, 'String', 'Running...') ;   
         if flag_tracemap_any 
             guiFracPaQ2Dtracemap(traces, nPixels, nNorth, ...
                     xmin, ymin, xmax, ymax, ...
@@ -1119,7 +1218,10 @@ if ~flagError
         flag_pattern = sum([flag_intensitymap, flag_densitymap, flag_triangle]) ; 
         if flag_pattern
             guiFracPaQ2Dpattern(traces, nPixels, xmin, ymin, xmax, ymax, ...
-                                    flag_intensitymap, flag_densitymap, flag_triangle, flag_showcircles, nCircles, flag_reverseY, flag_reverseX, sColour) ; 
+                                nBlocks, ... 
+                                flag_intensitymap, flag_densitymap, ...
+                                flag_triangle, flag_showcircles, ...
+                                nCircles, flag_reverseY, flag_reverseX, sColour) ; 
         end ; 
 
         if flag_permellipse
@@ -1139,6 +1241,21 @@ if ~flagError
                                             nPixels, sColour) ; 
         end ; 
 
+        if flag_graph_any 
+            guiFracPaQ2Dgraphs(traces, nPixels, xmin, ymin, xmax, ymax, ...
+                                handles.graphx, handles.graphy, sColour, ...
+                                nScanCircles, ... 
+                                flag_reverseX, flag_reverseY, ... 
+                                flag_tracelengthgraphalong, ...
+                                flag_segmentlengthgraphalong, ...
+                                flag_segmentanglegraphalong, ...
+                                flag_intensitygraphalong, ...
+                                flag_densitygraphalong, ...
+                                flag_tracelengthgraphfrom, ...
+                                flag_segmentlengthgraphfrom, ...
+                                flag_segmentanglegraphfrom) ; 
+        end 
+        
         set(handles.text_message, 'String', 'All done. Check current folder for plot figure .tif files.') ;   
         uicontrol(handles.pushbutton_run) ; 
 
@@ -1192,9 +1309,12 @@ if get(handles.checkbox_wavelet, 'Value')
         handles.fMorlet = false ; 
     end ; 
 
+    set(handles.text_message, 'String', 'Running...') ;   
     if ~flagWaveError
         guiFracPaQ2Dwavelet2(handles.a, handles.L, handles.nTheta, handles.fMorlet, '[0 0 1]') ; 
     end ; 
+    set(handles.text_message, 'String', 'All done. Check current folder for plot figure .tif files.') ;   
+    uicontrol(handles.pushbutton_run) ; 
 
 end ; 
 
@@ -1503,6 +1623,7 @@ set(handles.uibgTabMaps, 'Visible', 'on') ;
 set(handles.uibgTabLengths, 'Visible', 'off') ; 
 set(handles.uibgTabAngles, 'Visible', 'off') ; 
 set(handles.uibgTabFluid, 'Visible', 'off') ; 
+set(handles.uibgTabGraphs, 'Visible', 'off') ; 
 set(handles.uibgTabWavelets, 'Visible', 'off') ; 
 
 
@@ -1515,6 +1636,7 @@ set(handles.uibgTabMaps, 'Visible', 'off') ;
 set(handles.uibgTabLengths, 'Visible', 'on') ; 
 set(handles.uibgTabAngles, 'Visible', 'off') ; 
 set(handles.uibgTabFluid, 'Visible', 'off') ; 
+set(handles.uibgTabGraphs, 'Visible', 'off') ; 
 set(handles.uibgTabWavelets, 'Visible', 'off') ; 
 
 
@@ -1527,6 +1649,7 @@ set(handles.uibgTabMaps, 'Visible', 'off') ;
 set(handles.uibgTabLengths, 'Visible', 'off') ; 
 set(handles.uibgTabAngles, 'Visible', 'on') ; 
 set(handles.uibgTabFluid, 'Visible', 'off') ; 
+set(handles.uibgTabGraphs, 'Visible', 'off') ; 
 set(handles.uibgTabWavelets, 'Visible', 'off') ; 
 
 
@@ -1539,6 +1662,7 @@ set(handles.uibgTabMaps, 'Visible', 'off') ;
 set(handles.uibgTabLengths, 'Visible', 'off') ; 
 set(handles.uibgTabAngles, 'Visible', 'off') ; 
 set(handles.uibgTabFluid, 'Visible', 'on') ; 
+set(handles.uibgTabGraphs, 'Visible', 'off') ; 
 set(handles.uibgTabWavelets, 'Visible', 'off') ; 
 
 
@@ -1551,6 +1675,7 @@ set(handles.uibgTabMaps, 'Visible', 'off') ;
 set(handles.uibgTabLengths, 'Visible', 'off') ; 
 set(handles.uibgTabAngles, 'Visible', 'off') ; 
 set(handles.uibgTabFluid, 'Visible', 'off') ; 
+set(handles.uibgTabGraphs, 'Visible', 'off') ; 
 set(handles.uibgTabWavelets, 'Visible', 'on') ; 
 
 
@@ -1815,3 +1940,146 @@ else
     set(handles.label_LString, 'Enable', 'off') ; 
     set(handles.label_DegString, 'Enable', 'off') ; 
 end ; 
+
+
+% --- Executes on button press in pbGraphsTab.
+function pbGraphsTab_Callback(hObject, eventdata, handles)
+% hObject    handle to pbGraphsTab (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.uibgTabMaps, 'Visible', 'off') ; 
+set(handles.uibgTabLengths, 'Visible', 'off') ; 
+set(handles.uibgTabAngles, 'Visible', 'off') ; 
+set(handles.uibgTabFluid, 'Visible', 'off') ; 
+set(handles.uibgTabGraphs, 'Visible', 'on') ; 
+set(handles.uibgTabWavelets, 'Visible', 'off') ; 
+
+
+% --- Executes on button press in checkbox_segmentlengthgraphalong.
+function checkbox_segmentlengthgraphalong_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_segmentlengthgraphalong (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_segmentlengthgraphalong
+
+
+% --- Executes on button press in checkbox_segmentstrikegraphalong.
+function checkbox_segmentstrikegraphalong_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_segmentstrikegraphalong (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_segmentstrikegraphalong
+
+
+% --- Executes on button press in checkbox_intensitygraphalong.
+function checkbox_intensitygraphalong_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_intensitygraphalong (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_intensitygraphalong
+if get(hObject, 'Value') || get(handles.checkbox_densitygraphalong, 'Value')
+    set(handles.label_numscancirclesgraph, 'Enable', 'on') ; 
+    set(handles.edit_numscancirclesgraph, 'Enable', 'on') ; 
+else 
+    set(handles.label_numscancirclesgraph, 'Enable', 'off') ; 
+    set(handles.edit_numscancirclesgraph, 'Enable', 'off') ; 
+end ; 
+
+% --- Executes on button press in checkbox_densitygraphalong.
+function checkbox_densitygraphalong_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_densitygraphalong (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_densitygraphalong
+if get(hObject, 'Value') || get(handles.checkbox_intensitygraphalong, 'Value')
+    set(handles.label_numscancirclesgraph, 'Enable', 'on') ; 
+    set(handles.edit_numscancirclesgraph, 'Enable', 'on') ; 
+else 
+    set(handles.label_numscancirclesgraph, 'Enable', 'off') ; 
+    set(handles.edit_numscancirclesgraph, 'Enable', 'off') ; 
+end ; 
+
+% --- Executes on button press in checkbox_tracelengthgraphalong.
+function checkbox_tracelengthgraphalong_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_tracelengthgraphalong (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_tracelengthgraphalong
+
+
+% --- Executes on button press in checkbox_tracelengthgraphfrom.
+function checkbox_tracelengthgraphfrom_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_tracelengthgraphfrom (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_tracelengthgraphfrom
+
+
+% --- Executes on button press in checkbox_segmentlengthgraphfrom.
+function checkbox_segmentlengthgraphfrom_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_segmentlengthgraphfrom (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_segmentlengthgraphfrom
+
+
+% --- Executes on button press in checkbox_segmentanglegraphfrom.
+function checkbox_segmentanglegraphfrom_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_segmentanglegraphfrom (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_segmentanglegraphfrom
+
+
+
+function edit_numblocksmap_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_numblocksmap (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_numblocksmap as text
+%        str2double(get(hObject,'String')) returns contents of edit_numblocksmap as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_numblocksmap_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_numblocksmap (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit_numscancirclesgraph_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_numscancirclesgraph (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_numscancirclesgraph as text
+%        str2double(get(hObject,'String')) returns contents of edit_numscancirclesgraph as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_numscancirclesgraph_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_numscancirclesgraph (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

@@ -73,10 +73,6 @@ fclose(fidRose) ;
 if flag_roseangle 
     
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     %   might implement linear scaling later, if demand exists; equal area is better though 
     flag_equalarea = 1 ;
     
@@ -114,10 +110,6 @@ if flag_histoangle
     
     %   histogram of trace angles 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     [ nAngles, binAngles ] = hist(traceAngles2, 0:360/nHistoBins:360) ; 
     yyaxis left ; 
     bar(binAngles, nAngles, 1, 'FaceColor', sColour) ; 

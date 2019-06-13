@@ -37,12 +37,7 @@ nNodes = sum([traces(:).nNodes]) ;
 if flag_tracemap
 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     hold on ; 
-
     for k = 1:nTraces
 
         plot( [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 0.75, 'Color', sColour) ;
@@ -70,7 +65,6 @@ if flag_tracemap
         end ; 
 
     end ; 
-
     hold off ; 
     axis on equal ; 
     box on ; 
@@ -102,9 +96,6 @@ end ;
 if fMulticolour
     
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
     nTraces = length(traces) ; 
     nSegments = sum([traces(:).nSegments]) ; 
@@ -144,10 +135,6 @@ end ;
 if flag_tracesbylength 
     %   trace length by colour map 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     maxtraceLength = max([traces.totalLength]) ; 
     traceColourMap = cmocean('haline') ; 
     colormap(traceColourMap);
@@ -191,10 +178,6 @@ end ;
 if flag_segmentsbylength 
     %   segment length by colour map 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     maxsegmentLength = max([traces.segmentLength]) ; 
     segmentColourMap = cmocean('haline') ; 
     colormap(segmentColourMap);
@@ -242,10 +225,6 @@ end ;
 if flag_segmentsbystrike
     %   segment strike by colour map 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     segmentColours = cmocean('phase', 180) ; 
 
     hold on ; 
@@ -331,10 +310,6 @@ if flag_sliptendency
     
     %   1. slip tendency = shear stress/normal stress on the segment 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     segmentColours = cmocean('thermal', 100) ; 
 
     hold on ; 
@@ -450,10 +425,6 @@ if flag_sliptendency
     nRoseBins = 10 ; 
     %   rose plot of segment angles colour-coded by normalised Ts 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     roseEqualAreaColourTendency(traceAngles2, nRoseBins, 0, 0, nSigma1, nSigma2, nThetaSigma1, 1) ; 
     title({['Segment angles (equal area), colour-coded by T_s'];''}) ; 
     %   save to file 
@@ -465,10 +436,6 @@ if flag_dilationtendency
     
     %   2. dilation tendency on the segment 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     segmentColours = cmocean('thermal', 100) ; 
 
     hold on ; 
@@ -583,10 +550,6 @@ if flag_dilationtendency
     nRoseBins = 10 ; 
 %   rose plot of segment angles colour-coded by Td 
     f = figure ; 
-    set(gcf, 'PaperPositionMode', 'manual') ; 
-    set(gcf, 'PaperUnits', 'inches') ; 
-    set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
-
     roseEqualAreaColourTendency(traceAngles2, nRoseBins, 0, 0, nSigma1, nSigma2, nThetaSigma1, 0) ; 
     title({['Segment angles (equal area), colour-coded by T_d'];''}) ; 
     %   save to file 

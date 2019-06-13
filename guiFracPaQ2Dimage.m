@@ -182,17 +182,9 @@ ylabel('Y, pixels') ;
 
 %   show 3D surface of H to visualise peaks - helps selection of threshold 
 f = figure ; 
-set(gcf, 'PaperPositionMode', 'manual') ; 
-set(gcf, 'PaperUnits', 'inches') ; 
-set(gcf, 'PaperPosition', [ 0.25 0.25 9 9 ]) ; 
-
-if xMax > yMax
-    [ newX, newY ] = meshgrid(-90:houghThetaRes:(90-houghThetaRes), ...
-                        -(round(norm(size(BW)))):houghRhoRes:(round(norm(size(BW))))) ; 
-else
-    [ newX, newY ] = meshgrid(-90:houghThetaRes:(90-houghThetaRes), ...
+%   changed 15Feb2019 DH - many bug reports from previous (pre-v2.4) version
+[ newX, newY ] = meshgrid(-90:houghThetaRes:(90-houghThetaRes), ...
                         -(round(norm(size(BW)))-1):houghRhoRes:(round(norm(size(BW)))-1)) ; 
-end ; 
 
 Hthreshold = zeros(size(H)) ; 
 Hthreshold(:,:) = peakThreshold ; 

@@ -39,9 +39,6 @@ cn = [z (z./xmin).^(-alpha+1)];
 cn(:,2) = cn(:,2).* c(find(c(:,1)>=xmin,1,'first'),2);
 
 f = figure;
-set(gcf, 'PaperPositionMode', 'manual') ; 
-set(gcf, 'PaperUnits', 'inches') ; 
-set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
 h(1) = loglog(c(:,1),c(:,2),':s','Color',sCol,'MarkerSize',5,'MarkerFaceColor',sCol);
 hold on;

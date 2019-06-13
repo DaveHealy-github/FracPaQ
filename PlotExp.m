@@ -39,9 +39,6 @@ cn2 = [z2 (exp((lambda).*(xmin2-z2)))];
 cn2(:,2) = cn2(:,2).* c2(find(c2(:,1)>=xmin2,1,'first'),2);
 
 f = figure;
-set(gcf, 'PaperPositionMode', 'manual') ; 
-set(gcf, 'PaperUnits', 'inches') ; 
-set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ; 
 
 h(1) = semilogy(c2(:,1),c2(:,2),':s','Color',sCol,'MarkerSize',5,'MarkerFaceColor',sCol);
 hold on
