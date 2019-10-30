@@ -350,7 +350,7 @@ if flag_sliptendency
                 sn = nSigma1 * cosd(iAlpha)^2 + nSigma2 * sind(iAlpha)^2 ; 
                 tau = (nSigma1-nSigma2) * sind(iAlpha) * cosd(iAlpha) ; 
                 %   calculate slip and dilation tendency on this segment 
-                traces(k).Segment(l).Ts = abs(tau / sn) ; 
+                traces(k).Segment(l).Ts = abs(tau / sn) ;
                 traces(k).Segment(l).TsNorm = traces(k).Segment(l).Ts / Tsmax ; 
                 traces(k).Segment(l).Td = (nSigma1-sn) / (nSigma1-nSigma2) ; 
                 iTs = round(traces(k).Segment(l).TsNorm*100) ; 

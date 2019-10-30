@@ -52,6 +52,7 @@ for i = 1:size(segments,1)
               segments(i, 3), segments(i, 4) ] ; 
     
     if any(isnan(scanXY))
+        
         disp('Bad data in segments') ; 
         
     else
@@ -81,7 +82,7 @@ for i = 1:size(segments,1)
                         %   if this intersection point is also the end of either line  
                         if ( xint(nInt) == scanXY(1) && yint(nInt) == scanXY(2) ) 
                             Y = Y + 1 ; 
-                            fint(nInt) = 'Y' ; 
+                            fint(nInt) = 'Y' ;
                         elseif ( xint(nInt) == scanXY(3) && yint(nInt) == scanXY(4) )
                             Y = Y + 1 ; 
                             fint(nInt) = 'Y' ; 
@@ -119,12 +120,6 @@ for i = 1:Ntr
     XI(2*i, 2)   = traces(i).Node(Nnt).y;    
 end
 
-waitbar(0.5, hWait, 'Removing duplicates...') ;
-% Remove duplicates just in case
-[XIU, iu, tmp] = unique(XI, 'stable', 'rows');
-Nip = size(XIU, 1);
-XI = reshape(XIU, Nip, 2);
-
 disp('Initial I-Y-X node count:') ; 
 disp(['I: ', num2str(I)]) ; 
 disp(['Y: ', num2str(Y)]) ; 
@@ -139,58 +134,19 @@ if max(size(traces)) <= max(size(segments)) && nInt > 0
     % Get to the columnwise coordinates
     xint = xint';
     yint = yint';
-    Xc = [xint, yint];
+    Xc = [xint, yint] ;
     
-    % Intersections' coordinates without duplicates
+    % Intersection coordinates without duplicates
     [XU, iu, tmp] = unique(Xc, 'stable', 'rows');
     Np = size(XU, 1);
     XU = reshape(XU, Np, 2);
 
-    % For the trace connectivity case replace all Y nodes with X unless they
-    % coincide with I nodes
-    nodeType = fint(iu)';
-%     if (connectivityTraces)
-%         [XYI, ixyi, tmp] = intersect(XU, XI, 'rows');
-%         indX = setdiff( [1:Np]', ixyi);
-%         nodeTypeXYI = nodeType(ixyi);
-%         nodeType(indX) = 'X';
-%     end    
-    
     % Get the number and coordinates of unique X and Y nodes
+    nodeType = fint(iu)';
     indX = find(nodeType == 'X') ;
     indY = find(nodeType == 'Y') ;
-    
     X = length(indX);
     Y = length(indY);
-    
-    dx = (max(XU(:,1)) - min(XU(:, 1))) / 200;
-        
-%     % Replace the original implementation with the one below    
-%     for i = 1:nInt 
-% 
-%         if ~isnan(xint(i)) && fint(i) == 'Y'
-% 
-%             ix = find(xint == xint(i), nInt) ; 
-%             iy = find(yint == yint(i), nInt) ; 
-% 
-%             if length(ix) > 1 && length(iy) > 1  
-%                 
-%                 figure(1)
-%                 hold on
-%                 plot(xint(i), yint(i), 'o', 'Color', 'r')
-% 
-%                 Y = Y - length(ix) ; 
-%                 X = X + 1 ; 
-% 
-%                 %   make sure we only deal with each duplicate once 
-%                 xint(ix) = NaN ; 
-%                 yint(iy) = NaN ; 
-% 
-%             end ;
-% 
-%         end ; 
-% 
-%     end ; 
     
 end ;
 
@@ -225,27 +181,37 @@ disp(['X: ', num2str(X)]) ;
 ib = find( (XI(:,1) == xMin) | (XI(:,1) == xMax) | (XI(:,2) == yMin) | (XI(:,2) == yMax));
 Nip = size(XI, 1);
 indI = setdiff( [1:Nip]', ib);
+XI = [XI(indI, 1), XI(indI, 2)] ; 
+I = size(XI,1) ;
 
-% Exclude the I nodes coinciding with X and Y nodes
-if max(size(traces)) <= max(size(segments)) && nInt > 0 
-    XIi= setdiff(XI(indI,:), XU(indX,:), 'rows');
-    XI = setdiff(XIi, XU(indY,:), 'rows');
-    I = size(XI, 1) ; 
-else 
-    I = size(XI(indI), 1);
-end ; 
+%   remove I nodes that coincide with Y nodes; no double counting 
+XI = setdiff(XI, [XU(indY,1), XU(indY,2)], 'stable', 'rows') ; 
+%   remove I nodes that coincide with X nodes; no double counting 
+XI = setdiff(XI, [XU(indX,1), XU(indX,2)], 'stable', 'rows') ; 
+I = size(XI,1) ; 
+
+% %   remove Y nodes that coincide with X nodes; no double counting 
+% XY = setdiff([XU(indY,1), XU(indY,2)], [XU(indX,1), XU(indX,2)], 'stable', 'rows') ; 
+% Y = size(XY,1) ; 
+% 
+% % %   remove X nodes that coincide with Y nodes; no double counting 
+% % XX = setdiff([XU(indX,1), XU(indX,2)], [XU(indY,1), XU(indY,2)], 'stable', 'rows') ; 
+% XX = [XU(indX,1), XU(indX,2)] ; 
+% X = size(XX,1) ; 
+% 
+%   remove X nodes that coincide with Y nodes; no double counting 
+XX = setdiff([XU(indX,1), XU(indX,2)], [XU(indY,1), XU(indY,2)], 'stable', 'rows') ; 
+X = size(XX,1) ; 
+
+%   remove X nodes that coincide with Y nodes; no double counting 
+XY = setdiff([XU(indY,1), XU(indY,2)], [XU(indX,1), XU(indX,2)], 'stable', 'rows') ; 
+Y = size(XY,1) ; 
 
 waitbar(0.75, hWait, 'Building maps...') ;
 
 %   node marker map 
 f = figure ;
-% set(gcf, 'PaperPositionMode', 'manual') ;
-% set(gcf, 'PaperUnits', 'inches') ;
-% set(gcf, 'PaperPosition', [ 0.25 0.25 6 6 ]) ;
-% set(gcf, 'PaperUnits', 'centimeters') ;
-% set(gcf, 'PaperPosition', [ 2 2 21 29.7 ]) ;
-
-ms = 2 ;     
+ms = 3 ;     
 hold on ;         
 for k = 1:length(traces)
 
@@ -255,10 +221,10 @@ end ;
 
 if max(size(traces)) <= max(size(segments)) && nInt > 0 
     hi = plot(XI(:,1), XI(:,2), 'o', 'Color', 'b', 'MarkerFaceColor', 'b', 'MarkerSize', ms, 'DisplayName', 'I') ; 
-    hx = plot(XU(indX,1), XU(indX,2), 'o', 'Color', 'r', 'MarkerFaceColor', 'r', 'MarkerSize', ms, 'DisplayName', 'X') ; 
+    hx = plot(XX(:,1), XX(:,2), 'o', 'Color', 'r', 'MarkerFaceColor', 'r', 'MarkerSize', ms, 'DisplayName', 'X') ; 
     %         tind = [1:length(indX)];
     %         text(XU(indX,1)+dx, XU(indX,2), num2str(tind(:)), 'Color', 'r');        
-    hy = plot(XU(indY,1), XU(indY,2), 'o', 'Color', 'g', 'MarkerFaceColor', 'g', 'MarkerSize', ms, 'DisplayName', 'Y') ;
+    hy = plot(XY(:,1), XY(:,2), 'o', 'Color', 'g', 'MarkerFaceColor', 'g', 'MarkerSize', ms, 'DisplayName', 'Y') ;
     %         tind = [1:length(indY)];
     %         text(XU(indY,1)+dx, XU(indY,2), num2str(tind(:)), 'Color', 'g'); 
     hold off ; 
