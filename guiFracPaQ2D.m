@@ -43,7 +43,7 @@ function varargout = guiFracPaQ2D(varargin)
 
 % Edit the above text to modify the response to help guiFracPaQ2D
 
-% Last Modified by GUIDE v2.5 11-Jun-2019 12:03:42
+% Last Modified by GUIDE v2.5 24-Oct-2019 14:04:22
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -97,7 +97,7 @@ set(handles.popupmenu_histolengthbins,'Value',2) ;
 set(handles.popupmenu_histoanglebins,'Value',2) ;
 set(handles.popupmenu_rosebins,'Value',2) ;
 
-handles.FracPaQversion = '2.6' ; 
+handles.FracPaQversion = '2.6.1' ; 
 disp(['FracPaQ version ', handles.FracPaQversion]) ; 
 handles.graphx = [0, 0] ; 
 handles.graphy = [0, 0] ; 
@@ -714,6 +714,8 @@ function pushbutton_preview_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+global sTag ; 
+
 cla(handles.axes_tracemap) ; 
 
 flagError = false ; 
@@ -927,7 +929,9 @@ if ~flagError
     setappdata(handles.pushbutton_run, 'yMax', handles.ymax) ;                                                 
     setappdata(handles.pushbutton_run, 'xMin', handles.xmin) ;                                                 
     setappdata(handles.pushbutton_run, 'yMin', handles.ymin) ;                                                 
-
+    
+    sTag = ['_', get(handles.edit_FilenameTag, 'String')] ; 
+    
     handles.nTraces = length(handles.traces) ; 
     handles.nSegments = sum([handles.traces(:).nSegments]) ; 
     handles.nNodes = sum([handles.traces(:).nNodes]) ; 
@@ -967,18 +971,19 @@ function pushbutton_run_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 flagError = false ; 
+myEps = 1e-8 ; 
 
 sValue = get(handles.edit_sigma1, 'String') ; 
-if isnan(str2double(sValue))
-    hError = errordlg('Sigma 1 must be a number', 'Input error', 'modal') ; 
+if isnan(str2double(sValue)) || abs(str2double(sValue)) < myEps 
+    hError = errordlg('Sigma 1 must be a number, and not 0', 'Input error', 'modal') ; 
     uicontrol(handles.edit_sigma1) ; 
     flagError = true ; 
     return ; 
 end ; 
 
 sValue = get(handles.edit_sigma2, 'String') ; 
-if isnan(str2double(sValue))
-    hError = errordlg('Sigma 2 must be a number', 'Input error', 'modal') ; 
+if isnan(str2double(sValue)) || abs(str2double(sValue)) < myEps 
+    hError = errordlg('Sigma 2 must be a number, and not 0', 'Input error', 'modal') ; 
     uicontrol(handles.edit_sigma2) ; 
     flagError = true ; 
     return ; 
@@ -1311,7 +1316,9 @@ if get(handles.checkbox_wavelet, 'Value')
 
     set(handles.text_message, 'String', 'Running...') ;   
     if ~flagWaveError
-        guiFracPaQ2Dwavelet2(handles.a, handles.L, handles.nTheta, handles.fMorlet, '[0 0 1]') ; 
+        guiFracPaQ2Dwavelet2(handles.a, handles.L, ... 
+                             handles.nTheta, handles.fMorlet, '[0 0 1]', ...
+                             flag_reverseX, flag_reverseY) ; 
     end ; 
     set(handles.text_message, 'String', 'All done. Check current folder for plot figure .tif files.') ;   
     uicontrol(handles.pushbutton_run) ; 
@@ -2075,6 +2082,29 @@ function edit_numscancirclesgraph_Callback(hObject, eventdata, handles)
 % --- Executes during object creation, after setting all properties.
 function edit_numscancirclesgraph_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to edit_numscancirclesgraph (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit_FilenameTag_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_FilenameTag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_FilenameTag as text
+%        str2double(get(hObject,'String')) returns contents of edit_FilenameTag as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_FilenameTag_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_FilenameTag (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
