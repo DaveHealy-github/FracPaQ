@@ -30,8 +30,11 @@ function guiFracPaQ2Dlength(traces, nPixelsPerMetre, northCorrection, xMin, yMin
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 maxPossTraceLength = ceil(sqrt(xMax^2 + yMax^2)) ; 
-
 numTraces = length(traces) ; 
+
+v = ver('MATLAB') ; 
+iRelease = regexp(v.Release, 'R.....') ; 
+nReleaseYear = str2num(v.Release(iRelease+1:iRelease+4)) ; 
 
 if flag_censor 
     
@@ -42,20 +45,20 @@ if flag_censor
 
         %   if the first point of the trace is on the edge, don't use it in the
         %   length stats 
-        if traces(i).Node(1).x == 0.0 || traces(i).Node(1).x == xMax 
+        if traces(i).Node(1).x == xMin || traces(i).Node(1).x == xMax 
             traces(i).segmentLength(1:nSeg) = NaN ;
             traces(i).totalLength = NaN ;
-        elseif traces(i).Node(1).y == 0.0 || traces(i).Node(1).y == yMax 
+        elseif traces(i).Node(1).y == xMin || traces(i).Node(1).y == yMax 
             traces(i).segmentLength(1:nSeg) = NaN ;
             traces(i).totalLength = NaN ;
         end ; 
 
         %   if the last point of the trace is on the edge, don't use it in the
         %   length stats 
-        if traces(i).Node(nSeg).x == 0.0 || traces(i).Node(nSeg).x == xMax 
+        if traces(i).Node(nSeg).x == xMin || traces(i).Node(nSeg).x == xMax 
             traces(i).segmentLength(1:nSeg) = NaN ;
             traces(i).totalLength = NaN ;
-        elseif traces(i).Node(nSeg).y == 0.0 || traces(i).Node(nSeg).y == yMax 
+        elseif traces(i).Node(nSeg).y == xMax || traces(i).Node(nSeg).y == yMax 
             traces(i).segmentLength(1:nSeg) = NaN ;
             traces(i).totalLength = NaN ;
         end ; 
@@ -94,8 +97,33 @@ traceSegmentAngles2 = [ round(traceSegmentAngles - northCorrection); ...
 for i = 1:max(size(traceSegmentAngles2))
     if traceSegmentAngles2(i) < 0 
         traceSegmentAngles2(i) = traceSegmentAngles2(i) + 360 ; 
-    end ; 
-end ; 
+    end 
+end
+
+%   trace angles 
+traceAngles = [ traces.Angle ]' ; 
+traceAngles = traceAngles - northCorrection ; 
+traceAngles = traceAngles(~isnan(traceLengths)) ; 
+for i = 1:max(size(traceAngles))
+    if traceAngles(i) < 0 
+        traceAngles(i) = traceAngles(i) + 360 ; 
+    end
+end
+
+%   correct for flipped X or Y axes if required 
+if flag_revX 
+    traceSegmentAngles2 = 180 - traceSegmentAngles2 ; 
+    traceAngles = 180 - traceAngles ; 
+    traceSegmentAngles2(traceSegmentAngles2 < 0) = traceSegmentAngles2(traceSegmentAngles2 < 0) + 360 ; 
+    traceAngles(traceAngles < 0) = traceAngles(traceAngles < 0) + 360 ; 
+end
+
+if flag_revY 
+    traceSegmentAngles2 = 180 - traceSegmentAngles2 ; 
+    traceAngles = 180 - traceAngles ; 
+    traceSegmentAngles2(traceSegmentAngles2 < 0) = traceSegmentAngles2(traceSegmentAngles2 < 0) + 360 ; 
+    traceAngles(traceAngles < 0) = traceAngles(traceAngles < 0) + 360 ; 
+end 
 
 disp(' ') ; 
 disp('Length stats...') ; 
@@ -109,6 +137,7 @@ if nPixelsPerMetre > 0
     disp(['Minimum trace length: ', num2str(minTraceLength, '%8.2f'), ' metres']) ; 
     disp(['Maximum trace length: ', num2str(maxTraceLength, '%8.2f'), ' metres']) ; 
     disp(['Average trace length: ', num2str(mean(traceLengths, 'omitnan'), '%8.2f'), ' metres']) ; 
+    disp(['Total trace length: ', num2str(sum(traceLengths, 'omitnan'), '%8.2f'), ' metres']) ; 
 
     disp(['Minimum segment length: ', num2str(minSegmentLength, '%8.2f'), ' metres']) ; 
     disp(['Maximum segment length: ', num2str(maxSegmentLength, '%8.2f'), ' metres']) ; 
@@ -117,6 +146,7 @@ else
     disp(['Minimum trace length: ', num2str(minTraceLength, '%8.2f'), ' pixels']) ; 
     disp(['Maximum trace length: ', num2str(maxTraceLength, '%8.2f'), ' pixels']) ; 
     disp(['Average trace length: ', num2str(mean(traceLengths, 'omitnan'), '%8.2f'), ' pixels']) ; 
+    disp(['Total trace length: ', num2str(sum(traceLengths, 'omitnan'), '%8.2f'), ' pixels']) ; 
     
     disp(['Minimum segment length: ', num2str(minSegmentLength, '%8.2f'), ' pixels']) ; 
     disp(['Maximum segment length: ', num2str(maxSegmentLength, '%8.2f'), ' pixels']) ; 
@@ -146,25 +176,37 @@ if flag_histolength
     [ nTraceLengths, binTraceLengths ] = hist(traceLengths, ...
                                 minTraceLength:(maxTraceLength-minTraceLength)/nBins:maxTraceLength) ; 
 
-    yyaxis left ;                         
-    bar(binTraceLengths, nTraceLengths, 1, 'FaceColor', sColour) ;
-    hold on ; 
-    plot([minTraceLength, minTraceLength], [0, max(nTraceLengths)*1.2], '-r', 'LineWidth', 1) ;  
-    plot([maxTraceLength, maxTraceLength], [0, max(nTraceLengths)*1.2], '-r', 'LineWidth', 1) ;  
-%     plot([maxPossTraceLength, maxPossTraceLength], [0, max(nTraceLengths)], '--r', 'LineWidth', 1) ;  
-    ylim([0 max(nTraceLengths)*1.2]) ; 
-    ylabel('Frequency') ; 
-    yyaxis right ; 
-    bar(binTraceLengths, (nTraceLengths/sum(nTraceLengths))*100, 1, 'FaceColor', sColour) ;
-    hold off ; 
-    xlim([0 maxTraceLength*1.1]) ; 
-    ylim([0 max((nTraceLengths/sum(nTraceLengths))*100)*1.2]) ; 
-    if nPixelsPerMetre > 0 
-        xlabel('Trace length, metres') ; 
+    if nReleaseYear < 2016 
+        h = msgbox('Warning: FracPaQ needs MATLAB release of R2016a, or later, to plot double y-axis plots.', 'Warning!') ;  
+        uiwait(h) ; 
+        bar(binTraceLengths, nTraceLengths, 1, 'FaceColor', sColour) ;
+        hold on ; 
+        plot([minTraceLength, minTraceLength], [0, max(nTraceLengths)*1.2], '-r', 'LineWidth', 1) ;  
+        plot([maxTraceLength, maxTraceLength], [0, max(nTraceLengths)*1.2], '-r', 'LineWidth', 1) ;  
+    %     plot([maxPossTraceLength, maxPossTraceLength], [0, max(nTraceLengths)], '--r', 'LineWidth', 1) ;  
+        ylim([0 max(nTraceLengths)*1.2]) ; 
+        ylabel('Frequency') ; 
     else 
-        xlabel('Trace length, pixels') ; 
+        yyaxis left ;                         
+        bar(binTraceLengths, nTraceLengths, 1, 'FaceColor', sColour) ;
+        hold on ; 
+        plot([minTraceLength, minTraceLength], [0, max(nTraceLengths)*1.2], '-r', 'LineWidth', 1) ;  
+        plot([maxTraceLength, maxTraceLength], [0, max(nTraceLengths)*1.2], '-r', 'LineWidth', 1) ;  
+    %     plot([maxPossTraceLength, maxPossTraceLength], [0, max(nTraceLengths)], '--r', 'LineWidth', 1) ;  
+        ylim([0 max(nTraceLengths)*1.2]) ; 
+        ylabel('Frequency') ; 
+        yyaxis right ; 
+        bar(binTraceLengths, (nTraceLengths/sum(nTraceLengths))*100, 1, 'FaceColor', sColour) ;
+        hold off ; 
+        xlim([0 maxTraceLength*1.1]) ; 
+        ylim([0 max((nTraceLengths/sum(nTraceLengths))*100)*1.2]) ; 
+        if nPixelsPerMetre > 0 
+            xlabel('Trace length, metres') ; 
+        else 
+            xlabel('Trace length, pixels') ; 
+        end ; 
+        ylabel('Frequency, %') ; 
     end ; 
-    ylabel('Frequency, %') ; 
     axis on square ; 
     box on ; 
     grid on ; 
@@ -178,25 +220,37 @@ if flag_histolength
     [ nSegmentLengths, binSegmentLengths ] = hist(traceSegmentLengths, ...
                                 minSegmentLength:(maxSegmentLength-minSegmentLength)/nBins:maxSegmentLength) ; 
 
-    yyaxis left ; 
-    bar(binSegmentLengths, nSegmentLengths, 1, 'FaceColor', sColour) ;
-    hold on ; 
-    plot([minSegmentLength, minSegmentLength], [0, max(nSegmentLengths)*1.2], '-r', 'LineWidth', 1) ;  
-    plot([maxSegmentLength, maxSegmentLength], [0, max(nSegmentLengths)*1.2], '-r', 'LineWidth', 1) ;  
-%     plot([maxPossTraceLength, maxPossTraceLength], [0, max(nSegmentLengths)], '--r', 'LineWidth', 1) ;  
-    ylim([0 max(nSegmentLengths)*1.2]) ; 
-    ylabel('Frequency') ; 
-    yyaxis right ; 
-    bar(binSegmentLengths, (nSegmentLengths/sum(nSegmentLengths))*100, 1, 'FaceColor', sColour) ;
-    hold off ; 
-    xlim([0 maxSegmentLength*1.1]) ; 
-    ylim([0 max((nSegmentLengths/sum(nSegmentLengths))*100)*1.2]) ; 
-    if nPixelsPerMetre > 0 
-        xlabel('Segment length, metres') ; 
+    if nReleaseYear < 2016 
+        h = msgbox('Warning: FracPaQ needs MATLAB release of R2016a, or later, to plot double y-axis plots.', 'Warning!') ;  
+        uiwait(h) ; 
+        bar(binSegmentLengths, nSegmentLengths, 1, 'FaceColor', sColour) ;
+        hold on ; 
+        plot([minSegmentLength, minSegmentLength], [0, max(nSegmentLengths)*1.2], '-r', 'LineWidth', 1) ;  
+        plot([maxSegmentLength, maxSegmentLength], [0, max(nSegmentLengths)*1.2], '-r', 'LineWidth', 1) ;  
+    %     plot([maxPossTraceLength, maxPossTraceLength], [0, max(nSegmentLengths)], '--r', 'LineWidth', 1) ;  
+        ylim([0 max(nSegmentLengths)*1.2]) ; 
+        ylabel('Frequency') ; 
     else 
-        xlabel('Segment length, pixels') ; 
-    end ; 
-    ylabel('Frequency, %') ; 
+        yyaxis left ; 
+        bar(binSegmentLengths, nSegmentLengths, 1, 'FaceColor', sColour) ;
+        hold on ; 
+        plot([minSegmentLength, minSegmentLength], [0, max(nSegmentLengths)*1.2], '-r', 'LineWidth', 1) ;  
+        plot([maxSegmentLength, maxSegmentLength], [0, max(nSegmentLengths)*1.2], '-r', 'LineWidth', 1) ;  
+    %     plot([maxPossTraceLength, maxPossTraceLength], [0, max(nSegmentLengths)], '--r', 'LineWidth', 1) ;  
+        ylim([0 max(nSegmentLengths)*1.2]) ; 
+        ylabel('Frequency') ; 
+        yyaxis right ; 
+        bar(binSegmentLengths, (nSegmentLengths/sum(nSegmentLengths))*100, 1, 'FaceColor', sColour) ;
+        hold off ; 
+        xlim([0 maxSegmentLength*1.1]) ; 
+        ylim([0 max((nSegmentLengths/sum(nSegmentLengths))*100)*1.2]) ; 
+        if nPixelsPerMetre > 0 
+            xlabel('Segment length, metres') ; 
+        else 
+            xlabel('Segment length, pixels') ; 
+        end ; 
+        ylabel('Frequency, %') ; 
+    end 
     axis on square ; 
     box on ; 
     grid on ; 
@@ -374,6 +428,24 @@ if flag_crossplot
     %   save to file 
     guiPrint(f, 'FracPaQ2D_crossplotsegmentlengthangle') ; 
 
+    %   write the trace segment lengths to a text file
+    fidLengthAngle = fopen('FracPaQ2Dsegmentlengths_angles.txt', 'wt') ; 
+    anglesOut = traceSegmentAngles2(1:end/2) ; 
+    lengthsOut = traceSegmentLengths' ; 
+    for i = 1:length(traceSegmentLengths)
+        fprintf(fidLengthAngle, '%8.2f %8.2f\n', lengthsOut(i), anglesOut(i)) ; 
+    end ; 
+    fclose(fidLengthAngle) ; 
+    
+    %   write the trace lengths to a text file
+    fidLengthAngle = fopen('FracPaQ2Dtracelengths_angles.txt', 'wt') ; 
+    anglesOut = traceAngles ; 
+    lengthsOut = traceLengths' ; 
+    for i = 1:length(traceLengths)
+        fprintf(fidLengthAngle, '%8.2f %8.2f\n', lengthsOut(i), anglesOut(i)) ; 
+    end ; 
+    fclose(fidLengthAngle) ; 
+    
 end ; 
 
 % Call the functions for Maximum Likelihood (MLE) Statistical Analysis of lengths.
