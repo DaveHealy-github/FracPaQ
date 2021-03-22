@@ -223,7 +223,7 @@ for i = 1:iPoly
         nPolyPoints = str2num(sPoints) ;
         for j = 1:length(nPolyPoints)
             %   write to the colour file 
-            fprintf(fID(iColourFile), '%12.4f\t', nPolyPoints(j)) ; 
+            fprintf(fID(iColourFile), '%12.8f\t', nPolyPoints(j)) ; 
         end ; 
         if i <= iPoly && ~isempty(nPolyPoints)  
             fprintf(fID(iColourFile), '\r\n') ; 
@@ -280,9 +280,9 @@ for i = 1:iLine
 
         %   write to the colour file 
         if i < iLine
-            fprintf(fID(iColourFile), '%12.4f\t%12.4f\t%12.4f\t%12.4f\r\n', x1, y1, x2, y2) ; 
+            fprintf(fID(iColourFile), '%12.8f\t%12.8f\t%12.8f\t%12.8f\r\n', x1, y1, x2, y2) ; 
         else
-            fprintf(fID(iColourFile), '%12.4f\t%12.4f\t%12.4f\t%12.4f', x1, y1, x2, y2) ; 
+            fprintf(fID(iColourFile), '%12.8f\t%12.8f\t%12.8f\t%12.8f', x1, y1, x2, y2) ; 
         end ; 
     end ; 
 

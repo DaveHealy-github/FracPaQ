@@ -40,9 +40,9 @@ cn(:,2) = cn(:,2).* c(find(c(:,1)>=xmin,1,'first'),2);
 
 f = figure;
 
-h(1) = loglog(c(:,1),c(:,2),':s','Color',sCol,'MarkerSize',5,'MarkerFaceColor',sCol);
+h(1) = loglog(c(:,1),c(:,2),':s','Color',sCol,'MarkerSize',8,'MarkerFaceColor',sCol);
 hold on;
-h(2) = loglog(cn(:,1),cn(:,2),'-.','Color',sCol,'LineWidth',2);
+h(2) = loglog(cn(:,1),cn(:,2),'-.','Color','k','LineWidth',2);
 
 PosLc = max(y);
 PosUc = min(y);

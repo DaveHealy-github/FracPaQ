@@ -1,4 +1,4 @@
-function guiFracPaQ2Dgraphs(traces, numPixelsPerMetre, xMin, yMin, xMax, yMax, ...
+function guiFracPaQ2Dgraphs(traces, numPixelsPerMetre, ...
                             x, y, sColour, ...
                             nScanCircles, ...  
                             flag_revX, flag_revY, ... 
@@ -36,6 +36,14 @@ function guiFracPaQ2Dgraphs(traces, numPixelsPerMetre, xMin, yMin, xMax, yMax, .
 % DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+if numPixelsPerMetre > 0
+    sUnits = ' metres' ; 
+else 
+    sUnits = ' pixels' ; 
+end 
+
+[xMin, xMax, yMin, yMax] = getMapLimits(traces) ; 
 
 x1 = x(1) ; 
 x2 = x(2) ; 
@@ -127,13 +135,8 @@ if flag_tracelengthgraphalong
         plot(dInt(i), lTrace(i), 'o', 'MarkerEdgeColor', 'b', 'MarkerFaceColor', 'b') ;
     end ;
     hold off ;
-    if numPixelsPerMetre > 0
-        xlabel('Distance along line from point 1, metres');
-        ylabel('Trace length, metres') ;
-    else
-        xlabel('Distance along line from point 1, pixels');
-        ylabel('Trace length, pixels') ;
-    end ;
+    xlabel(['Distance along line from point 1,', sUnits]);
+    ylabel(['Trace length,', sUnits]) ;
     xlim([0 max(dInt)]) ; 
     ylim([0 max(lTrace)]) ; 
     box on ;
@@ -152,13 +155,8 @@ if flag_segmentlengthgraphalong
         plot(dInt(i), lSegment(i), 'o', 'MarkerEdgeColor', 'b', 'MarkerFaceColor', 'b') ;
     end ;
     hold off ;
-    if numPixelsPerMetre > 0
-        xlabel('Distance along line from point 1, metres');
-        ylabel('Segment length, metres') ;
-    else
-        xlabel('Distance along line from point 1, pixels');
-        ylabel('Segment length, pixels') ;
-    end ;
+    xlabel(['Distance along line from point 1,', sUnits]);
+    ylabel(['Segment length,', sUnits]) ;
     xlim([0 max(dInt)]) ; 
     ylim([0 max(lSegment)]) ; 
     box on ;
@@ -177,11 +175,7 @@ if flag_segmentanglegraphalong
         plot(dInt(i), aSegment(i), 'o', 'MarkerEdgeColor', 'b', 'MarkerFaceColor', 'b') ;
     end ;
     hold off ;
-    if numPixelsPerMetre > 0
-        xlabel('Distance along line from point 1, metres');
-    else
-        xlabel('Distance along line from point 1, pixels');
-    end ;
+    xlabel(['Distance along line from point 1,', sUnits]);
     ylabel('Segment angle, degrees') ;
     xlim([0 max(dInt)]) ; 
     ylim([0 180]) ; 
@@ -234,13 +228,8 @@ if flag_intensitygraphalong || flag_densitygraphalong
     if flag_revY
         set(gca, 'YDir', 'reverse') ;
     end ;
-    if numPixelsPerMetre > 0
-        xlabel('X, metres') ;
-        ylabel('Y, metres') ;
-    else
-        xlabel('X, pixels') ;
-        ylabel('Y, pixels') ;
-    end ;
+    xlabel(['X,', sUnits]) ;
+    ylabel(['Y,', sUnits]) ;
     title(['Mapped trace segments, n=', num2str(length(traceLengths))]) ;
 
     %   save to file
@@ -354,13 +343,8 @@ if flag_intensitygraphalong || flag_densitygraphalong
         plot(distScanCircles(i), I(i), 'o', 'MarkerEdgeColor', 'b', 'MarkerFaceColor', 'b') ;
     end ;
     hold off ;
-    if numPixelsPerMetre > 0
-        xlabel('Distance along line from point 1, metres');
-        ylabel('Intensity, metres^{-1}') ;
-    else
-        xlabel('Distance along line from point 1, pixels');
-        ylabel('Intensity, pixels^{-1}') ;
-    end ;
+    xlabel(['Distance along line from point 1,', sUnits]);
+    ylabel(['Intensity,' sUnits, '^{-1}']) ;
     xlim([0 max(distScanCircles)]) ; 
     ylim([0 max(I)]) ; 
     box on ;
@@ -377,13 +361,8 @@ if flag_intensitygraphalong || flag_densitygraphalong
         plot(distScanCircles(i), D(i), 'o', 'MarkerEdgeColor', 'b', 'MarkerFaceColor', 'b') ;
     end ;
     hold off ;
-    if numPixelsPerMetre > 0
-        xlabel('Distance along line from point 1, metres');
-        ylabel('Density, metres^{-2}') ;
-    else
-        xlabel('Distance along line from point 1, pixels');
-        ylabel('Density, pixels^{-2}') ;
-    end ;
+    xlabel(['Distance along line from point 1,', sUnits]);
+    ylabel(['Density,', sUnits, '^{-2}']) ;
     xlim([0 max(distScanCircles)]) ; 
     ylim([0 max(D)]) ; 
     box on ;
@@ -413,13 +392,8 @@ if flag_tracelengthgraphfrom
 
     end ;
     hold off ;
-    if numPixelsPerMetre > 0
-        xlabel('Perpendicular distance from line, metres');
-        ylabel('Trace length, metres') ;
-    else
-        xlabel('Perpendicular distance from line, pixels');
-        ylabel('Trace length, pixels') ;
-    end ;
+    xlabel(['Perpendicular distance from line,' sUnits]);
+    ylabel(['Trace length,', sUnits]) ;
     box on ;
     grid on ;
     title('Trace lengths') ;
@@ -448,13 +422,8 @@ if flag_segmentlengthgraphfrom
 
     end ;
     hold off ;
-    if numPixelsPerMetre > 0
-        xlabel('Perpendicular distance from line, metres');
-        ylabel('Segment length, metres') ;
-    else
-        xlabel('Perpendicular distance from line, pixels');
-        ylabel('Segment length, pixels') ;
-    end ;
+    xlabel(['Perpendicular distance from line,', sUnits]);
+    ylabel(['Segment length,', sUnits]) ;
     box on ;
     grid on ;
     title('Segment lengths') ;
@@ -483,11 +452,7 @@ if flag_segmentanglegraphfrom
 
     end ;
     hold off ;
-    if numPixelsPerMetre > 0
-        xlabel('Perpendicular distance from line, metres');
-    else
-        xlabel('Perpendicular distance from line, pixels');
-    end ;
+    xlabel(['Perpendicular distance from line,', sUnits]) ;
     ylabel('Segment angle, degrees') ;
     ylim([0 180]) ; 
     box on ;

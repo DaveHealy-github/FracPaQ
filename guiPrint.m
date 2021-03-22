@@ -26,16 +26,21 @@ function guiPrint(fig, fn)
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+global sTag ; 
+
 set(gcf, 'PaperPositionMode', 'manual') ; 
 set(gcf, 'PaperUnits', 'centimeters') ; 
 set(gcf, 'PaperPosition', [ 1 1 20 20 ]) ; 
 
-print(fig, '-dtiff', '-r300', [fn, '.tif']) ;
+fn1 = [fn, sTag, '.png'] ; 
+print(fig, '-dpng', '-r600', fn1) ;
+% fn = [fn, sTag, '.tif'] ; 
+% print(fig, '-dtiff', '-r600', fn) ;
 
 %   add some FracPaQ metadata to the file 
-t = Tiff([fn, '.tif'], 'r+') ; 
-t.setTag('Artist', 'FracPaQ2D version 2.6') ; 
-t.rewriteDirectory() ; 
-t.close() ; 
+% t = Tiff(fn, 'r+') ; 
+% t.setTag('Artist', 'FracPaQ2D version 2.6.1') ; 
+% t.rewriteDirectory() ; 
+% t.close() ; 
 
 end 

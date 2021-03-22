@@ -40,9 +40,9 @@ cn2(:,2) = cn2(:,2).* c2(find(c2(:,1)>=xmin2,1,'first'),2);
 
 f = figure;
 
-h(1) = semilogy(c2(:,1),c2(:,2),':s','Color',sCol,'MarkerSize',5,'MarkerFaceColor',sCol);
+h(1) = semilogy(c2(:,1),c2(:,2),':s','Color',sCol,'MarkerSize',8,'MarkerFaceColor',sCol);
 hold on
-h(2) = semilogy(cn2(:,1),cn2(:,2),'-.','Color',sCol,'LineWidth',1);
+h(2) = semilogy(cn2(:,1),cn2(:,2),'-.','Color','k','LineWidth',1);
 
 PosLc = max(y);
 PosUc = min(y);

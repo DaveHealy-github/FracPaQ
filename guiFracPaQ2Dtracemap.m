@@ -1,8 +1,8 @@
-function guiFracPaQ2Dtracemap(traces, nPixelsPerMetre, nNorth, xMin, yMin, xMax, yMax, ...
+function guiFracPaQ2Dtracemap(traces, nPixelsPerMetre, nNorth, ...
                 flag_shownodes, flag_revY, flag_revX, sColour, ...
                 fMulticolour, flag_tracemap, flag_sliptendency, flag_dilationtendency, ...
                     flag_tracesbylength, flag_segmentsbylength, flag_segmentsbystrike, ...
-                    nSigma1, nSigma2, nThetaSigma1) 
+                    nSigma1, nSigma2, nThetaSigma1, flag_fracsuscep, flag_CSF, C0, pf, mu) 
 %   guiFracPaQ2Dtracemap.m 
 %       calculates and plots statistics of line trace segment lengths  
 %       
@@ -29,6 +29,26 @@ function guiFracPaQ2Dtracemap(traces, nPixelsPerMetre, nNorth, xMin, yMin, xMax,
 % DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+[xMin, xMax, yMin, yMax] = getMapLimits(traces) ; 
+
+if nPixelsPerMetre > 0 
+    sUnits = ' metres' ; 
+else 
+    sUnits = ' pixels' ; 
+end 
+
+if flag_revX 
+    sXDir = 'reverse' ; 
+else 
+    sXDir = 'normal' ; 
+end 
+
+if flag_revY 
+    sYDir = 'reverse' ; 
+else 
+    sYDir = 'normal' ; 
+end 
 
 nTraces = length(traces) ; 
 nSegments = sum([traces(:).nSegments]) ; 
@@ -70,19 +90,10 @@ if flag_tracemap
     box on ; 
     xlim([xMin xMax]) ; 
     ylim([yMin yMax]) ; 
-    if flag_revX 
-        set(gca, 'XDir', 'reverse') ; 
-    end ; 
-    if flag_revY 
-        set(gca, 'YDir', 'reverse') ; 
-    end ; 
-    if nPixelsPerMetre > 0 
-        xlabel('X, metres') ; 
-        ylabel('Y, metres') ; 
-    else
-        xlabel('X, pixels') ; 
-        ylabel('Y, pixels') ; 
-    end ; 
+    set(gca, 'XDir', sXDir) ; 
+    set(gca, 'YDir', sYDir) ; 
+    xlabel(['X,', sUnits]) ; 
+    ylabel(['Y,', sUnits]) ; 
     title({['Mapped traces (n=', num2str(nTraces), ...
            '), segments (n=', num2str(nSegments), ...
            ') & nodes (n=', num2str(nNodes), ')'];''}) ; 
@@ -92,7 +103,7 @@ if flag_tracemap
 
 end ; 
 
-%   multcolour tracemap, if necessary 
+%   multi-colour tracemap, if necessary 
 if fMulticolour
     
     f = figure ; 
@@ -110,19 +121,10 @@ if fMulticolour
     box on ; 
     xlim([xMin xMax]) ; 
     ylim([yMin yMax]) ; 
-    if flag_revX 
-        set(gca, 'XDir', 'reverse') ; 
-    end ; 
-    if flag_revY 
-        set(gca, 'YDir', 'reverse') ; 
-    end ; 
-    if nPixelsPerMetre > 0 
-        xlabel('X, metres') ; 
-        ylabel('Y, metres') ; 
-    else
-        xlabel('X, pixels') ; 
-        ylabel('Y, pixels') ; 
-    end ; 
+    set(gca, 'XDir', sXDir) ; 
+    set(gca, 'YDir', sYDir) ; 
+    xlabel(['X,', sUnits]) ; 
+    ylabel(['Y,', sUnits]) ; 
     title({['Multicolour traces (n=', num2str(nTraces), ...
            '), segments (n=', num2str(nSegments), ...
            ') & nodes (n=', num2str(nNodes), ')'];''}) ; 
@@ -132,13 +134,14 @@ if fMulticolour
 
 end ; 
 
+%   trace length by colour map 
 if flag_tracesbylength 
-    %   trace length by colour map 
+    
     f = figure ; 
-    maxtraceLength = max([traces.totalLength]) ; 
+    maxtraceLength = max([traces.totalLength]) ;
     traceColourMap = cmocean('haline') ; 
     colormap(traceColourMap);
-
+    
     hold on ; 
     for k = 1:nTraces
         iC = round( ( traces(k).totalLength / maxtraceLength ) * 256 ) ; 
@@ -148,35 +151,32 @@ if flag_tracesbylength
         plot( [ traces(k).Node.x ]', [ traces(k).Node.y ]', 'LineWidth', 0.75, 'color', traceColourMap(iC,:) ) ;
     end ; 
     hold off ;
-    caxis([0 maxtraceLength]) ; 
-    c = colorbar('southoutside') ; 
+    caxis([maxtraceLength/1e3 maxtraceLength]) ; 
+    set(gca, 'ColorScale', 'log') ; 
+    c = colorbar('southoutside', ... 
+                 'Ticks', [maxtraceLength/1e3, maxtraceLength/12, maxtraceLength/3, maxtraceLength], ... 
+                 'TickLabels', {num2str(round(maxtraceLength/1e3), '%d'), ...
+                                num2str(round(maxtraceLength/12), '%d'), ...
+                                num2str(round(maxtraceLength/3), '%d'), ...
+                                num2str(round(maxtraceLength), '%d')}) ; 
     axis on equal ; 
     box on ; 
     xlim([xMin xMax]) ; 
     ylim([yMin yMax]) ; 
-    if flag_revX 
-        set(gca, 'XDir', 'reverse') ; 
-    end ; 
-    if flag_revY 
-        set(gca, 'YDir', 'reverse') ; 
-    end ; 
-    if nPixelsPerMetre > 0 
-        xlabel('X, metres') ; 
-        ylabel('Y, metres') ; 
-        c.Label.String = 'Trace length, metres' ;  
-    else
-        xlabel('X, pixels') ; 
-        ylabel('Y, pixels') ; 
-        c.Label.String = 'Trace length, pixels' ;  
-    end ; 
+    set(gca, 'XDir', sXDir) ; 
+    set(gca, 'YDir', sYDir) ; 
+    xlabel(['X,', sUnits]) ; 
+    ylabel(['Y,', sUnits]) ; 
+    c.Label.String = ['Trace length,', sUnits] ;   
     title({['Trace length map, n=', num2str(nTraces)];''}) ; 
 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_tracelengthmap') ; 
 end ; 
 
+%   segment length by colour map 
 if flag_segmentsbylength 
-    %   segment length by colour map 
+    
     f = figure ; 
     maxsegmentLength = max([traces.segmentLength]) ; 
     segmentColourMap = cmocean('haline') ; 
@@ -195,35 +195,32 @@ if flag_segmentsbylength
         end ; 
     end ; 
     hold off ;
-    caxis([0 maxsegmentLength]) ; 
-    c = colorbar('southoutside') ; 
+    caxis([maxsegmentLength/1e3 maxsegmentLength]) ; 
+    set(gca, 'ColorScale', 'log') ; 
+    c = colorbar('southoutside', ... 
+                 'Ticks', [maxsegmentLength/1e3, maxsegmentLength/12, maxsegmentLength/3, maxsegmentLength], ... 
+                 'TickLabels', {num2str(round(maxsegmentLength/1e3), '%d'), ...
+                                num2str(round(maxsegmentLength/12), '%d'), ...
+                                num2str(round(maxsegmentLength/3), '%d'), ...
+                                num2str(round(maxsegmentLength), '%d')}) ; 
     axis on equal ; 
     box on ; 
     xlim([xMin xMax]) ; 
     ylim([yMin yMax]) ; 
-    if flag_revX 
-        set(gca, 'XDir', 'reverse') ; 
-    end ; 
-    if flag_revY 
-        set(gca, 'YDir', 'reverse') ; 
-    end ; 
-    if nPixelsPerMetre > 0 
-        xlabel('X, metres') ; 
-        ylabel('Y, metres') ; 
-        c.Label.String = 'Segment length, metres' ;  
-    else
-        xlabel('X, pixels') ; 
-        ylabel('Y, pixels') ; 
-        c.Label.String = 'Segment length, pixels' ;  
-    end ; 
+    set(gca, 'XDir', sXDir) ; 
+    set(gca, 'YDir', sYDir) ; 
+    xlabel(['X,', sUnits]) ; 
+    ylabel(['Y,', sUnits]) ; 
+    c.Label.String = ['Segment length,', sUnits] ;   
     title({['Segment length map, n=', num2str(nSegments)];''}) ; 
 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_segmentlengthmap') ; 
 end ; 
 
+%   segment strike by colour map 
 if flag_segmentsbystrike
-    %   segment strike by colour map 
+    
     f = figure ; 
     segmentColours = cmocean('phase', 180) ; 
 
@@ -277,50 +274,37 @@ if flag_segmentsbystrike
     box on ; 
     xlim([xMin xMax]) ; 
     ylim([yMin yMax]) ; 
-    if flag_revX 
-        set(gca, 'XDir', 'reverse') ; 
-    end ; 
-    if flag_revY 
-        set(gca, 'YDir', 'reverse') ; 
-    end ; 
-    if nPixelsPerMetre > 0 
-        xlabel('X, metres') ; 
-        ylabel('Y, metres') ; 
-    else
-        xlabel('X, pixels') ; 
-        ylabel('Y, pixels') ; 
-    end ; 
+    set(gca, 'XDir', sXDir) ; 
+    set(gca, 'YDir', sYDir) ; 
+    xlabel(['X,', sUnits]) ; 
+    ylabel(['Y,', sUnits]) ; 
     title({['Segment strike map, n=', num2str(nSegments)];''}) ; 
 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_segmentstrikemap') ; 
 end ; 
 
-%   new maps for slip and dilation tendency in 2D
-%   supplied principal stresses, and azimuth of s1 from North (assumed
-%   y-axis)
-% s1 = 100e6 ;    %   in Pa
-% s2 = 50e6 ;     %   in Pa
-% nTheta = 30 ;    %   degrees from North (i.e. the y-axis)
-nAlpha = 1:180 ; 
-Tsmax = max( ((nSigma1-nSigma2).*sind(nAlpha).*cosd(nAlpha)) ... 
-                ./ (nSigma1.*cosd(nAlpha).^2+nSigma2.*sind(nAlpha).^2) ) ;  
+%   maps for slip and dilation tendency in 2D
+%   supplied principal stresses, and azimuth of s1 from North
+nAlpha = [ traces.segmentAngle ]' + 90. ; 
+tau = abs(-(nSigma1 - nSigma2) .* sind(2 * nAlpha) / 2.0) ; 
+sigmaN = (nSigma1 + nSigma2) / 2.0  + (nSigma1 - nSigma2) .* cosd(2 * nAlpha) / 2.0 ; 
+Tsmax = max(abs(tau ./ sigmaN)) ;  
+Sfmax = max(sigmaN - (tau - C0) / mu) ; 
+Sfmin = min(sigmaN - (tau - C0) / mu) ; 
 
-if flag_sliptendency 
-    
-    %   1. slip tendency = shear stress/normal stress on the segment 
-    f = figure ; 
-    segmentColours = cmocean('thermal', 100) ; 
+if flag_sliptendency || flag_dilationtendency || flag_fracsuscep || flag_CSF 
 
-    hold on ; 
+    i = 0 ; 
     for k = 1:nTraces
 
         for l = 1:traces(k).nSegments
 
             if traces(k).segmentLength(l) > 0
 
+                i = i + 1 ; 
                 iAngle = round(traces(k).segmentAngle(l) - nNorth) ; 
-
+                
                 if flag_revY 
                     iAngle = 180 - iAngle ; 
                 end ; 
@@ -346,26 +330,58 @@ if flag_sliptendency
 
                 %   get the angle between the pole to this segment and the s1 azimuth 
                 iAlpha = ( iAngle + 90 ) - nThetaSigma1 ; 
+                
                 %   calculate normal and shear stress on this segment 
-                sn = nSigma1 * cosd(iAlpha)^2 + nSigma2 * sind(iAlpha)^2 ; 
-                tau = (nSigma1-nSigma2) * sind(iAlpha) * cosd(iAlpha) ; 
-                %   calculate slip and dilation tendency on this segment 
-                traces(k).Segment(l).Ts = abs(tau / sn) ;
-                traces(k).Segment(l).TsNorm = traces(k).Segment(l).Ts / Tsmax ; 
-                traces(k).Segment(l).Td = (nSigma1-sn) / (nSigma1-nSigma2) ; 
-                iTs = round(traces(k).Segment(l).TsNorm*100) ; 
-                if iTs < 1 
-                    iTs = 1 ; 
-                end ; 
-                plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
-                      [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
-                            'LineWidth', 0.75, 'color', segmentColours(iTs,:) ) ;
+                sn(i) = 0.5 * (nSigma1 + nSigma2) + 0.5 * (nSigma1 - nSigma2) * cosd(2 * iAlpha) ; 
+                tau(i) = -0.5 * (nSigma1 - nSigma2) * sind(2 * iAlpha) ; 
+                
+                traces(k).Segment(l).sn = abs(sn(i)) ; 
+                traces(k).Segment(l).tau = abs(tau(i)) ;
 
-            end ; 
+            else 
+                
+                traces(k).Segment(l).sn = 0 ; 
+                traces(k).Segment(l).tau = 0 ;
+                
+            end 
+            
+        end 
+    end
+    
+    f = figure ; 
+    plotMohr2D(nSigma1, nSigma2, pf, C0, mu, sn, tau) ; 
+    %   save to file 
+    guiPrint(f, 'FracPaQ2D_Mohrplot') ; 
+    
+end 
 
-        end ;
+if flag_sliptendency 
+    
+    %   1. slip tendency = shear stress/normal stress on the segment 
+    f = figure ; 
+    segmentColours = colormap(jet(100)) ; 
+    hold on ; 
+    for k = 1:nTraces
 
-    end ; 
+        for l = 1:traces(k).nSegments
+
+            %   calculate slip tendency on this segment 
+            traces(k).Segment(l).Ts = traces(k).Segment(l).tau / traces(k).Segment(l).sn ;
+            traces(k).Segment(l).TsNorm = traces(k).Segment(l).Ts / Tsmax ; 
+            iTs = round(traces(k).Segment(l).TsNorm*100) ; 
+            if iTs < 1 
+                iTs = 1 ; 
+            end 
+            if isnan(iTs) 
+                iTs = 1 ; 
+            end 
+            plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
+                  [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
+                        'LineWidth', 0.75, 'color', segmentColours(iTs,:) ) ;
+
+        end
+
+    end 
     hold off ;
     colormap(segmentColours) ; 
     caxis([0 1]) ; 
@@ -375,19 +391,10 @@ if flag_sliptendency
     box on ; 
     xlim([xMin xMax]) ; 
     ylim([yMin yMax]) ; 
-    if flag_revX 
-        set(gca, 'XDir', 'reverse') ; 
-    end ; 
-    if flag_revY 
-        set(gca, 'YDir', 'reverse') ; 
-    end ; 
-    if nPixelsPerMetre > 0 
-        xlabel('X, metres') ; 
-        ylabel('Y, metres') ; 
-    else
-        xlabel('X, pixels') ; 
-        ylabel('Y, pixels') ; 
-    end ; 
+    set(gca, 'XDir', sXDir) ; 
+    set(gca, 'YDir', sYDir) ; 
+    xlabel(['X,', sUnits]) ; 
+    ylabel(['Y,', sUnits]) ; 
     title({['Normalised slip tendency for \sigma_1=', num2str(nSigma1), ...
             ' MPa, \sigma_2=', num2str(nSigma2), ' MPa, \theta=', num2str(nThetaSigma1), '\circ'];''}) ; 
     %   save to file 
@@ -396,37 +403,20 @@ if flag_sliptendency
     %   rose plots 
     traceAngles = [ traces.segmentAngle ]' ; 
     %   double the trace angle data over 360 degrees 
-    traceAngles2 = [ round(traceAngles - nNorth); ...
-                     round(traceAngles - nNorth) + 180 ] ;
-    for i = 1:max(size(traceAngles2))
-        if traceAngles2(i) < 0 
-            traceAngles2(i) = traceAngles2(i) + 360 ; 
-        end ; 
-    end ; 
-
+    traceAngles2 = doubleAngles(traceAngles, nNorth) ;  
+    %   flip the angles if the axis is flipped 
     if flag_revX 
-        traceAngles2 = 180 - traceAngles2 ; 
-        for i = 1:max(size(traceAngles2))
-            if traceAngles2(i) < 0 
-                traceAngles2(i) = traceAngles2(i) + 360 ; 
-            end ;
-        end ; 
+        traceAngles2 = reverseAxis(traceAngles2) ; 
     end ; 
-
     if flag_revY 
-        traceAngles2 = 180 - traceAngles2 ; 
-        for i = 1:max(size(traceAngles2))
-            if traceAngles2(i) < 0 
-                traceAngles2(i) = traceAngles2(i) + 360 ; 
-            end ;
-        end ; 
+        traceAngles2 = reverseAxis(traceAngles2) ; 
     end ; 
-
     nRoseBins = 10 ; 
     %   rose plot of segment angles colour-coded by normalised Ts 
     f = figure ; 
-    roseEqualAreaColourTendency(traceAngles2, nRoseBins, 0, 0, nSigma1, nSigma2, nThetaSigma1, 1) ; 
-    title({['Segment angles (equal area), colour-coded by T_s'];''}) ; 
+    roseEqualAreaColourTendency(traceAngles2, nRoseBins, 0, 0, ...
+                                    nSigma1, nSigma2, nThetaSigma1, 1, C0, mu, pf) ; 
+    title({'Segment angles (equal area), colour-coded by T_s';''}) ; 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_sliptendencyrose') ; 
 
@@ -436,61 +426,25 @@ if flag_dilationtendency
     
     %   2. dilation tendency on the segment 
     f = figure ; 
-    segmentColours = cmocean('thermal', 100) ; 
-
+    segmentColours = colormap(jet(100)) ; 
     hold on ; 
     for k = 1:nTraces
 
         for l = 1:traces(k).nSegments
 
-            if traces(k).segmentLength(l) > 0
+            %   calculate slip and dilation tendency on this segment 
+            traces(k).Segment(l).Td = (nSigma1 - traces(k).Segment(l).sn) / (nSigma1 - nSigma2) ; 
+            iTd = round(traces(k).Segment(l).Td * 100) ; 
+            if iTd < 1 
+                iTd = 1 ; 
+            end 
+            plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
+                  [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
+                        'LineWidth', 0.75, 'color', segmentColours(iTd,:) ) ;
 
-                iAngle = round(traces(k).segmentAngle(l) - nNorth) ; 
+        end
 
-                if flag_revY 
-                    iAngle = 180 - iAngle ; 
-                end ; 
-
-                if flag_revX
-                    iAngle = 180 - iAngle ; 
-                end ; 
-
-                if iAngle < 0  
-                    iAngle = iAngle + 360 ; 
-                end ; 
-
-                if iAngle > 180  
-                    iAngle = iAngle - 180 ; 
-                    if iAngle > 180  
-                        iAngle = iAngle - 180 ; 
-                    end ; 
-                end ; 
-
-                if iAngle < 1  
-                    iAngle = 180 ; 
-                end ; 
-
-                %   get the angle between the pole to this segment and the s1 azimuth 
-                iAlpha = ( iAngle + 90 ) - nThetaSigma1 ; 
-                %   calculate normal and shear stress on this segment 
-                sn = nSigma1 * cosd(iAlpha)^2 + nSigma2 * sind(iAlpha)^2 ; 
-                tau = (nSigma1-nSigma2) * sind(iAlpha) * cosd(iAlpha) ; 
-                %   calculate slip and dilation tendency on this segment 
-                traces(k).Segment(l).Td = (nSigma1-sn) / (nSigma1-nSigma2) ; 
-                
-                iTd = round(traces(k).Segment(l).Td*100) ; 
-                if iTd < 1 
-                    iTd = 1 ; 
-                end ; 
-                plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
-                      [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
-                            'LineWidth', 0.75, 'color', segmentColours(iTd,:) ) ;
-
-            end ; 
-
-        end ;
-
-    end ; 
+    end
     hold off ;
     colormap(segmentColours) ; 
     caxis([0 1]) ; 
@@ -500,19 +454,10 @@ if flag_dilationtendency
     box on ; 
     xlim([xMin xMax]) ; 
     ylim([yMin yMax]) ; 
-    if flag_revX 
-        set(gca, 'XDir', 'reverse') ; 
-    end ; 
-    if flag_revY 
-        set(gca, 'YDir', 'reverse') ; 
-    end ; 
-    if nPixelsPerMetre > 0 
-        xlabel('X, metres') ; 
-        ylabel('Y, metres') ; 
-    else
-        xlabel('X, pixels') ; 
-        ylabel('Y, pixels') ; 
-    end ; 
+    set(gca, 'XDir', sXDir) ; 
+    set(gca, 'YDir', sYDir) ; 
+    xlabel(['X,', sUnits]) ; 
+    ylabel(['Y,', sUnits]) ; 
     title({['Dilation tendency for \sigma_1=', num2str(nSigma1), ...
             ' MPa, \sigma_2=', num2str(nSigma2), ' MPa, \theta=', num2str(nThetaSigma1), '\circ'];''}) ; 
     %   save to file 
@@ -521,40 +466,154 @@ if flag_dilationtendency
     %   rose plots 
     traceAngles = [ traces.segmentAngle ]' ; 
     %   double the trace angle data over 360 degrees 
-    traceAngles2 = [ round(traceAngles - nNorth); ...
-                     round(traceAngles - nNorth) + 180 ] ;
-    for i = 1:max(size(traceAngles2))
-        if traceAngles2(i) < 0 
-            traceAngles2(i) = traceAngles2(i) + 360 ; 
-        end ; 
-    end ; 
-
+    traceAngles2 = doubleAngles(traceAngles, nNorth) ;  
+    %   flip angles if user has flipped axis
     if flag_revX 
-        traceAngles2 = 180 - traceAngles2 ; 
-        for i = 1:max(size(traceAngles2))
-            if traceAngles2(i) < 0 
-                traceAngles2(i) = traceAngles2(i) + 360 ; 
-            end ;
-        end ; 
-    end ; 
-
+        traceAngles2 = reverseAxis(traceAngles2) ; 
+    end 
     if flag_revY 
-        traceAngles2 = 180 - traceAngles2 ; 
-        for i = 1:max(size(traceAngles2))
-            if traceAngles2(i) < 0 
-                traceAngles2(i) = traceAngles2(i) + 360 ; 
-            end ;
-        end ; 
-    end ; 
-
+        traceAngles2 = reverseAxis(traceAngles2) ; 
+    end 
     nRoseBins = 10 ; 
 %   rose plot of segment angles colour-coded by Td 
     f = figure ; 
-    roseEqualAreaColourTendency(traceAngles2, nRoseBins, 0, 0, nSigma1, nSigma2, nThetaSigma1, 0) ; 
-    title({['Segment angles (equal area), colour-coded by T_d'];''}) ; 
+    roseEqualAreaColourTendency(traceAngles2, nRoseBins, 0, 0, ...
+                                    nSigma1, nSigma2, nThetaSigma1, 0, C0, mu, pf) ; 
+    title({'Segment angles (equal area), colour-coded by T_d';''}) ; 
     %   save to file 
     guiPrint(f, 'FracPaQ2D_dilationtendencyrose') ; 
 
-end ; 
+end 
+
+if flag_fracsuscep
+
+    f = figure ; 
+    segmentColours = colormap(flipud(jet(100))) ; 
+    hold on ; 
+    for k = 1:nTraces
+
+        for l = 1:traces(k).nSegments
+
+            %   calculate fracture susceptibility on this segment 
+            traces(k).Segment(l).Sf = traces(k).Segment(l).sn - (traces(k).Segment(l).tau - C0) / mu ;                
+            iSf = abs(round(((traces(k).Segment(l).Sf-Sfmin)/(Sfmax-Sfmin))*100)) ; 
+            if iSf < 1 
+                iSf = 1 ; 
+            end
+
+            %   draw the segment, colour-coded 
+            plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
+                  [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
+                        'LineWidth', 0.75, 'color', segmentColours(iSf, :) ) ;
+
+        end
+
+    end 
+    hold off ;
+    colormap(segmentColours) ; 
+    caxis([Sfmin Sfmax]) ; 
+    c = colorbar('southoutside') ; 
+    c.Label.String = 'Fracture susceptibility (\DeltaP_f), MPa' ;  
+    axis on equal ; 
+    box on ; 
+    xlim([xMin xMax]) ; 
+    ylim([yMin yMax]) ; 
+    set(gca, 'XDir', sXDir) ; 
+    set(gca, 'YDir', sYDir) ; 
+    xlabel(['X,', sUnits]) ; 
+    ylabel(['Y,', sUnits]) ; 
+    title({['Fracture susceptibility \sigma_1=', num2str(nSigma1), ...
+            ' MPa, \sigma_2=', num2str(nSigma2), ' MPa, \theta=', num2str(nThetaSigma1), '\circ'];''}) ; 
+    %   save to file 
+    guiPrint(f, 'FracPaQ2D_fracsuscepmap') ; 
+    
+    %   rose plots 
+    traceAngles = [ traces.segmentAngle ]' ; 
+    %   double the trace angle data over 360 degrees 
+    traceAngles2 = doubleAngles(traceAngles, nNorth) ; 
+    %   flip angles if user flipped axis
+    if flag_revX 
+        traceAngles2 = reverseAxis(traceAngles2) ; 
+    end 
+    if flag_revY 
+        traceAngles2 = reverseAxis(traceAngles2) ; 
+    end 
+    nRoseBins = 10 ; 
+    %   rose plot of segment angles colour-coded by normalised Sf 
+    f = figure ; 
+    roseEqualAreaColourTendency(traceAngles2, nRoseBins, 0, 0, ...
+                                nSigma1, nSigma2, nThetaSigma1, 2, C0, mu, pf) ; 
+    title({'Segment angles (equal area), colour-coded by S_f';''}) ; 
+    caxis([Sfmin Sfmax]) ; 
+    
+    %   save to file 
+    guiPrint(f, 'FracPaQ2D_fracsusceprose') ; 
+    
+end 
+
+if flag_CSF 
+
+    f = figure ; 
+    segmentColours = colormap(jet(100)) ; 
+    hold on ; 
+    for k = 1:nTraces
+        for l = 1:traces(k).nSegments
+            if traces(k).Segment(l).tau >= mu * (traces(k).Segment(l).sn - pf) + C0
+                iCSF = 90 ; 
+            else 
+                iCSF = 10 ; 
+            end 
+            %   draw the segment, colour-coded 
+            plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
+                  [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
+                        'LineWidth', 0.75, 'color', segmentColours(iCSF, :) ) ;
+        end 
+    end
+    hold off ;
+    colormap(segmentColours) ; 
+%    caxis([1 3]) ; 
+    c = colorbar('southoutside') ; 
+    c.Label.String = ['Critically Stressed Fractures, \itP\rm_f=', num2str(pf), ' MPa'] ;  
+    c.Ticks = [0, 1] ;
+    c.TickLabels = {'Non-CSF', 'CSF'} ; 
+    axis on equal ; 
+    box on ; 
+    xlim([xMin xMax]) ; 
+    ylim([yMin yMax]) ; 
+    set(gca, 'XDir', sXDir) ; 
+    set(gca, 'YDir', sYDir) ; 
+    xlabel(['X,', sUnits]) ; 
+    ylabel(['Y,', sUnits]) ; 
+    title({['Critically stressed fractures \sigma_1''=', num2str(nSigma1-pf), ...
+            ' MPa, \sigma_2''=', num2str(nSigma2-pf), ' MPa, \theta=', num2str(nThetaSigma1), '\circ'];''}) ; 
+    %   save to file 
+    guiPrint(f, 'FracPaQ2D_CSFmap') ; 
+
+    %   rose plot 
+    traceAngles = [ traces.segmentAngle ]' ; 
+    %   double the trace angle data over 360 degrees 
+    traceAngles2 = doubleAngles(traceAngles, nNorth) ; 
+    %   flip angles if user flipped axis
+    if flag_revX 
+        traceAngles2 = reverseAxis(traceAngles2) ; 
+    end 
+    if flag_revY 
+        traceAngles2 = reverseAxis(traceAngles2) ; 
+    end 
+    nRoseBins = 10 ; 
+    %   rose plot of segment angles colour-coded by normalised Sf 
+    f = figure ; 
+    roseEqualAreaColourTendency(traceAngles2, nRoseBins, 0, 0, ...
+                            nSigma1, nSigma2, nThetaSigma1, 3, C0, mu, pf) ; 
+    title({'Segment angles (equal area), colour-coded by CSF';''}) ; 
+    c = colorbar('southoutside') ; 
+    c.Label.String = ['Critically Stressed Fractures, \itP\rm_f=', num2str(pf), ' MPa'] ;  
+    c.Ticks = [0, 1] ;
+    c.TickLabels = {'Non-CSF', 'CSF'} ; 
+    
+    %   save to file 
+    guiPrint(f, 'FracPaQ2D_CSFrose') ; 
+    
+end 
 
 end 

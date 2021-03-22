@@ -1,7 +1,7 @@
-function guiFracPaQ2Dlength(traces, nPixelsPerMetre, northCorrection, xMin, yMin, xMax, yMax, ...
-                                nBins, flag_histolength, flag_logloglength, flag_crossplot, ...
-                                flag_mle, flag_censor, flag_blocksize, flag_revY, flag_revX, ...
-                                sColour, nlc, nuc, flag_seglenvariogram)
+function guiFracPaQ2Dlength(traces, nPixelsPerMetre, northCorrection, ...
+                            nBins, flag_histolength, flag_logloglength, flag_crossplot, ...
+                            flag_mle, flag_censor, flag_blocksize, flag_revY, flag_revX, ...
+                            sColour, nlc, nuc, flag_seglenvariogram)
 %   guiFracPaQ2Dlength.m 
 %       calculates and plots statistics of line trace segment lengths  
 %       
@@ -28,6 +28,16 @@ function guiFracPaQ2Dlength(traces, nPixelsPerMetre, northCorrection, xMin, yMin
 % DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+global sTag ; 
+
+if nPixelsPerMetre > 0 
+    sUnits = ' metres' ; 
+else 
+    sUnits = ' pixels' ; 
+end 
+
+[xMin, xMax, yMin, yMax] = getMapLimits(traces) ; 
 
 maxPossTraceLength = ceil(sqrt(xMax^2 + yMax^2)) ; 
 numTraces = length(traces) ; 
@@ -92,38 +102,7 @@ traceSegmentAngles = [ traces.segmentAngle ]' ;
 traceSegmentAngles = traceSegmentAngles(~isnan(traceSegmentLengths)) ; 
 
 %   double the trace angle data over 360 degrees 
-traceSegmentAngles2 = [ round(traceSegmentAngles - northCorrection); ...
-                 round(traceSegmentAngles - northCorrection) + 180 ] ;
-for i = 1:max(size(traceSegmentAngles2))
-    if traceSegmentAngles2(i) < 0 
-        traceSegmentAngles2(i) = traceSegmentAngles2(i) + 360 ; 
-    end 
-end
-
-%   trace angles 
-traceAngles = [ traces.Angle ]' ; 
-traceAngles = traceAngles - northCorrection ; 
-traceAngles = traceAngles(~isnan(traceLengths)) ; 
-for i = 1:max(size(traceAngles))
-    if traceAngles(i) < 0 
-        traceAngles(i) = traceAngles(i) + 360 ; 
-    end
-end
-
-%   correct for flipped X or Y axes if required 
-if flag_revX 
-    traceSegmentAngles2 = 180 - traceSegmentAngles2 ; 
-    traceAngles = 180 - traceAngles ; 
-    traceSegmentAngles2(traceSegmentAngles2 < 0) = traceSegmentAngles2(traceSegmentAngles2 < 0) + 360 ; 
-    traceAngles(traceAngles < 0) = traceAngles(traceAngles < 0) + 360 ; 
-end
-
-if flag_revY 
-    traceSegmentAngles2 = 180 - traceSegmentAngles2 ; 
-    traceAngles = 180 - traceAngles ; 
-    traceSegmentAngles2(traceSegmentAngles2 < 0) = traceSegmentAngles2(traceSegmentAngles2 < 0) + 360 ; 
-    traceAngles(traceAngles < 0) = traceAngles(traceAngles < 0) + 360 ; 
-end 
+traceSegmentAngles2 = doubleAngles(traceSegmentAngles, northCorrection) ; 
 
 disp(' ') ; 
 disp('Length stats...') ; 
@@ -133,40 +112,38 @@ disp(['Total number of segments found: ', num2str(length(traceSegmentLengths))])
 disp(['Number of traces excluded (censored): ', num2str(numTraceSegmentsCensored)]) ; 
 disp(['Number of segments excluded (censored): ', num2str(len1-len2)]) ; 
 
-if nPixelsPerMetre > 0 
-    disp(['Minimum trace length: ', num2str(minTraceLength, '%8.2f'), ' metres']) ; 
-    disp(['Maximum trace length: ', num2str(maxTraceLength, '%8.2f'), ' metres']) ; 
-    disp(['Average trace length: ', num2str(mean(traceLengths, 'omitnan'), '%8.2f'), ' metres']) ; 
-    disp(['Total trace length: ', num2str(sum(traceLengths, 'omitnan'), '%8.2f'), ' metres']) ; 
+disp(['Minimum trace length: ', num2str(minTraceLength, '%8.2f'), sUnits]) ; 
+disp(['Maximum trace length: ', num2str(maxTraceLength, '%8.2f'), sUnits]) ; 
+disp(['Average trace length: ', num2str(mean(traceLengths, 'omitnan'), '%8.2f'), sUnits]) ; 
 
-    disp(['Minimum segment length: ', num2str(minSegmentLength, '%8.2f'), ' metres']) ; 
-    disp(['Maximum segment length: ', num2str(maxSegmentLength, '%8.2f'), ' metres']) ; 
-    disp(['Average segment length: ', num2str(mean(traceSegmentLengths, 'omitnan'), '%8.2f'), ' metres']) ; 
-else 
-    disp(['Minimum trace length: ', num2str(minTraceLength, '%8.2f'), ' pixels']) ; 
-    disp(['Maximum trace length: ', num2str(maxTraceLength, '%8.2f'), ' pixels']) ; 
-    disp(['Average trace length: ', num2str(mean(traceLengths, 'omitnan'), '%8.2f'), ' pixels']) ; 
-    disp(['Total trace length: ', num2str(sum(traceLengths, 'omitnan'), '%8.2f'), ' pixels']) ; 
-    
-    disp(['Minimum segment length: ', num2str(minSegmentLength, '%8.2f'), ' pixels']) ; 
-    disp(['Maximum segment length: ', num2str(maxSegmentLength, '%8.2f'), ' pixels']) ; 
-    disp(['Average segment length: ', num2str(mean(traceSegmentLengths, 'omitnan'), '%8.2f'), ' pixels']) ; 
-end ; 
+disp(['Minimum segment length: ', num2str(minSegmentLength, '%8.2f'), sUnits]) ; 
+disp(['Maximum segment length: ', num2str(maxSegmentLength, '%8.2f'), sUnits]) ; 
+disp(['Average segment length: ', num2str(mean(traceSegmentLengths, 'omitnan'), '%8.2f'), sUnits]) ; 
 
-%   write the trace lengths to a text file
+%   write the segment lengths to a text file
 sorted_traceSegmentLengths = sort(traceSegmentLengths) ; 
-fidLength = fopen('FracPaQ2Dsegmentlengths.txt', 'wt') ; 
+fn = ['FracPaQ2Dsegmentlengths', sTag, '.txt'] ;
+fidLength = fopen(fn, 'wt') ; 
 for i = 1:max(size(traceSegmentLengths)) 
     fprintf(fidLength, '%6.2f\n', sorted_traceSegmentLengths(i)) ; 
-end ; 
+end 
 fclose(fidLength) ; 
 
 %   write the trace lengths to a text file
 sorted_traceLengths = sort(traceLengths) ; 
-fidLength = fopen('FracPaQ2Dtracelengths.txt', 'wt') ; 
+fn = ['FracPaQ2Dtracelengths', sTag, '.txt'] ;
+fidLength = fopen(fn, 'wt') ; 
 for i = 1:max(size(traceLengths)) 
     fprintf(fidLength, '%6.2f\n', sorted_traceLengths(i)) ; 
-end ; 
+end  
+fclose(fidLength) ; 
+
+%   write the segment angles & lengths to a text file
+fn = ['FracPaQ2Dsegmentangleslengths', sTag, '.txt'] ;
+fidLength = fopen(fn, 'wt') ; 
+for i = 1:max(size(traceSegmentLengths)) 
+    fprintf(fidLength, '%6.2f\t%6.2f\n', traceSegmentAngles(i), traceSegmentLengths(i)) ; 
+end
 fclose(fidLength) ; 
 
 if flag_histolength 
@@ -200,11 +177,7 @@ if flag_histolength
         hold off ; 
         xlim([0 maxTraceLength*1.1]) ; 
         ylim([0 max((nTraceLengths/sum(nTraceLengths))*100)*1.2]) ; 
-        if nPixelsPerMetre > 0 
-            xlabel('Trace length, metres') ; 
-        else 
-            xlabel('Trace length, pixels') ; 
-        end ; 
+        xlabel(['Trace length,', sUnits]) ; 
         ylabel('Frequency, %') ; 
     end ; 
     axis on square ; 
@@ -244,11 +217,7 @@ if flag_histolength
         hold off ; 
         xlim([0 maxSegmentLength*1.1]) ; 
         ylim([0 max((nSegmentLengths/sum(nSegmentLengths))*100)*1.2]) ; 
-        if nPixelsPerMetre > 0 
-            xlabel('Segment length, metres') ; 
-        else 
-            xlabel('Segment length, pixels') ; 
-        end ; 
+        xlabel(['Segment length,', sUnits]) ; 
         ylabel('Frequency, %') ; 
     end 
     axis on square ; 
@@ -277,11 +246,7 @@ if flag_logloglength
     set(gca,'XTick', [1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3, 1e4]) ; 
     xlim([minTraceLength*0.9 maxTraceLength*1.1]) ; 
     ylim([0.1 max(nTraceLengths)*1.2]) ; 
-    if nPixelsPerMetre > 0 
-        xlabel('Trace length, metres') ; 
-    else 
-        xlabel('Trace length, pixels') ; 
-    end ; 
+    xlabel(['Trace length,', sUnits]) ; 
     ylabel('Frequency, n(L)') ; 
     axis on square ; 
     box on ; 
@@ -317,11 +282,7 @@ if flag_logloglength
     set(gca,'XTick', [1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3, 1e4]) ; 
     xlim([minTraceLength*0.9 maxPossTraceLength*1.1]) ; 
     ylim([0.1 max(cLengths)*1.2]) ; 
-    if nPixelsPerMetre > 0 
-        xlabel('Trace length, metres') ; 
-    else 
-        xlabel('Trace length, pixels') ; 
-    end ; 
+    xlabel(['Trace length,', sUnits]) ; 
     ylabel('Cumulative frequency, C(L)') ; 
     axis on square ; 
     box on ; 
@@ -344,11 +305,7 @@ if flag_logloglength
     set(gca,'XTick', [1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3, 1e4]) ; 
     xlim([minSegmentLength*0.9 maxSegmentLength*1.1]) ; 
     ylim([0.1 max(nSegmentLengths)*1.2]) ; 
-    if nPixelsPerMetre > 0 
-        xlabel('Segment length, metres') ; 
-    else 
-        xlabel('Segment length, pixels') ; 
-    end ; 
+    xlabel(['Segment length,', sUnits]) ; 
     ylabel('Frequency, n(L)') ; 
     axis on square ; 
     box on ; 
@@ -385,11 +342,7 @@ if flag_logloglength
     set(gca,'XTick', [1e-3, 1e-2, 1e-1, 1e0, 1e1, 1e2, 1e3, 1e4]) ; 
     xlim([minSegmentLength*0.9 maxPossTraceLength*1.1]) ; 
     ylim([0.1 max(cLengths)*1.2]) ; 
-    if nPixelsPerMetre > 0 
-        xlabel('Segment length, metres') ; 
-    else 
-        xlabel('Segment length, pixels') ; 
-    end ; 
+    xlabel(['Segment length,', sUnits]) ; 
     ylabel('Cumulative frequency, C(L)') ; 
     axis on square ; 
     box on ; 
@@ -403,6 +356,15 @@ end ;
 
 if flag_crossplot 
     
+    %   change angles if axis flipped 
+    if flag_revX 
+        traceSegmentAngles2 = reverseAxis(traceSegmentAngles2) ; 
+    end ; 
+
+    if flag_revY 
+        traceSegmentAngles2 = reverseAxis(traceSegmentAngles2) ; 
+    end ;
+
     f = figure ; 
     hold on ; 
     plot(traceSegmentAngles2, [traceSegmentLengths'; traceSegmentLengths'], 's', ...
@@ -412,11 +374,7 @@ if flag_crossplot
     plot([0, 360], [maxPossTraceLength, maxPossTraceLength], '--r', 'LineWidth', 1) ;  
     hold off ; 
     xlabel('Trace segment angle, degrees') ; 
-    if nPixelsPerMetre > 0 
-        ylabel('Trace segment length, metres') ; 
-    else 
-        ylabel('Trace segment length, pixels') ;
-    end ; 
+    ylabel(['Trace segment length,', sUnits]) ; 
     xlim([-10 370]) ; 
     ylim([0 maxSegmentLength*1.1]) ; 
     set(gca,'XTick', 0:60:360) ; 
@@ -428,24 +386,6 @@ if flag_crossplot
     %   save to file 
     guiPrint(f, 'FracPaQ2D_crossplotsegmentlengthangle') ; 
 
-    %   write the trace segment lengths to a text file
-    fidLengthAngle = fopen('FracPaQ2Dsegmentlengths_angles.txt', 'wt') ; 
-    anglesOut = traceSegmentAngles2(1:end/2) ; 
-    lengthsOut = traceSegmentLengths' ; 
-    for i = 1:length(traceSegmentLengths)
-        fprintf(fidLengthAngle, '%8.2f %8.2f\n', lengthsOut(i), anglesOut(i)) ; 
-    end ; 
-    fclose(fidLengthAngle) ; 
-    
-    %   write the trace lengths to a text file
-    fidLengthAngle = fopen('FracPaQ2Dtracelengths_angles.txt', 'wt') ; 
-    anglesOut = traceAngles ; 
-    lengthsOut = traceLengths' ; 
-    for i = 1:length(traceLengths)
-        fprintf(fidLengthAngle, '%8.2f %8.2f\n', lengthsOut(i), anglesOut(i)) ; 
-    end ; 
-    fclose(fidLengthAngle) ; 
-    
 end ; 
 
 % Call the functions for Maximum Likelihood (MLE) Statistical Analysis of lengths.
@@ -464,11 +404,7 @@ if flag_mle
     disp('MLE for trace lengths...') ; 
     % Power Law Statistics
     [alpha,xmin,z,HpercentPL,PpercentPL]=fittingPL(x,uc,lc,sColour);
-    if nPixelsPerMetre > 0 
-        xlabel('Length, metres') ; 
-    else 
-        xlabel('Length, pixels') ;
-    end ; 
+    xlabel(['Length,', sUnits]) ; 
     t = get(gca, 'Title') ; 
     title({[t.String, ', trace lengths'];''}) ; 
     %   save to file 
@@ -476,11 +412,7 @@ if flag_mle
     
     % Exponential Statistics
     [lambda,xmin2,z2,Hpercentexp,Ppercentexp]=fittingExponential(x,uc,lc,sColour);
-    if nPixelsPerMetre > 0 
-        xlabel('Length, metres') ; 
-    else 
-        xlabel('Length, pixels') ;
-    end ; 
+    xlabel(['Length,', sUnits]) ; 
     t = get(gca, 'Title') ; 
     title({[t.String, ', trace lengths'];''}) ; 
     %   save to file 
@@ -488,11 +420,7 @@ if flag_mle
     
     % Log-Normal Statistics
     [mu,sigma,xmin3,z4,HpercentLN,PpercentLN]=fittingLognormal(x,uc,lc,sColour);
-    if nPixelsPerMetre > 0 
-        xlabel('Length, metres') ; 
-    else 
-        xlabel('Length, pixels') ;
-    end ; 
+    xlabel(['Length,', sUnits]) ; 
     t = get(gca, 'Title') ; 
     title({[t.String, ', trace lengths'];''}) ; 
     %   save to file 
@@ -511,11 +439,7 @@ if flag_mle
     disp('MLE for segment lengths...') ; 
     % Power Law Statistics
     [alpha,xmin,z,HpercentPL,PpercentPL]=fittingPL(x,uc,lc,sColour);
-    if nPixelsPerMetre > 0 
-        xlabel('Length, metres') ; 
-    else 
-        xlabel('Length, pixels') ;
-    end ; 
+    xlabel(['Length,', sUnits]) ; 
     t = get(gca, 'Title') ; 
     title({[t.String, ', segment lengths'];''}) ; 
     %   save to file 
@@ -523,11 +447,7 @@ if flag_mle
 
     % Exponential Statistics
     [lambda,xmin2,z2,Hpercentexp,Ppercentexp]=fittingExponential(x,uc,lc,sColour);
-    if nPixelsPerMetre > 0 
-        xlabel('Length, metres') ; 
-    else 
-        xlabel('Length, pixels') ;
-    end ; 
+    xlabel(['Length,', sUnits]) ; 
     t = get(gca, 'Title') ; 
     title({[t.String, ', segment lengths'];''}) ; 
     %   save to file 
@@ -535,11 +455,7 @@ if flag_mle
 
     % Log-Normal Statistics
     [mu,sigma,xmin3,z4,HpercentLN,PpercentLN]=fittingLognormal(x,uc,lc,sColour);
-    if nPixelsPerMetre > 0 
-        xlabel('Length, metres') ; 
-    else 
-        xlabel('Length, pixels') ;
-    end ; 
+    xlabel(['Length,', sUnits]) ; 
     t = get(gca, 'Title') ; 
     title({[t.String, ', segment lengths'];''}) ; 
     %   save to file 
@@ -600,13 +516,8 @@ if flag_blocksize
     if flag_revY 
         set(gca, 'YDir', 'reverse') ; 
     end ; 
-    if nPixelsPerMetre > 0 
-        xlabel('X, metres') ; 
-        ylabel('Y, metres') ; 
-    else
-        xlabel('X, pixels') ; 
-        ylabel('Y, pixels') ; 
-    end ; 
+    xlabel(['X,', sUnits]) ; 
+    ylabel(['Y,', sUnits]) ; 
     title({['Block centroids, n=', num2str(nBlocks)];''}) ;     
     guiPrint(gcf, 'FracPaQ2D_blocksizecentroidmap') ;
 
@@ -621,11 +532,7 @@ if flag_blocksize
     
     loglog((min(areas):incArea:max(areas)), (max(cAreas) - cAreas), 's', 'LineWidth', 1, 'Color', sColour, 'MarkerFaceColor', sColour) ;
     
-    if nPixelsPerMetre > 0 
-        xlabel('Block size (area), metres^2') ; 
-    else 
-        xlabel('Block size (area), pixels^2') ; 
-    end ; 
+    xlabel(['Block size (area),', sUnits, '^2']) ; 
     ylabel('Cumulative frequency') ; 
     axis on square ; 
     box on ; 
@@ -640,11 +547,7 @@ if flag_blocksize
     [ nAreas, binAreas ] = hist(areas, min(areas):incArea:max(areas)) ;
     bar(binAreas, (nAreas/sum(nAreas))*100, 1, 'FaceColor', sColour) ;
     
-    if nPixelsPerMetre > 0 
-        xlabel('Block size (area), metres^2') ; 
-    else 
-        xlabel('Block size (area), pixels^2') ; 
-    end ; 
+    xlabel(['Block size (area),', sUnits, '^2']) ; 
     ylabel('Frequency, %') ; 
     xlim([0 max(areas)*1.1]) ; 
     axis on square ; 
@@ -682,11 +585,7 @@ if flag_seglenvariogram
 
     plot(d.distance, d.val, 'rs') ;
     % axis([0 params.maxdist 0 max(S.val)*1.1]) ;
-    if nPixelsPerMetre > 0 
-        xlabel('h, metres') ; 
-    else 
-        xlabel('h, pixels') ; 
-    end ; 
+    xlabel(['h,', sUnits]) ; 
     ylabel('\gamma (h)') ;
     box on ; 
     grid on ; 
