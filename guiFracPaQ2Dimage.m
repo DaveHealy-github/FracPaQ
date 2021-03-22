@@ -77,7 +77,11 @@ maxLength = 0 ;
 lengths = zeros(length(lines), 1) ; 
 angles = zeros(length(lines), 1) ;
 for k = 1:length(lines)
-    
+
+   if numPixelsPerMetre > 0 
+       lines(k).point1 = lines(k).point1 / numPixelsPerMetre ; 
+       lines(k).point2 = lines(k).point2 / numPixelsPerMetre ;
+   end 
    xy = [ lines(k).point1 ; lines(k).point2 ] ;
    
    tanAngle = ( lines(k).point2(1) - lines(k).point1(1) ) / ... 
@@ -175,10 +179,17 @@ for k = 1:length(lines)
 end ; 
 hold off ; 
 set(ax,'YDir','normal') ; 
-xlim([xMin xMax]) ; 
-ylim([yMin yMax]) ; 
-xlabel('X, pixels') ; 
-ylabel('Y, pixels') ; 
+if numPixelsPerMetre > 0 
+    xlim([xMin/numPixelsPerMetre xMax/numPixelsPerMetre]) ; 
+    ylim([yMin/numPixelsPerMetre yMax/numPixelsPerMetre]) ; 
+    xlabel('X, metres') ; 
+    ylabel('Y, metres') ; 
+else
+    xlim([xMin xMax]) ; 
+    ylim([yMin yMax]) ; 
+    xlabel('X, pixels') ; 
+    ylabel('Y, pixels') ; 
+end ;
 
 %   show 3D surface of H to visualise peaks - helps selection of threshold 
 f = figure ; 
@@ -241,5 +252,13 @@ colormap(hot) ;
 
 %   save to file 
 guiPrint(f, 'FracPaQ2D_Houghstuff') ; 
+
+if numPixelsPerMetre > 0 
+    xMin = xMin / numPixelsPerMetre ; 
+    xMax = xMax / numPixelsPerMetre ; 
+    yMin = yMin / numPixelsPerMetre ; 
+    yMax = yMax / numPixelsPerMetre ; 
+end ;
+
 
 end 

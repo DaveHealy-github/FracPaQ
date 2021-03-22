@@ -72,24 +72,28 @@ end
 
 % Reshape the input vector, making sure that 'x' is a one column vector
 x = reshape(x,numel(x),1);
+
 x=sort(x);
-y=x(uppercut:(end-lowercut));
+
+x=x(uppercut:(end-lowercut));
+
 % Avoid repetitions searching all over unique values of the data set
-xmins=unique(y);
+xmins=unique(x);
 
 dat2=zeros(size(xmins));
 
 % Sort the data in ascending order
-%z2 = sort(x);
+y = sort(x);
+
 
 % Estimate 'lambda' using directly the MLE
 
 for i=1:length(xmins)
     xmin2 = xmins(i);   % choose the next xmin candidate
-    %z3 = z2(z2>=xmin2); % truncate the data below this xmin
+    y = y(y>=xmin2); % truncate the data below this xmin
     n = length(y);
     
-    lambda = 1/(mean(y));
+    lambda = 1/(mean(y)-xmin2);
     
     cx2 = (n:-1:1)'./n; % Construct the empirical CDF
     
@@ -113,7 +117,7 @@ n=length(z2);
 lambda=1/(mean(z2)-xmin2);
 
 % Call the function KStestexp
-[Hpercentexp,Ppercentexp]=KStestexp(z2,n,lambda);
+[Hpercentexp,Ppercentexp]=KStestexp(z2,n,lambda,xmin2);
 disp(' ') ; 
 disp('Probability of Exponentially distributed lengths...') ; 
 disp(['Exponential Null hypothesis percentage: ', num2str(Hpercentexp), '%']) ; 

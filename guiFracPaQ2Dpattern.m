@@ -1,8 +1,8 @@
-function guiFracPaQ2Dpattern(traces, numPixelsPerMetre, xMin, yMin, xMax, yMax, ...
+function guiFracPaQ2Dpattern(traces, numPixelsPerMetre, ...
                              nBlocks, ... 
                              flag_intensitymap, flag_densitymap, ... 
                              flag_triangle, flag_showcircles, ...
-                             nCircles, flag_revY, flag_revX, sColour)
+                             nCircles, flag_revY, flag_revX, sColour, nPixelsItoY)
 %   guiFracPaQ2Dpattern.m
 %       calculates and plots statistics of trace segment patterns
 %
@@ -37,6 +37,16 @@ function guiFracPaQ2Dpattern(traces, numPixelsPerMetre, xMin, yMin, xMax, yMax, 
 % DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+global sTag ; 
+
+if numPixelsPerMetre > 0
+    sUnits = ' metres' ; 
+else 
+    sUnits = ' pixels' ; 
+end 
+
+[xMin, xMax, yMin, yMax] = getMapLimits(traces) ; 
 
 numTraces = length(traces) ;
 traceLengths = [ traces.segmentLength ] ;
@@ -91,17 +101,10 @@ if flag_intensitymap || flag_densitymap || flag_showcircles
     
     disp(' ') ;
     disp('Circular scan windows...') ;
-    if numPixelsPerMetre > 0
-        disp(['Circle increment in X: ', num2str(xDeltaCircle, '%8.2E'), ' metres']) ;
-        disp(['Circle increment in Y: ', num2str(yDeltaCircle, '%8.2E'), ' metres']) ;
-        disp(['Circle radius: ', num2str(rCircle, '%8.2E'), ' metres']) ;
-        rCircleMetres = rCircle ;
-    else
-        disp(['Circle increment in X: ', num2str(xDeltaCircle, '%8.2E'), ' pixels']) ;
-        disp(['Circle increment in Y: ', num2str(yDeltaCircle, '%8.2E'), ' pixels']) ;
-        disp(['Circle radius: ', num2str(rCircle, '%8.2E'), ' pixels']) ;
-        rCircleMetres = rCircle ;
-    end ;
+    disp(['Circle increment in X: ', num2str(xDeltaCircle, '%8.2E'), sUnits]) ;
+    disp(['Circle increment in Y: ', num2str(yDeltaCircle, '%8.2E'), sUnits]) ;
+    disp(['Circle radius: ', num2str(rCircle, '%8.2E'), sUnits]) ;
+    rCircleMetres = rCircle ;
     I = zeros(yNumCircle, xNumCircle) ;
     D = zeros(yNumCircle, xNumCircle) ;
     
@@ -137,13 +140,8 @@ if flag_showcircles
     if flag_revY
         set(gca, 'YDir', 'reverse') ;
     end ;
-    if numPixelsPerMetre > 0
-        xlabel('X, metres') ;
-        ylabel('Y, metres') ;
-    else
-        xlabel('X, pixels') ;
-        ylabel('Y, pixels') ;
-    end ;
+    xlabel(['X,', sUnits]) ;
+    ylabel(['Y,', sUnits]) ;
     title({['Mapped trace segments, n=', num2str(length(traceLengths))];''}) ;
     
     %   save to file
@@ -286,9 +284,10 @@ if flag_triangle
         end ;
         
     end ;
-     
+    
     [cY, cX, cI] = getConnectivity(traces, segmentsxy, xMin, yMin, xMax, yMax, ...
-                                   nBlocks, flag_revX, flag_revY, numPixelsPerMetre) ;
+                                    nBlocks, flag_revX, flag_revY, ...
+                                    numPixelsPerMetre, nPixelsItoY) ;
     cTot = cY + cX + cI ;
     disp('Connectivity...') ;
     disp(['Y:X:I = ', ...
@@ -325,7 +324,8 @@ if flag_triangle
     guiPrint(f, 'FracPaQ2D_IYXtriangle') ;
     
     %   write a file of counts
-    fidConn = fopen('FracPaQ2Dconnectivity.txt', 'wt') ;
+    fn = ['FracPaQ2Dconnectivity', sTag, '.txt'] ; 
+    fidConn = fopen(fn, 'wt') ;
     fprintf(fidConn, '%s %i\n', 'I', cI) ;
     fprintf(fidConn, '%s %i\n', 'X', cX) ;
     fprintf(fidConn, '%s %i\n', 'Y', cY) ;
@@ -357,13 +357,8 @@ if flag_intensitymap || flag_densitymap
             set(gca, 'YDir', 'reverse') ;
         end ;
         title({'Estimated Intensity of segments (P21)';''}) ;
-        if numPixelsPerMetre > 0
-            xlabel('X, metres') ;
-            ylabel('Y, metres') ;
-        else
-            xlabel('X, pixels') ;
-            ylabel('Y, pixels') ;
-        end ;
+        xlabel(['X,', sUnits]) ;
+        ylabel(['Y,', sUnits]) ;
         c = colorbar('location', 'southoutside') ;
         if numPixelsPerMetre > 0
             c.Label.String = 'Intensity of segments (P21), metre^{-1}' ; 
@@ -413,13 +408,8 @@ if flag_intensitymap || flag_densitymap
             set(gca, 'YDir', 'reverse') ;
         end ;
         title({'Estimated Density of segments (P20)';''}) ;
-        if numPixelsPerMetre > 0
-            xlabel('X, metres') ;
-            ylabel('Y, metres') ;
-        else
-            xlabel('X, pixels') ;
-            ylabel('Y, pixels') ;
-        end ;
+        xlabel(['X,', sUnits]) ;
+        ylabel(['Y,', sUnits]) ;
         c = colorbar('southoutside') ; 
         if numPixelsPerMetre > 0
             c.Label.String = 'Density of segments (P20), metre^{-2}' ; 
@@ -445,9 +435,11 @@ if flag_intensitymap || flag_densitymap
 
     end ;
     
-    %   write I, D and MTL fto file
-    fidIntensity = fopen('FracPaQ2Dintensity.txt', 'wt') ;
-    fidDensity = fopen('FracPaQ2Ddensity.txt', 'wt') ;
+    %   write I and D data to file
+    fn1 = ['FracPaQ2Dintensity', sTag, '.txt'] ; 
+    fn2 = ['FracPaQ2Ddensity', sTag, '.txt'] ; 
+    fidIntensity = fopen(fn1, 'wt') ;
+    fidDensity = fopen(fn2, 'wt') ;
     for i = 1:xNumCircle
         
         xCentreCircle = xMin + xDeltaCircle * i ;

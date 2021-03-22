@@ -86,6 +86,7 @@ end
 % Reshape the input vector, making sure that 'x' is a one column vector
 x = reshape(x,numel(x),1);
 x=sort(x);
+
 y=x(uppercut:(end-lowercut));
 % Avoid repetitions searching all over unique values of the data set
 xmins = unique(y);
@@ -101,11 +102,11 @@ dat = zeros(size(xmins));
 for i=1:length(xmins)
     xmin = xmins(i); % choose the next xmin candidate
     
-   % z1=z(z>=xmin);   % truncate the data below this xmin
+    y=y(y>=xmin);   % truncate the data below this xmin
     
     n = length(y);
     
-    a = 1+n.*(sum(log(y./xmin)))^-1;
+    a = 1+n.*(sum(log(y./xmin)))^-1; %estimate apha using the MLE
     
     cx = (n:-1:1)'./n;  % Construct the empirical CDF
     
@@ -122,7 +123,6 @@ D = min(dat(dat>0));
 xmin = xmins(find(dat==D,1,'first'));
 
 z = x (x>=xmin);
-%z = sort (z);
 n = length(z);
 
 % Get corresponding alpha estimate

@@ -41,9 +41,9 @@ cn3(:,2) = cn3(:,2).* c3(find(c3(:,1)>=xmin3,1,'first'),2);
 
 f = figure;
 
-h(1)= semilogx(c3(:,1),c3(:,2),':s','Color',sCol,'MarkerSize',5,'MarkerFaceColor',sCol);
+h(1)= semilogx(c3(:,1),c3(:,2),':s','Color',sCol,'MarkerSize',8,'MarkerFaceColor',sCol);
 hold on
-h(2)= semilogx(cn3(:,1),cn3(:,2),'-.','Color',sCol,'LineWidth',2);
+h(2)= semilogx(cn3(:,1),cn3(:,2),'-.','Color','k','LineWidth',2);
 
 %Locate the position of Upper and Lower cut-off if applied
 PosLc = max(y);

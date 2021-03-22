@@ -1,4 +1,4 @@
-function guiFracPaQ2Dangle(traces, northCorrection, xMax, yMax, nHistoBins, nRoseBins, ...
+function guiFracPaQ2Dangle(traces, northCorrection, nHistoBins, nRoseBins, ...
                 flag_histoangle, flag_roseangle, flag_revY, flag_revX, flag_cracktensor, ...
                 flag_roselengthweighted, flag_rosemean, flag_rosecolour, sColour)
 %   guiFracPaQ2Dangle.m 
@@ -28,43 +28,35 @@ function guiFracPaQ2Dangle(traces, northCorrection, xMax, yMax, nHistoBins, nRos
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-numTraces = length(traces) ; 
+global sTag ; 
 
+numTraces = length(traces) ; 
 traceAngles = [ traces.segmentAngle ]' ; 
 traceLengths = [ traces.segmentLength ]' ; 
 
+v = ver('MATLAB') ; 
+iRelease = regexp(v.Release, 'R.....') ; 
+nReleaseYear = str2num(v.Release(iRelease+1:iRelease+4)) ; 
+
 %   double the trace angle data over 360 degrees 
-traceAngles2 = [ round(traceAngles - northCorrection); ...
-                 round(traceAngles - northCorrection) + 180 ] ;
-for i = 1:max(size(traceAngles2))
-    if traceAngles2(i) < 0 
-        traceAngles2(i) = traceAngles2(i) + 360 ; 
-    end ; 
-end ; 
+traceAngles2 = doubleAngles(traceAngles, northCorrection) ; 
+
 %   double the length data too, for length weighting of rose plot 
 traceLengths2 = [ traceLengths ; traceLengths ] ; 
 
+%   change angles if axis flipped 
 if flag_revX 
-    traceAngles2 = 180 - traceAngles2 ; 
-    for i = 1:max(size(traceAngles2))
-        if traceAngles2(i) < 0 
-            traceAngles2(i) = traceAngles2(i) + 360 ; 
-        end ;
-    end ; 
+    traceAngles2 = reverseAxis(traceAngles2) ; 
 end ; 
 
 if flag_revY 
-    traceAngles2 = 180 - traceAngles2 ; 
-    for i = 1:max(size(traceAngles2))
-        if traceAngles2(i) < 0 
-            traceAngles2(i) = traceAngles2(i) + 360 ; 
-        end ;
-    end ; 
+    traceAngles2 = reverseAxis(traceAngles2) ; 
 end ; 
 
 %   write the trace angles to a text file for EZ-ROSE plotting
 sorted_traceAngles2 = sort(traceAngles2) ; 
-fidRose = fopen('FracPaQ2DEZROSE.txt', 'wt') ; 
+fn = ['FracPaQ2DEZROSE', sTag, '.txt'] ; 
+fidRose = fopen(fn, 'wt') ; 
 for i = 1:max(size(traceAngles2)) 
     fprintf(fidRose, '%6.2f\n', sorted_traceAngles2(i)) ; 
 end ; 
@@ -111,18 +103,26 @@ if flag_histoangle
     %   histogram of trace angles 
     f = figure ; 
     [ nAngles, binAngles ] = hist(traceAngles2, 0:360/nHistoBins:360) ; 
-    yyaxis left ; 
-    bar(binAngles, nAngles, 1, 'FaceColor', sColour) ; 
-    ylabel('Frequency') ; 
-    ylim([0 max(nAngles)*1.1]) ; 
-    yyaxis right ; 
-    hold on ; 
-    bar(binAngles, (nAngles/sum(nAngles))*100, 1, 'FaceColor', sColour) ; 
-    hold off ; 
-    ylim([0 max((nAngles/sum(nAngles))*100)*1.1]) ; 
+    if nReleaseYear < 2016 
+        h = msgbox('Warning: FracPaQ needs MATLAB release of R2016a, or later, to plot double y-axis plots.', 'Warning!') ;  
+        uiwait(h) ; 
+        bar(binAngles, nAngles, 1, 'FaceColor', sColour) ; 
+        ylabel('Frequency') ; 
+        ylim([0 max(nAngles)*1.1]) ; 
+    else
+        yyaxis left ; 
+        bar(binAngles, nAngles, 1, 'FaceColor', sColour) ; 
+        ylabel('Frequency') ; 
+        ylim([0 max(nAngles)*1.1]) ; 
+        yyaxis right ; 
+        hold on ; 
+        bar(binAngles, (nAngles/sum(nAngles))*100, 1, 'FaceColor', sColour) ; 
+        hold off ; 
+        ylim([0 max((nAngles/sum(nAngles))*100)*1.1]) ; 
+        ylabel('Frequency, %') ; 
+    end 
     xlabel('Trace segment angle, degrees') ; 
     xlim([-10 370]) ; 
-    ylabel('Frequency, %') ; 
     set(gca,'XTick', 0:60:360) ; 
     axis on square ; 
     box on ; 
@@ -136,7 +136,7 @@ end ;
 
 if flag_cracktensor 
     
-    guiFracPaQ2Dcracktensor(traces, northCorrection, xMax, yMax, flag_revY, flag_revX) ; 
+    guiFracPaQ2Dcracktensor(traces, northCorrection, flag_revY, flag_revX) ; 
 
 end ;
 

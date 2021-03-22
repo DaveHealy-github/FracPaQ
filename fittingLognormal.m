@@ -91,6 +91,7 @@ z4=sort(x);
 % Estimate 'mu' and 'sigma^2' using directly the MLE
 for i=1:length(xmins)
     xmin3=xmins(i); % choose the next xmin candidate
+    
    % z5=z4(z4>=xmin3);  % truncate the data below this xmin
     
     n=length(z4);

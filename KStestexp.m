@@ -1,4 +1,4 @@
-function [Hpercentexp,Ppercentexp]=KStestexp(z2,n,lambda)
+function [Hpercentexp,Ppercentexp]=KStestexp(z2,n,lambda,xmin2)
 
 %%
 % Author: Roberto Emanuele Rizzo (rerizzo@abdn.ac.uk)
@@ -54,6 +54,7 @@ function [Hpercentexp,Ppercentexp]=KStestexp(z2,n,lambda)
 rep=2500;
 for i=1:rep
     expon=exprnd((1/lambda),n,1);
+    expon = expon + xmin2;
     q=sort(expon);
     
     [h(i),p(i)]=kstest2(z2,q,'alpha',0.05,'tail','unequal');

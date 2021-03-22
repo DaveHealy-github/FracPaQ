@@ -43,7 +43,7 @@ function varargout = guiFracPaQ2D(varargin)
 
 % Edit the above text to modify the response to help guiFracPaQ2D
 
-% Last Modified by GUIDE v2.5 24-Oct-2019 14:04:22
+% Last Modified by GUIDE v2.5 17-Mar-2021 16:13:32
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -97,7 +97,7 @@ set(handles.popupmenu_histolengthbins,'Value',2) ;
 set(handles.popupmenu_histoanglebins,'Value',2) ;
 set(handles.popupmenu_rosebins,'Value',2) ;
 
-handles.FracPaQversion = '2.6.1' ; 
+handles.FracPaQversion = '2.8' ; 
 disp(['FracPaQ version ', handles.FracPaQversion]) ; 
 handles.graphx = [0, 0] ; 
 handles.graphy = [0, 0] ; 
@@ -126,6 +126,8 @@ set(handles.uibgTabFluid, 'Visible', 'off') ;
 set(handles.uibgTabWavelets, 'Visible', 'off') ; 
 set(handles.uibgTabGraphs, 'Visible', 'off') ; 
 
+set(handles.edit_filename, 'Enable', 'on') ; 
+
 % --- Outputs from this function are returned to the command line.
 function varargout = guiFracPaQ2D_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
@@ -147,9 +149,13 @@ function checkbox_triangle_Callback(hObject, eventdata, handles)
 if get(hObject, 'Value')
     set(handles.label_numblocksmap, 'Enable', 'on') ; 
     set(handles.edit_numblocksmap, 'Enable', 'on') ; 
+    set(handles.label_numpixelsItoY, 'Enable', 'on') ; 
+    set(handles.edit_numpixelsItoY, 'Enable', 'on') ; 
 else 
     set(handles.label_numblocksmap, 'Enable', 'off') ; 
     set(handles.edit_numblocksmap, 'Enable', 'off') ; 
+    set(handles.label_numpixelsItoY, 'Enable', 'off') ; 
+    set(handles.edit_numpixelsItoY, 'Enable', 'off') ; 
 end ; 
 
 % --- Executes on button press in checkbox_permellipse.
@@ -574,12 +580,74 @@ function edit_filename_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit_filename as text
 %        str2double(get(hObject,'String')) returns contents of edit_filename as a double
-% handles.filename = uigetfile({'*.txt'; '*.jpeg'; '*.tiff'}, 'Select an input file for FracPaQ2D') ; 
-% if length(handles.filename) > 0 
-%     set(hObject, 'String', handles.filename) ; 
-% else 
-%     set(hObject, 'String', '(no file selected)') ; 
-% end ; 
+cla(handles.axes_tracemap) ; 
+handles.axes_tracemap.YDir = 'normal' ; 
+
+handles.selfile = get(hObject, 'String') ;
+handles.selpath = pwd ; 
+if ispc 
+    handles.selpath = [handles.selpath, '\'] ;
+else
+    handles.selpath = [handles.selpath, '/'] ;
+end 
+
+if ~isempty(handles.selfile)
+    
+    sFileName = char(handles.selfile) ; 
+
+    if ~isempty(regexp(sFileName, 'colour', 'ONCE')) 
+        iHex = regexp(sFileName, '[A-F,0-9]{6}', 'ONCE') ; 
+        %   check each file has 'HHHHHH' in the name i.e. a valid hex string for colour 
+        if isempty(iHex) 
+            hError = errordlg('For a colour file, all filenames must contain a 6 character hexadecimal colour code', 'Input error', 'modal') ; 
+            uicontrol(handles.edit_filename) ; 
+            flagError = true ; 
+            return ; 
+        else 
+            iRGB = strfind(sFileName, 'colour') ; 
+            sRGB = sFileName(iRGB+6:iRGB+11) ; 
+            sColour = hexRGB(sRGB) ; 
+            handles.cstrColours = cellstr(sColour) ; 
+        end ; 
+
+    else
+        %   MATLAB default blue 
+        sColour = '[0, 0, 1]' ; 
+        handles.cstrColours = cellstr(sColour) ; 
+    end ; 
+
+    handles.iCurrentColour = 1 ; 
+
+    set(handles.pushbutton_preview, 'Enable', 'on') ; 
+
+    if ~isempty(strfind(upper(handles.selfile), '.TIF')) || ...
+       ~isempty(strfind(upper(handles.selfile), '.TIFF')) || ...
+       ~isempty(strfind(upper(handles.selfile), '.JPEG')) || ...
+       ~isempty(strfind(upper(handles.selfile), '.JPG'))  
+        set(handles.radiobutton_image, 'Value', 1) ;
+        set(handles.radiobutton_node, 'Value', 0) ;
+        set(handles.edit_houghpeaks, 'Enable', 'on') ; 
+        set(handles.edit_houghthreshold, 'Enable', 'on') ; 
+        set(handles.edit_fillgap, 'Enable', 'on') ; 
+        set(handles.edit_minlength, 'Enable', 'on') ; 
+    else 
+        set(handles.radiobutton_node, 'Value', 1) ;
+        set(handles.radiobutton_image, 'Value', 0) ;
+        set(handles.edit_houghpeaks, 'Enable', 'off') ; 
+        set(handles.edit_houghthreshold, 'Enable', 'off') ; 
+        set(handles.edit_fillgap, 'Enable', 'off') ; 
+        set(handles.edit_minlength, 'Enable', 'off') ; 
+    end ; 
+
+end 
+
+set(handles.pushbutton_flipx, 'Enable', 'off') ; 
+set(handles.pushbutton_flipy, 'Enable', 'off') ; 
+set(handles.pushbutton_run, 'Enable', 'off') ; 
+set(handles.text_message, 'String', 'Click Preview to view the file contents.') ;                                 
+
+% Update handles structure
+guidata(hObject, handles);
 
 % --- Executes during object creation, after setting all properties.
 function edit_filename_CreateFcn(hObject, eventdata, handles)
@@ -776,8 +844,7 @@ else
     %   convert .svg file to .txt file 
     if ~isempty(strfind(sFilename, '.svg'))  
         
-        nConvert = convertSVG2txt_colour(sFilename) ; 
-%         disp(nConvert) ; 
+        nConvert = convertSVG2txt_colour2(sFilename) ; 
         
         if nConvert > 0 
             
@@ -944,6 +1011,9 @@ if ~flagError
                                         ['Number of segments: ', num2str(handles.nSegments)], ...
                                         ['Number of nodes: ', num2str(handles.nNodes)]}) ;
 
+    xyMaxRange = max([handles.xmax-handles.xmin, handles.ymax-handles.ymin]) ;
+    set(handles.edit_numpixelsItoY, 'String', num2str(xyMaxRange/1000, '%2.2f')) ; 
+    
     set(handles.text_message, 'String', 'Ready. Click Run to generate maps and graphs.') ;     
   
     set(handles.pushbutton_run, 'Enable', 'on') ; 
@@ -993,6 +1063,30 @@ sValue = get(handles.edit_thetasigma1, 'String') ;
 if isnan(str2double(sValue)) || str2double(sValue) > 180.0 || str2double(sValue) < 0.0
     hError = errordlg('Angle must be a number and between 0-180', 'Input error', 'modal') ; 
     uicontrol(handles.edit_thetasigma1) ; 
+    flagError = true ; 
+    return ; 
+end ; 
+
+sValue = get(handles.edit_C0, 'String') ; 
+if isnan(str2double(sValue)) || str2double(sValue) < 0.0
+    hError = errordlg('Cohesion (C0) must be a positive number or 0.0', 'Input error', 'modal') ; 
+    uicontrol(handles.edit_C0) ; 
+    flagError = true ; 
+    return ; 
+end ; 
+
+sValue = get(handles.edit_Pf, 'String') ; 
+if isnan(str2double(sValue)) || str2double(sValue) < 0.0
+    hError = errordlg('Pore pressure must be a positive number or 0.0', 'Input error', 'modal') ; 
+    uicontrol(handles.edit_Pf) ; 
+    flagError = true ; 
+    return ; 
+end ; 
+
+sValue = get(handles.edit_mu, 'String') ; 
+if isnan(str2double(sValue)) || str2double(sValue) < 0.0
+    hError = errordlg('Friction coefficient must be a positive number or 0.0', 'Input error', 'modal') ; 
+    uicontrol(handles.edit_mu) ; 
     flagError = true ; 
     return ; 
 end ; 
@@ -1092,10 +1186,6 @@ end ;
 if ~flagError 
     
     traces = getappdata(hObject, 'Traces') ; 
-    xmin = getappdata(hObject, 'xMin') ; 
-    ymin = getappdata(hObject, 'yMin') ; 
-    xmax = getappdata(hObject, 'xMax') ; 
-    ymax = getappdata(hObject, 'yMax') ; 
 
     %   get the current RGB colour string 
     if ~isempty(handles.selmultifile)
@@ -1132,8 +1222,12 @@ if ~flagError
         nSigma1 = str2double(get(handles.edit_sigma1, 'String')) ; 
         nSigma2 = str2double(get(handles.edit_sigma2, 'String')) ; 
         nThetaSigma1 = str2double(get(handles.edit_thetasigma1, 'String')) ; 
+        C0 = str2double(get(handles.edit_C0, 'String')) ; 
+        Pf = str2double(get(handles.edit_Pf, 'String')) ; 
+        mu = str2double(get(handles.edit_mu, 'String')) ; 
         
         nBlocks = str2double(get(handles.edit_numblocksmap, 'String')) ; 
+        nPixelsItoY = str2double(get(handles.edit_numpixelsItoY, 'String')) ; 
         nScanCircles = str2double(get(handles.edit_numscancirclesgraph, 'String')) ; 
 
         %   get values from drop down lists 
@@ -1151,13 +1245,16 @@ if ~flagError
         flag_shownodes = get(handles.checkbox_shownodes, 'Value') ; 
         flag_sliptendency = get(handles.checkbox_sliptendency, 'Value') ; 
         flag_dilationtendency = get(handles.checkbox_dilationtendency, 'Value') ; 
+        flag_fracsuscep = get(handles.checkbox_fracsuscep, 'Value') ; 
+        flag_CSF = get(handles.checkbox_CSF, 'Value') ; 
         flag_tracesbylength = get(handles.checkbox_tracemaplength, 'Value') ; 
         flag_segmentsbylength = get(handles.checkbox_segmentmaplength, 'Value') ; 
         flag_segmentsbystrike = get(handles.checkbox_segmentmapstrike, 'Value') ; 
         
         flag_tracemap_any = false ; 
-        if sum([flag_tracemap, flag_sliptendency, flag_dilationtendency, flag_tracesbylength, ...
-                flag_segmentsbylength, flag_segmentsbystrike]) > 0 
+        if sum([flag_tracemap, flag_sliptendency, flag_dilationtendency, ... 
+                flag_tracesbylength, flag_segmentsbylength, flag_segmentsbystrike, ...
+                flag_fracsuscep, flag_CSF]) > 0 
             flag_tracemap_any = true ; 
         end ; 
         
@@ -1194,16 +1291,15 @@ if ~flagError
         set(handles.text_message, 'String', 'Running...') ;   
         if flag_tracemap_any 
             guiFracPaQ2Dtracemap(traces, nPixels, nNorth, ...
-                    xmin, ymin, xmax, ymax, ...
                     flag_shownodes, flag_reverseY, flag_reverseX, sColour, ...
                     flag_multicolour, flag_tracemap, flag_sliptendency, flag_dilationtendency, ...
                     flag_tracesbylength, flag_segmentsbylength, flag_segmentsbystrike, ...
-                    nSigma1, nSigma2, nThetaSigma1) ; 
+                    nSigma1, nSigma2, nThetaSigma1, flag_fracsuscep, flag_CSF, C0, Pf, mu) ; 
         end ; 
 
         flag_length = sum([flag_histolength, flag_logloglength, flag_blocksize, flag_seglenvario]) ; 
         if flag_length
-            guiFracPaQ2Dlength(traces, nPixels, nNorth, xmin, ymin, xmax, ymax, ...
+            guiFracPaQ2Dlength(traces, nPixels, nNorth, ...
                                nHistoLengthBins, flag_histolength, flag_logloglength, ...
                                flag_crossplot, flag_mle, flag_censor, ...
                                flag_blocksize, flag_reverseY, flag_reverseX, ...
@@ -1212,7 +1308,7 @@ if ~flagError
 
         flag_angle = sum([flag_histoangle, flag_roseangle, flag_cracktensor]) ; 
         if flag_angle
-            guiFracPaQ2Dangle(traces, nNorth, xmax, ymax, nHistoAngleBins, nRoseBins, ...
+            guiFracPaQ2Dangle(traces, nNorth, nHistoAngleBins, nRoseBins, ...
                                     flag_histoangle, flag_roseangle, ...
                                     flag_reverseY, flag_reverseX, ...
                                     flag_cracktensor, ...
@@ -1222,11 +1318,11 @@ if ~flagError
 
         flag_pattern = sum([flag_intensitymap, flag_densitymap, flag_triangle]) ; 
         if flag_pattern
-            guiFracPaQ2Dpattern(traces, nPixels, xmin, ymin, xmax, ymax, ...
-                                nBlocks, ... 
+            guiFracPaQ2Dpattern(traces, nPixels, nBlocks, ... 
                                 flag_intensitymap, flag_densitymap, ...
                                 flag_triangle, flag_showcircles, ...
-                                nCircles, flag_reverseY, flag_reverseX, sColour) ; 
+                                nCircles, flag_reverseY, flag_reverseX, ...
+                                sColour, nPixelsItoY) ; 
         end ; 
 
         if flag_permellipse
@@ -1240,14 +1336,14 @@ if ~flagError
                 nApertureFactor = str2double(get(handles.edit_aperturefactor, 'String')) ;
                 nApertureExponent = str2double(get(handles.edit_apertureexponent, 'String')) ;
             end ; 
-            guiFracPaQ2Dtensor(traces, xmin, ymin, xmax, ymax, nNorth, nLambda, ...
+            guiFracPaQ2Dtensor(traces, nNorth, nLambda, ...
                                     flag_reverseY, flag_reverseX, ...
                                         nFixedAperture, nApertureFactor, nApertureExponent, ...
                                             nPixels, sColour) ; 
         end ; 
 
         if flag_graph_any 
-            guiFracPaQ2Dgraphs(traces, nPixels, xmin, ymin, xmax, ymax, ...
+            guiFracPaQ2Dgraphs(traces, nPixels, ...
                                 handles.graphx, handles.graphy, sColour, ...
                                 nScanCircles, ... 
                                 flag_reverseX, flag_reverseY, ... 
@@ -1316,9 +1412,9 @@ if get(handles.checkbox_wavelet, 'Value')
 
     set(handles.text_message, 'String', 'Running...') ;   
     if ~flagWaveError
-        guiFracPaQ2Dwavelet2(handles.a, handles.L, ... 
-                             handles.nTheta, handles.fMorlet, '[0 0 1]', ...
-                             flag_reverseX, flag_reverseY) ; 
+        guiFracPaQ2Dwavelet(traces, handles.a, handles.L, ... 
+                            handles.nTheta, handles.fMorlet, '[0 0 1]', ...
+                            flag_reverseX, flag_reverseY) ; 
     end ; 
     set(handles.text_message, 'String', 'All done. Check current folder for plot figure .tif files.') ;   
     uicontrol(handles.pushbutton_run) ; 
@@ -1743,20 +1839,35 @@ function checkbox_dilationtendency_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_dilationtendency
-if get(hObject, 'Value') || get(handles.checkbox_sliptendency, 'Value')
+if get(hObject, 'Value') || ...
+   get(handles.checkbox_sliptendency, 'Value') || ... 
+   get(handles.checkbox_fracsuscep, 'Value') || ... 
+   get(handles.checkbox_CSF, 'Value')
     set(handles.edit_sigma1, 'Enable', 'on') ; 
     set(handles.edit_sigma2, 'Enable', 'on') ; 
     set(handles.edit_thetasigma1, 'Enable', 'on') ; 
+    set(handles.edit_C0, 'Enable', 'on') ; 
+    set(handles.edit_Pf, 'Enable', 'on') ; 
+    set(handles.edit_mu, 'Enable', 'on') ; 
     set(handles.label_sigma1, 'Enable', 'on') ; 
     set(handles.label_sigma2, 'Enable', 'on') ; 
     set(handles.label_thetasigma1, 'Enable', 'on') ; 
+    set(handles.label_C0, 'Enable', 'on') ; 
+    set(handles.label_Pf, 'Enable', 'on') ; 
+    set(handles.label_mu, 'Enable', 'on') ; 
 else 
     set(handles.edit_sigma1, 'Enable', 'off') ; 
     set(handles.edit_sigma2, 'Enable', 'off') ; 
     set(handles.edit_thetasigma1, 'Enable', 'off') ; 
+    set(handles.edit_C0, 'Enable', 'off') ; 
+    set(handles.edit_Pf, 'Enable', 'off') ; 
+    set(handles.edit_mu, 'Enable', 'off') ; 
     set(handles.label_sigma1, 'Enable', 'off') ; 
     set(handles.label_sigma2, 'Enable', 'off') ; 
     set(handles.label_thetasigma1, 'Enable', 'off') ; 
+    set(handles.label_C0, 'Enable', 'off') ; 
+    set(handles.label_Pf, 'Enable', 'off') ; 
+    set(handles.label_mu, 'Enable', 'off') ; 
 end ; 
 
 
@@ -1767,22 +1878,36 @@ function checkbox_sliptendency_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox_sliptendency
-if get(hObject, 'Value') || get(handles.checkbox_dilationtendency, 'Value')
+if get(hObject, 'Value') || ...
+   get(handles.checkbox_dilationtendency, 'Value') || ... 
+   get(handles.checkbox_fracsuscep, 'Value') || ... 
+   get(handles.checkbox_CSF, 'Value')
     set(handles.edit_sigma1, 'Enable', 'on') ; 
     set(handles.edit_sigma2, 'Enable', 'on') ; 
     set(handles.edit_thetasigma1, 'Enable', 'on') ; 
+    set(handles.edit_C0, 'Enable', 'on') ; 
+    set(handles.edit_Pf, 'Enable', 'on') ; 
+    set(handles.edit_mu, 'Enable', 'on') ; 
     set(handles.label_sigma1, 'Enable', 'on') ; 
     set(handles.label_sigma2, 'Enable', 'on') ; 
     set(handles.label_thetasigma1, 'Enable', 'on') ; 
+    set(handles.label_C0, 'Enable', 'on') ; 
+    set(handles.label_Pf, 'Enable', 'on') ; 
+    set(handles.label_mu, 'Enable', 'on') ; 
 else 
     set(handles.edit_sigma1, 'Enable', 'off') ; 
     set(handles.edit_sigma2, 'Enable', 'off') ; 
     set(handles.edit_thetasigma1, 'Enable', 'off') ; 
+    set(handles.edit_C0, 'Enable', 'off') ; 
+    set(handles.edit_Pf, 'Enable', 'off') ; 
+    set(handles.edit_mu, 'Enable', 'off') ; 
     set(handles.label_sigma1, 'Enable', 'off') ; 
     set(handles.label_sigma2, 'Enable', 'off') ; 
     set(handles.label_thetasigma1, 'Enable', 'off') ; 
+    set(handles.label_C0, 'Enable', 'off') ; 
+    set(handles.label_Pf, 'Enable', 'off') ; 
+    set(handles.label_mu, 'Enable', 'off') ; 
 end ; 
-
 
 
 function edit_sigma2_Callback(hObject, eventdata, handles)
@@ -2100,11 +2225,180 @@ function edit_FilenameTag_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit_FilenameTag as text
 %        str2double(get(hObject,'String')) returns contents of edit_FilenameTag as a double
+global sTag ; 
 
+sTag = ['_', get(hObject,'String')] ; 
 
 % --- Executes during object creation, after setting all properties.
 function edit_FilenameTag_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to edit_FilenameTag (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit_numpixelsItoY_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_numpixelsItoY (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_numpixelsItoY as text
+%        str2double(get(hObject,'String')) returns contents of edit_numpixelsItoY as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_numpixelsItoY_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_numpixelsItoY (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in checkbox_fracsuscep.
+function checkbox_fracsuscep_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_fracsuscep (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_fracsuscep
+if get(hObject, 'Value') || ...
+   get(handles.checkbox_dilationtendency, 'Value') || ...
+   get(handles.checkbox_sliptendency, 'Value') || ... 
+   get(handles.checkbox_CSF, 'Value')
+    set(handles.edit_sigma1, 'Enable', 'on') ; 
+    set(handles.edit_sigma2, 'Enable', 'on') ; 
+    set(handles.edit_thetasigma1, 'Enable', 'on') ; 
+    set(handles.edit_C0, 'Enable', 'on') ; 
+    set(handles.edit_Pf, 'Enable', 'on') ; 
+    set(handles.edit_mu, 'Enable', 'on') ; 
+    set(handles.label_sigma1, 'Enable', 'on') ; 
+    set(handles.label_sigma2, 'Enable', 'on') ; 
+    set(handles.label_thetasigma1, 'Enable', 'on') ; 
+    set(handles.label_C0, 'Enable', 'on') ; 
+    set(handles.label_Pf, 'Enable', 'on') ; 
+    set(handles.label_mu, 'Enable', 'on') ; 
+else 
+    set(handles.edit_sigma1, 'Enable', 'off') ; 
+    set(handles.edit_sigma2, 'Enable', 'off') ; 
+    set(handles.edit_thetasigma1, 'Enable', 'off') ; 
+    set(handles.edit_C0, 'Enable', 'off') ; 
+    set(handles.edit_Pf, 'Enable', 'off') ; 
+    set(handles.edit_mu, 'Enable', 'off') ; 
+    set(handles.label_sigma1, 'Enable', 'off') ; 
+    set(handles.label_sigma2, 'Enable', 'off') ; 
+    set(handles.label_thetasigma1, 'Enable', 'off') ; 
+    set(handles.label_C0, 'Enable', 'off') ; 
+    set(handles.label_Pf, 'Enable', 'off') ; 
+    set(handles.label_mu, 'Enable', 'off') ; 
+end ; 
+
+
+% --- Executes on button press in checkbox_CSF.
+function checkbox_CSF_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox_CSF (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox_CSF
+if get(hObject, 'Value') || ...
+   get(handles.checkbox_dilationtendency, 'Value') || ...
+   get(handles.checkbox_sliptendency, 'Value') || ...
+   get(handles.checkbox_fracsuscep, 'Value')
+    set(handles.edit_sigma1, 'Enable', 'on') ; 
+    set(handles.edit_sigma2, 'Enable', 'on') ; 
+    set(handles.edit_thetasigma1, 'Enable', 'on') ; 
+    set(handles.edit_C0, 'Enable', 'on') ; 
+    set(handles.edit_Pf, 'Enable', 'on') ; 
+    set(handles.edit_mu, 'Enable', 'on') ; 
+    set(handles.label_sigma1, 'Enable', 'on') ; 
+    set(handles.label_sigma2, 'Enable', 'on') ; 
+    set(handles.label_thetasigma1, 'Enable', 'on') ; 
+    set(handles.label_C0, 'Enable', 'on') ; 
+    set(handles.label_Pf, 'Enable', 'on') ; 
+    set(handles.label_mu, 'Enable', 'on') ; 
+else 
+    set(handles.edit_sigma1, 'Enable', 'off') ; 
+    set(handles.edit_sigma2, 'Enable', 'off') ; 
+    set(handles.edit_thetasigma1, 'Enable', 'off') ; 
+    set(handles.edit_C0, 'Enable', 'off') ; 
+    set(handles.edit_Pf, 'Enable', 'off') ; 
+    set(handles.edit_mu, 'Enable', 'off') ; 
+    set(handles.label_sigma1, 'Enable', 'off') ; 
+    set(handles.label_sigma2, 'Enable', 'off') ; 
+    set(handles.label_thetasigma1, 'Enable', 'off') ; 
+    set(handles.label_C0, 'Enable', 'off') ; 
+    set(handles.label_Pf, 'Enable', 'off') ; 
+    set(handles.label_mu, 'Enable', 'off') ; 
+end ; 
+
+
+function edit_C0_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_C0 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_C0 as text
+%        str2double(get(hObject,'String')) returns contents of edit_C0 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_C0_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_C0 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function edit_Pf_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_Pf (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_Pf as text
+%        str2double(get(hObject,'String')) returns contents of edit_Pf as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_Pf_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_Pf (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function edit_mu_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_mu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit_mu as text
+%        str2double(get(hObject,'String')) returns contents of edit_mu as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit_mu_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_mu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
