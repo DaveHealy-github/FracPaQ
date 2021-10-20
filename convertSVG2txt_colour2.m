@@ -1,5 +1,5 @@
-function rc = convertSVG2txt_colour(fName) 
-%   convertSVG2txt.m 
+function rc = convertSVG2txt_colour2(fName) 
+%   convertSVG2txt2.m 
 %       reads in .SVG (version 1.1) file and writes out .txt file of (x,y) nodes  
 %       
 %   David Healy
@@ -8,6 +8,10 @@ function rc = convertSVG2txt_colour(fName)
 %
 %   Modified:
 %   March 2021
+%   d.healy@abdn.ac.uk 
+%
+%   Modified:
+%   May 2021
 %   d.healy@abdn.ac.uk 
 
 %% Copyright
@@ -160,17 +164,14 @@ for i = 1:length(sAllLines)
     
     %   save the line colour 
     iC = iC + 1 ; 
-    iColour = 0 ; 
+    sAllColours(iC) = {''} ; 
     if contains(sThisLine, 'stroke=')
         iColour = strfind(sThisLine, 'stroke="#') + 9 ; 
+        sAllColours(iC) = { sThisLine(iColour:iColour+5) } ; 
     end 
     if contains(sThisLine, 'stroke:')
         iColour = strfind(sThisLine, 'stroke:#') + 8 ; 
-    end 
-    if iColour > 0 
-        sAllColours(iC) = { sThisLine(iColour:iColour+5) } ;
-    else 
-        sAllColours(iC) = { '000000' } ; 
+        sAllColours(iC) = { sThisLine(iColour:iColour+5) } ; 
     end 
     
 end
@@ -197,174 +198,169 @@ else
 end
 
 %   loop through pathlines extracting (x,y) coordinate pairs 
-if iPath > 0 
+for i = 1:iPath 
     
-    for i = 1:iPath 
-
-        if iscellstr(sNewPathLines(i,:))
-            sThisLine = char(sNewPathLines(i,:)) ; 
-        else
-            continue ; 
+    if iscellstr(sNewPathLines(i,:))
+        sThisLine = char(sNewPathLines(i,:)) ; 
+    else
+        continue ; 
+    end 
+    lThisLine = length(sThisLine) ; 
+    
+    %   check we have the ONLY valid formats:
+    %       d="M x1,y1 x2,y2 x3,y3 ...xn,yn"
+    %   or 
+    %       d="Mx1,y1Lx2,y2....Lxn,yn"
+    %   1. must be upper case M or L - i.e., absolute position coords, not
+    %   relative 
+    %   2. no other alphabetic characters (i.e. SVG commands) allowed 
+    %   inside the double quotes
+    if contains(sThisLine, 'M') 
+        
+        iColour = 0 ; 
+        %   find which colour file 
+        if contains(sThisLine, 'stroke="#')
+            iColour = strfind(sThisLine, 'stroke="#') + 9 ; 
         end 
-
-        %   check we have the ONLY valid format:
-        %       d="M x1,y1 x2,y2 x3,y3 ...xn,yn"
-        %   1. must be upper case M - i.e., absolute position coords, not
-        %   relative 
-        %   2. no other alphabetic characters (i.e. SVG commands) allowed 
-        %   inside the double quotes
-        if contains(sThisLine, 'M') 
-
-            %   find which colour file 
-            if contains(sThisLine, 'stroke=')
-                iColour = strfind(sThisLine, 'stroke="#') + 9 ; 
-            end 
-            if contains(sThisLine, 'stroke:')
-                iColour = strfind(sThisLine, 'stroke:#') + 8 ; 
-            end 
-            if isempty(iColour)
-                sColour = '000000' ; 
-                iColourFile = 1 ; 
-            else 
-                sColour = upper(sThisLine(iColour:iColour+5)) ; 
-                iColourFile = find(~cellfun('isempty', strfind(sAllColours, sColour))) ; 
-            end 
-
-            %   find points 
-            iS = strfind(sThisLine, 'd="M') ; 
-            iStartPoints = iS(1) + length('d="M') ; 
+        if contains(sThisLine, 'stroke:#')
+            iColour = strfind(sThisLine, 'stroke:#') + 8 ; 
+        end 
+        if iColour == 0 
+            sColour = '000000' ; 
+            iColourFile = 1 ; 
+        else 
+            sColour = upper(sThisLine(iColour:iColour+5)) ; 
+            iColourFile = find(~cellfun('isempty', strfind(sAllColours, sColour))) ; 
+        end 
+        
+        %   find points 
+        iS = strfind(sThisLine, 'd="M') ; 
+        iStartPoints = iS(1) + length('d="M') ; 
+        if contains(sThisLine, "L") 
+            sThisLine_LforComma = replace(sThisLine, 'L', ',') ; 
+            iEndPoints = strfind(sThisLine, 'style') - 3 ; 
+            sPoints = sThisLine_LforComma(iStartPoints:iEndPoints) ; 
+        else 
             iEndPoints = max(strfind(sThisLine, 'id')) - 3 ; 
             sPoints = sThisLine(iStartPoints:iEndPoints) ; 
+        end 
 
-            %   can only handle <path tags with M(ove) command; filter out any
-            %   lines with other commands, e.g., Bezier curves etc. 
-            SVG_cmd_pattern = ["A", "C", "H", "L", "Q", "V", "S", "T" "Z"] ; 
-            if contains(upper(sPoints), SVG_cmd_pattern) 
-                disp('***Error: SVG <path has non-M command. FracPaQ cannot read this line, skipping...') ; 
-                disp(sPoints) ; 
-                continue ; 
-            else 
-                %   strip out (x,y) pairs 
-                nPathPoints = str2num(sPoints) ;
-                for j = 1:length(nPathPoints)
-                    %   write to the colour file 
-                    fprintf(fID(iColourFile), '%12.8f\t', nPathPoints(j)) ; 
-                end  
-                if i <= iPath && ~isempty(nPathPoints)  
-                    fprintf(fID(iColourFile), '\r\n') ; 
-                end  
-            end 
-
-        else
-            
-            disp('***Error: SVG <path has non-M command. FracPaQ cannot read this line, skipping...') ; 
+        %   can only handle <path tags with M(ove) and L(ine) commands; 
+        %   filter out any lines with other commands, e.g., Bezier curves etc. 
+        SVG_cmd_pattern = ["A", "C", "H", "Q", "V", "S", "T" "Z"] ; 
+        if contains(upper(sPoints), SVG_cmd_pattern) 
+            disp('***Error: SVG <path has non-M command. FracPaQ cannot read this line, skipping') ; 
+            disp(sPoints) ; 
             continue ; 
-
-        end
-
-    end 
+        else 
+            %   strip out (x,y) pairs 
+            nPathPoints = str2num(sPoints) ;
+            for j = 1:length(nPathPoints)
+                %   write to the colour file 
+                fprintf(fID(iColourFile), '%12.8f\t', nPathPoints(j)) ; 
+            end  
+            if i <= iPath && ~isempty(nPathPoints)  
+                fprintf(fID(iColourFile), '\r\n') ; 
+            end  
+        end 
+        
+    else
+        continue ; 
+    end
     
 end 
 
 %   loop through polylines extracting (x,y) coordinate pairs 
-if iPoly > 0 
-
-    for i = 1:iPoly 
-
-        if iscellstr(sNewPolyLines(i,:))
-            sThisLine = char(sNewPolyLines(i,:)) ; 
-        else
-            continue ; 
-        end 
-        lThisLine = length(sThisLine) ; 
-
-        if lThisLine > 20 
-            %   find which colour file 
-            iColour = strfind(sThisLine, 'stroke="#') + 9 ; 
-            if isempty(iColour)
-                sColour = '000000' ; 
-                iColourFile = 1 ; 
-            else 
-                sColour = sThisLine(iColour:iColour+5) ; 
-                iColourFile = find(~cellfun('isempty', strfind(sAllColours, sColour))) ; 
-            end 
-
-            %   find points 
-            iS = strfind(sThisLine, 'points="') ; 
-            iStartPoints = iS(1) + length('points="') ; 
-            iEndPoints = lThisLine - 2 ; 
-            sPoints = sThisLine(iStartPoints:iEndPoints) ; 
-
-            %   strip out (x,y) pairs 
-            nPolyPoints = str2num(sPoints) ;
-            for j = 1:length(nPolyPoints)
-                %   write to the colour file 
-                fprintf(fID(iColourFile), '%12.8f\t', nPolyPoints(j)) ; 
-            end  
-            if i <= iPoly && ~isempty(nPolyPoints)  
-                fprintf(fID(iColourFile), '\r\n') ; 
-            end  
-        end 
-
+for i = 1:iPoly 
+    
+    if iscellstr(sNewPolyLines(i,:))
+        sThisLine = char(sNewPolyLines(i,:)) ; 
+    else
+        continue ; 
     end 
+    lThisLine = length(sThisLine) ; 
+    
+    if lThisLine > 20 
+        %   find which colour file 
+        iColour = strfind(sThisLine, 'stroke="#') + 9 ; 
+        if isempty(iColour)
+            sColour = '000000' ; 
+            iColourFile = 1 ; 
+        else 
+            sColour = sThisLine(iColour:iColour+5) ; 
+            iColourFile = find(~cellfun('isempty', strfind(sAllColours, sColour))) ; 
+        end 
 
+        %   find points 
+        iS = strfind(sThisLine, 'points="') ; 
+        iStartPoints = iS(1) + length('points="') ; 
+        iEndPoints = lThisLine - 2 ; 
+        sPoints = sThisLine(iStartPoints:iEndPoints) ; 
+
+        %   strip out (x,y) pairs 
+        nPolyPoints = str2num(sPoints) ;
+        for j = 1:length(nPolyPoints)
+            %   write to the colour file 
+            fprintf(fID(iColourFile), '%12.8f\t', nPolyPoints(j)) ; 
+        end  
+        if i <= iPoly && ~isempty(nPolyPoints)  
+            fprintf(fID(iColourFile), '\r\n') ; 
+        end  
+    end 
+    
 end 
 
 %   loop through lines extracting (x,y) coordinate pairs 
-if iLine > 0 
+for i = 1:iLine 
     
-    for i = 1:iLine 
+    if iscellstr(sNewLines(i,:)) 
+        sThisLine = char(sNewLines(i,:)) ; 
+    else
+        continue ; 
+    end 
+    
+    lThisLine = length(sThisLine) ; 
 
-        if iscellstr(sNewLines(i,:)) 
-            sThisLine = char(sNewLines(i,:)) ; 
+    if lThisLine > 20 
+        %   find which colour file 
+        iColour = strfind(sThisLine, 'stroke="#') + 9 ; 
+        if isempty(iColour)
+            sColour = '000000' ; 
+            iColourFile = 1 ; 
+        else 
+            sColour = sThisLine(iColour:iColour+5) ; 
+            iColourFile = find(~cellfun('isempty', strfind(sAllColours, sColour))) ; 
+        end 
+
+        %   find points 
+        ix1 = strfind(sThisLine, 'x1="') + 4 ; 
+        iy1 = strfind(sThisLine, 'y1="') + 4 ; 
+        ix2 = strfind(sThisLine, 'x2="') + 4 ; 
+        iy2 = strfind(sThisLine, 'y2="') + 4 ;
+        fy2 = 1 ; 
+        if isempty(iy2)
+            iy2 = strfind(sThisLine, 'y2= "') + 5 ;
+            fy2 = 0 ; 
+        end 
+
+        x1 = str2double(sThisLine(ix1:iy1-7)) ; 
+        y1 = str2double(sThisLine(iy1:ix2-7)) ; 
+        if fy2 
+            x2 = str2double(sThisLine(ix2:iy2-7)) ; 
+        else 
+            x2 = str2double(sThisLine(ix2:iy2-8)) ; 
+        end 
+        y2 = str2double(deblank(sThisLine(iy2:max(strfind(sThisLine, '"'))-1))) ; 
+
+        %   write to the colour file 
+        if i < iLine
+            fprintf(fID(iColourFile), '%12.8f\t%12.8f\t%12.8f\t%12.8f\r\n', x1, y1, x2, y2) ; 
         else
-            continue ; 
+            fprintf(fID(iColourFile), '%12.8f\t%12.8f\t%12.8f\t%12.8f', x1, y1, x2, y2) ; 
         end 
+    end 
 
-        lThisLine = length(sThisLine) ; 
-
-        if lThisLine > 20 
-            %   find which colour file 
-            iColour = strfind(sThisLine, 'stroke="#') + 9 ; 
-            if isempty(iColour)
-                sColour = '000000' ; 
-                iColourFile = 1 ; 
-            else 
-                sColour = sThisLine(iColour:iColour+5) ; 
-                iColourFile = find(~cellfun('isempty', strfind(sAllColours, sColour))) ; 
-            end 
-
-            %   find points 
-            ix1 = strfind(sThisLine, 'x1="') + 4 ; 
-            iy1 = strfind(sThisLine, 'y1="') + 4 ; 
-            ix2 = strfind(sThisLine, 'x2="') + 4 ; 
-            iy2 = strfind(sThisLine, 'y2="') + 4 ;
-            fy2 = 1 ; 
-            if isempty(iy2)
-                iy2 = strfind(sThisLine, 'y2= "') + 5 ;
-                fy2 = 0 ; 
-            end 
-
-            x1 = str2double(sThisLine(ix1:iy1-7)) ; 
-            y1 = str2double(sThisLine(iy1:ix2-7)) ; 
-            if fy2 
-                x2 = str2double(sThisLine(ix2:iy2-7)) ; 
-            else 
-                x2 = str2double(sThisLine(ix2:iy2-8)) ; 
-            end 
-            y2 = str2double(deblank(sThisLine(iy2:max(strfind(sThisLine, '"'))-1))) ; 
-
-            %   write to the colour file 
-            if i < iLine
-                fprintf(fID(iColourFile), '%12.8f\t%12.8f\t%12.8f\t%12.8f\r\n', x1, y1, x2, y2) ; 
-            else
-                fprintf(fID(iColourFile), '%12.8f\t%12.8f\t%12.8f\t%12.8f', x1, y1, x2, y2) ; 
-            end 
-        end 
-
-    end  
-
-end 
+end  
 
 %   clean up and quit 
 for i = 1:nAllColours
