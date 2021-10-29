@@ -30,6 +30,8 @@ function guiFracPaQ2Dtracemap(traces, nPixelsPerMetre, nNorth, ...
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+global sTag ; 
+
 [xMin, xMax, yMin, yMax] = getMapLimits(traces) ; 
 
 if nPixelsPerMetre > 0 
@@ -290,8 +292,8 @@ nAlpha = [ traces.segmentAngle ]' + 90. ;
 tau = abs(-(nSigma1 - nSigma2) .* sind(2 * nAlpha) / 2.0) ; 
 sigmaN = (nSigma1 + nSigma2) / 2.0  + (nSigma1 - nSigma2) .* cosd(2 * nAlpha) / 2.0 ; 
 Tsmax = max(abs(tau ./ sigmaN)) ;  
-Sfmax = max(sigmaN - (tau - C0) / mu) ; 
-Sfmin = min(sigmaN - (tau - C0) / mu) ; 
+Sfmax = max(sigmaN - pf - (tau - C0) / mu) ; 
+Sfmin = min(sigmaN - pf - (tau - C0) / mu) ; 
 
 if flag_sliptendency || flag_dilationtendency || flag_fracsuscep || flag_CSF 
 
@@ -340,8 +342,8 @@ if flag_sliptendency || flag_dilationtendency || flag_fracsuscep || flag_CSF
 
             else 
                 
-                traces(k).Segment(l).sn = 0 ; 
-                traces(k).Segment(l).tau = 0 ;
+                traces(k).Segment(l).sn = NaN ; 
+                traces(k).Segment(l).tau = NaN ;
                 
             end 
             
@@ -365,20 +367,24 @@ if flag_sliptendency
 
         for l = 1:traces(k).nSegments
 
-            %   calculate slip tendency on this segment 
-            traces(k).Segment(l).Ts = traces(k).Segment(l).tau / traces(k).Segment(l).sn ;
-            traces(k).Segment(l).TsNorm = traces(k).Segment(l).Ts / Tsmax ; 
-            iTs = round(traces(k).Segment(l).TsNorm*100) ; 
-            if iTs < 1 
-                iTs = 1 ; 
-            end 
-            if isnan(iTs) 
-                iTs = 1 ; 
-            end 
-            plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
-                  [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
-                        'LineWidth', 0.75, 'color', segmentColours(iTs,:) ) ;
+            if traces(k).segmentLength(l) > 0
+                
+                %   calculate slip tendency on this segment 
+                traces(k).Segment(l).Ts = traces(k).Segment(l).tau / traces(k).Segment(l).sn ;
+                traces(k).Segment(l).TsNorm = traces(k).Segment(l).Ts / Tsmax ; 
+                iTs = round(traces(k).Segment(l).TsNorm*100) ; 
+                if iTs < 1 
+                    iTs = 1 ; 
+                end 
+                if isnan(iTs) 
+                    iTs = 1 ; 
+                end 
+                plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
+                      [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
+                            'LineWidth', 0.75, 'color', segmentColours(iTs,:) ) ;
 
+            end 
+            
         end
 
     end 
@@ -420,6 +426,24 @@ if flag_sliptendency
     %   save to file 
     guiPrint(f, 'FracPaQ2D_sliptendencyrose') ; 
 
+    %   write out the segment coords and strikes 
+    fn = ['FracPaQ2Dsegmentdata', sTag, '.txt'] ;
+    fidSeg = fopen(fn, 'wt') ; 
+    iSeq = 0 ; 
+    for i = 1:nTraces
+        for j = 1:traces(i).nSegments
+            iSeq = iSeq + 1 ; 
+            fprintf(fidSeg, '%4i\t%8.4f\t%8.4f\t%8.4f\t%8.4f\t%3.1f\n', ...  
+                        iSeq, ...
+                        traces(i).Segment(j).Point1(1), ...
+                        traces(i).Segment(j).Point1(2), ...
+                        traces(i).Segment(j).Point2(1), ...
+                        traces(i).Segment(j).Point2(2), ...
+                        traces(i).segmentAngle(j)) ; 
+        end 
+    end  
+    fclose(fidSeg) ; 
+
 end ; 
 
 if flag_dilationtendency
@@ -432,16 +456,20 @@ if flag_dilationtendency
 
         for l = 1:traces(k).nSegments
 
-            %   calculate slip and dilation tendency on this segment 
-            traces(k).Segment(l).Td = (nSigma1 - traces(k).Segment(l).sn) / (nSigma1 - nSigma2) ; 
-            iTd = round(traces(k).Segment(l).Td * 100) ; 
-            if iTd < 1 
-                iTd = 1 ; 
+            if traces(k).segmentLength(l) > 0
+                
+                %   calculate dilation tendency on this segment 
+                traces(k).Segment(l).Td = (nSigma1 - traces(k).Segment(l).sn) / (nSigma1 - nSigma2) ; 
+                iTd = round(traces(k).Segment(l).Td * 100) ; 
+                if iTd < 1 
+                    iTd = 1 ; 
+                end 
+                plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
+                      [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
+                            'LineWidth', 0.75, 'color', segmentColours(iTd,:) ) ;
+        
             end 
-            plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
-                  [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
-                        'LineWidth', 0.75, 'color', segmentColours(iTd,:) ) ;
-
+            
         end
 
     end
@@ -494,18 +522,22 @@ if flag_fracsuscep
 
         for l = 1:traces(k).nSegments
 
-            %   calculate fracture susceptibility on this segment 
-            traces(k).Segment(l).Sf = traces(k).Segment(l).sn - (traces(k).Segment(l).tau - C0) / mu ;                
-            iSf = abs(round(((traces(k).Segment(l).Sf-Sfmin)/(Sfmax-Sfmin))*100)) ; 
-            if iSf < 1 
-                iSf = 1 ; 
-            end
+            if traces(k).segmentLength(l) > 0
+                
+                %   calculate fracture susceptibility on this segment 
+                traces(k).Segment(l).Sf = traces(k).Segment(l).sn - pf - (traces(k).Segment(l).tau - C0) / mu ;                
+                iSf = abs(round(((traces(k).Segment(l).Sf-Sfmin)/(Sfmax-Sfmin))*100)) ; 
+                if iSf < 1 
+                    iSf = 1 ; 
+                end
 
-            %   draw the segment, colour-coded 
-            plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
-                  [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
-                        'LineWidth', 0.75, 'color', segmentColours(iSf, :) ) ;
+                %   draw the segment, colour-coded 
+                plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
+                      [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
+                            'LineWidth', 0.75, 'color', segmentColours(iSf, :) ) ;
 
+            end 
+            
         end
 
     end 
@@ -557,17 +589,25 @@ if flag_CSF
     segmentColours = colormap(jet(100)) ; 
     hold on ; 
     for k = 1:nTraces
+        
         for l = 1:traces(k).nSegments
-            if traces(k).Segment(l).tau >= mu * (traces(k).Segment(l).sn - pf) + C0
-                iCSF = 90 ; 
-            else 
-                iCSF = 10 ; 
+            
+            if traces(k).segmentLength(l) > 0
+                
+                if traces(k).Segment(l).tau >= mu * (traces(k).Segment(l).sn - pf) + C0
+                    iCSF = 90 ; 
+                else 
+                    iCSF = 10 ; 
+                end 
+                %   draw the segment, colour-coded 
+                plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
+                      [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
+                            'LineWidth', 0.75, 'color', segmentColours(iCSF, :) ) ;
+                        
             end 
-            %   draw the segment, colour-coded 
-            plot( [ traces(k).Segment(l).Point1(1), traces(k).Segment(l).Point2(1) ]', ...
-                  [ traces(k).Segment(l).Point1(2), traces(k).Segment(l).Point2(2) ]', ...
-                        'LineWidth', 0.75, 'color', segmentColours(iCSF, :) ) ;
+            
         end 
+        
     end
     hold off ;
     colormap(segmentColours) ; 
