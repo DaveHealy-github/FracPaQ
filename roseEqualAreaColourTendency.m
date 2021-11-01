@@ -102,8 +102,8 @@ limAlpha(limAlpha < 0) = limAlpha(limAlpha < 0) + 360 ;
 %disp(limAlpha) ; 
 
 TsMax = max(tau ./ sn) ; 
-SfMax = max((sn - (tau - C0) ./ mu)) ; 
-Sfmin = min((sn - (tau - C0) ./ mu)) ; 
+SfMax = max((sn - pf - (tau - C0) ./ mu)) ; 
+Sfmin = min((sn - pf - (tau - C0) ./ mu)) ; 
 
 %   go through the bins... 
 for i = 1:max(size(binAngles))-1
@@ -136,7 +136,7 @@ for i = 1:max(size(binAngles))-1
             TsNorm = Ts / TsMax ; 
             iCol = round(TsNorm * ( round((360/delta)/2)+1 )) ; 
         case 2      %   fracture susceptibility 
-            Sf = sn - (tau - C0) / mu ; 
+            Sf = sn - pf - (tau - C0) / mu ; 
             SfNorm = (Sf - Sfmin) / (SfMax - Sfmin) ; 
             iCol = round(SfNorm * ( round((360/delta)/2)+1 )) ; 
         case 3      %   critically stressed fractures
@@ -145,9 +145,11 @@ for i = 1:max(size(binAngles))-1
             else 
                 CSFNorm = 0.1 ; 
             end 
-            for a = 1:max(size(limAlpha))
-                if limAlpha(a) >= binAngles2(j) && limAlpha(a) < binAngles2(j+1)
-                    CSFNorm = 0.75 ; 
+            if ~all(limAlpha) 
+                for a = 1:max(size(limAlpha))
+                    if limAlpha(a) >= binAngles2(j) && limAlpha(a) < binAngles2(j+1)
+                        CSFNorm = 0.75 ; 
+                    end 
                 end 
             end 
             iCol = round(CSFNorm * ( round((360/delta)/2)+1 )) ; 
