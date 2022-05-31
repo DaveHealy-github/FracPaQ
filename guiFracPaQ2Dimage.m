@@ -194,8 +194,17 @@ end ;
 %   show 3D surface of H to visualise peaks - helps selection of threshold 
 f = figure ; 
 %   changed 15Feb2019 DH - many bug reports from previous (pre-v2.4) version
+% [ newX, newY ] = meshgrid(-90:houghThetaRes:(90-houghThetaRes), ...
+%                         -(round(norm(size(BW)))-1):houghRhoRes:(round(norm(size(BW)))-1)) ; 
+%   changed 04Nov2021 DH - 
+%[ newX, newY ] = meshgrid(-90:houghThetaRes:(90-houghThetaRes), ...
+%                        -(round(norm(size(BW)))):houghRhoRes:(round(norm(size(BW))))) ; 
+%   changed 31May2022 DH - 
+[numRows,numCols] = size(BW);
+D = sqrt((numRows-1)^2+(numCols-1)^2) ;
 [ newX, newY ] = meshgrid(-90:houghThetaRes:(90-houghThetaRes), ...
-                        -(round(norm(size(BW)))-1):houghRhoRes:(round(norm(size(BW)))-1)) ; 
+                        -(ceil(D/houghRhoRes)):houghRhoRes:ceil(D/houghRhoRes)) ; 
+                    
 
 Hthreshold = zeros(size(H)) ; 
 Hthreshold(:,:) = peakThreshold ; 
